@@ -1,0 +1,36 @@
+name: Docs Updated
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  notify:
+    name: Log Update
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get commit info
+        id: info
+        run: |
+          echo "commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          echo "message=$(git log -1 --format='%s')" >> $GITHUB_OUTPUT
+          echo "author=$(git log -1 --format='%an')" >> $GITHUB_OUTPUT
+
+      - name: Create deployment status
+        run: |
+          echo "## 文档已更新 ✅" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 项目 | 值 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | \`${{ steps.info.outputs.commit }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 提交信息 | ${{ steps.info.outputs.message }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 作者 | ${{ steps.info.outputs.author }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "请在主仓库执行以下命令同步子模块：" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "git submodule update --remote docs/dyl/QmClient_docs" >> $GITHUB_STEP_SUMMARY
+          echo "git add docs/dyl/QmClient_docs" >> $GITHUB_STEP_SUMMARY
+          echo "git commit -m 'sync: 更新文档子模块'" >> $GITHUB_STEP_SUMMARY
+          echo "git push" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
