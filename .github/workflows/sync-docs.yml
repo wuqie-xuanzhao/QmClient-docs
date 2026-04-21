@@ -11,11 +11,11 @@ permissions:
   pull-requests: write
 
 jobs:
-  create-pr-to-upstream:
+  create-pr:
     name: Create PR to Upstream
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout current repo
+      - name: Checkout
         uses: actions/checkout@v5
         with:
           fetch-depth: 1
@@ -24,28 +24,14 @@ jobs:
         id: info
         run: |
           echo "commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
-          echo "date=$(git log -1 --format='%ci')" >> $GITHUB_OUTPUT
           echo "message=$(git log -1 --format='%s')" >> $GITHUB_OUTPUT
 
-      - name: Create PR to upstream
+      - name: Create PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh pr create \
             --repo wxj881027/QmClient \
             --base master \
-            --title "docs: 同步 QmClient-docs 至 ${{ github.event.head_commit.id }}" \
-            --body "## 文档同步
-
-QmClient-docs 子模块有新更新
-
-| 项目 | 值 |
-|------|-----|
-| Commit | \`${{ github.event.head_commit.id }}\` |
-| 更新时间 | ${{ github.event.head_commit.timestamp }} |
-| 提交信息 | ${{ github.event.head_commit.message }} |
-
-此 PR 更新主仓库的子模块引用，请审核并合并。
-
----
-*自动由 GitHub Actions 生成*" || echo "PR 可能已存在或无权限"
+            --title "docs: sync from QmClient-docs" \
+            --body "QmClient-docs updated: ${{ steps.info.outputs.commit }}"
