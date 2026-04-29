@@ -66,25 +66,40 @@ class CUiV2LegacyAdapter {
 CUiRuntimeV2 m_UiRuntimeV2;
 ```
 
-### 1.3 QmUi 的实际使用情况
+### 1.3 QmUI v2 的实际接入矩阵
 
-| 使用位置 | 使用的 QmUi 类 | 用途 |
-|---------|--------------|------|
-| scoreboard.cpp | `CUiV2LayoutEngine`, `CUiV2LegacyAdapter`, `CUiV2AnimationRuntime` | 计分板 Flexbox 布局 + 动画 |
-| hud.cpp | `CUiV2LayoutEngine`, `CUiV2LegacyAdapter`, `CUiV2AnimationRuntime` | HUD 布局 + 动画值 |
-| menus.cpp | `CUiV2AnimationRuntime` | 菜单动画 |
-| menus_start.cpp | `CUiV2LayoutEngine`, `CUiV2LegacyAdapter` | 开始菜单布局 |
-| nameplates.cpp | `CUiV2AnimationRuntime` | 名字板动画 |
+当前的 QmUI v2 不是一次性替换旧 UI，而是**运行时统一，页面渐进接入**。  
+从实际代码落点看，可以分成四类：
+
+| 层级 | 文件 / 组件 | 接入的 v2 能力 | 当前状态 | 说明 |
+|------|-------------|---------------|----------|------|
+| 运行时总控 | `gameclient.cpp` / `gameclient.h` / `QmRt.cpp` / `QmRt.h` | `CUiRuntimeV2`、`CUiV2Tree`、`CUiV2LayoutEngine`、`CUiV2AnimationRuntime`、`CUiV2RenderBridge` | 已完成 | 在 `GameClient` 初始化，并在每帧 `OnRender()` 驱动 |
+| 完整接入 | `scoreboard.cpp` | `QmLayout` + `QmAnim` + `QmLegacy` | 已接入 | 计分板是当前 v2 最完整的应用之一，既有布局又有动画，还保留旧矩形桥接 |
+| 完整接入 | `hud.cpp` | `QmLayout` + `QmAnim` | 已接入 | HUD 已经开始使用 v2 布局和动画，但仍与旧 HUD 逻辑混合存在 |
+| 部分接入 | `menus_start.cpp` | `QmLayout` + `QmLegacy` + `CUiV2AnimationRuntime` | 已接入 | 开始菜单的按钮区支持 v2 布局，且局部使用动画 runtime |
+| 部分接入 | `menus.cpp` | `CUiV2AnimationRuntime` | 已接入 | 菜单系统已经吃到 v2 动画 runtime，但整体布局仍以旧体系为主 |
+| 部分接入 | `nameplates.cpp` | `CUiV2AnimationRuntime` | 已接入 | 名字板与聊天气泡主要用 v2 管理动画状态 |
+| 部分接入 | `menus_ingame_touch_controls.cpp` | `CUiV2AnimationRuntime` | 已接入 | 触控编辑界面的元素切换动画走 v2 runtime |
+| 辅助桥接 | `scoreboard.cpp` / `menus_start.cpp` | `CUiV2LegacyAdapter` | 已接入 | 把新布局结果转回旧 `CUIRect` 渲染路径 |
+
+#### 结论
+
+- `QmLayout` 的主要落点在 `HUD`、`计分板`、`开始菜单`
+- `QmAnim` 的主要落点在 `HUD`、`计分板`、`名字板`、`菜单`、`触控编辑`
+- `QmLegacy` 主要服务于 `计分板` 和 `开始菜单` 的新旧桥接
+- `QmTree` 和 `QmRender` 目前更多是运行时内部能力，还不是页面直接调用的入口
+- 这套系统现在属于“运行时统一、页面渐进迁移”，而不是“全局一次性换壳”
 
 ### 1.4 测试覆盖
 
 `src/test/QmAnimTest.cpp` 包含 6 个 GTest 测试用例：
-- `ReplacePolicyReplacesCurrentTrack` — 替换策略
-- `QueuePolicyRunsInOrder` — 队列策略
-- `KeepHigherPriorityRejectsLowerPriorityRequest` — 优先级策略
-- `MergeTargetKeepsContinuity` — 合并目标策略（连续性）
-- `DelayDefersAnimationStart` — 延迟启动
-- `ZeroDurationCompletesImmediately` — 零时长立即完成
+
+- `ReplacePolicyReplacesCurrentTrack` - 替换策略
+- `QueuePolicyRunsInOrder` - 队列策略
+- `KeepHigherPriorityRejectsLowerPriorityRequest` - 优先级策略
+- `MergeTargetKeepsContinuity` - 合并目标策略（连续性）
+- `DelayDefersAnimationStart` - 延迟启动
+- `ZeroDurationCompletesImmediately` - 零时长立即完成
 
 ---
 
