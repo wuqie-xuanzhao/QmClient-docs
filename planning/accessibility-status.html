@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>无障碍与可读性现状</title>
+  <style>
+    :root{--bg:#f4f1ea;--paper:#fffdfa;--ink:#2d2924;--muted:#6f675f;--line:#ded4c6;--accent:#4f6f73;--accent-2:#b8795b;--ok:#5f7f55;--warn:#a57536;--bad:#a94d45;--shadow:0 18px 45px rgba(62,50,39,.12);--code-bg:#ede6dc}*{box-sizing:border-box}body{margin:0;color:var(--ink);background:radial-gradient(circle at 12% 0%,rgba(184,121,91,.16),transparent 30rem),radial-gradient(circle at 88% 8%,rgba(79,111,115,.14),transparent 28rem),linear-gradient(180deg,#f7f3ec 0%,var(--bg) 100%);font-family:"Noto Sans SC","Segoe UI","Microsoft YaHei",sans-serif;line-height:1.72}.page{max-width:1180px;margin:0 auto;padding:28px 20px 56px}.hero,.card{background:var(--paper);border:1px solid rgba(222,212,198,.95);box-shadow:var(--shadow);border-radius:22px}.hero{padding:28px 28px 24px;margin-bottom:18px}.card{padding:22px 24px;margin-top:18px}h1,h2{margin:0 0 12px;line-height:1.2}h1{font-size:28px}h2{font-size:22px}p{margin:0 0 12px}ul{margin:10px 0 0 22px;padding:0}li{margin:4px 0}code{padding:.12em .36em;border-radius:6px;background:var(--code-bg);color:#613c2e;font-size:.94em}table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px;display:block;overflow-x:auto}th,td{border-top:1px solid var(--line);padding:10px 12px;vertical-align:top;text-align:left}th{background:#faf5ed;color:#4f463d;font-weight:700;white-space:nowrap}a{color:#355f66;text-decoration-thickness:1px;text-underline-offset:3px}.meta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(79,111,115,.10);color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.02em}.pill.secondary{background:rgba(184,121,91,.10);color:var(--accent-2)}.pill.warn{background:rgba(165,117,54,.12);color:var(--warn)}.pill.ok{background:rgba(95,127,85,.12);color:var(--ok)}.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}.badge.ok{background:rgba(95,127,85,.12);color:var(--ok)}.badge.warn{background:rgba(165,117,54,.12);color:var(--warn)}.badge.bad{background:rgba(169,77,69,.12);color:var(--bad)}.muted{color:var(--muted)}.note{border-left:4px solid var(--accent);padding:10px 12px;background:rgba(79,111,115,.06);border-radius:0 10px 10px 0;color:#4c4238}.note.warn{border-left-color:var(--warn);background:rgba(165,117,54,.08)}details{margin-top:10px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.65);padding:10px 12px}summary{cursor:pointer;font-weight:700;color:#423b33}.footer{margin-top:18px;color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill ok">active</span><span class="pill secondary">2026-06-16</span><span class="pill warn">planning + current status</span></div>
+      <h1>无障碍与可读性现状</h1>
+      <p class="muted">本页接管旧 <code>accessibility-plan.md</code>。旧报告把当前状态写成“几乎为零”过于绝对；更准确的结论是：专门色盲/高对比/通用键盘焦点体系仍缺失，但已有分散的字体、缩放、透明度、颜色和 Focus Mode 能力。</p>
+    </header>
+
+    <section class="card">
+      <h2>当前结论</h2>
+      <table>
+        <thead><tr><th>主题</th><th>状态</th><th>当前事实</th><th>口径修正</th></tr></thead>
+        <tbody>
+          <tr><td>专门色盲模式</td><td><span class="badge warn">missing</span></td><td>未看到 <code>colorblind</code> 或 <code>qm_colorblind_mode</code> 一类配置。</td><td>旧方案方向有效，但不能假设已有统一颜色管线。</td></tr>
+          <tr><td>高对比模式</td><td><span class="badge warn">missing</span></td><td>未看到 <code>high_contrast</code> 或全局高对比开关。</td><td>可以复用现有 UI opacity/color 管线做局部入口，不应先重写整套 UI。</td></tr>
+          <tr><td>全局 UI 缩放</td><td><span class="badge warn">not verified</span></td><td>当前只确认到多个局部缩放配置，未确认可直接接入的全局 <code>qm_ui_scale</code>。</td><td>旧文档“在 adapter 加全局缩放因子即可”的判断需要降级。</td></tr>
+          <tr><td>局部可读性控制</td><td><span class="badge ok">exists</span></td><td>已有自定义字体、光标缩放、pie menu 缩放、input overlay 缩放、聊天气泡字体、UI/HUD 透明度等配置。</td><td>无障碍规划应先盘点并串起这些入口，避免重复造设置项。</td></tr>
+          <tr><td>键盘操作</td><td><span class="badge warn">partial</span></td><td>已有 Enter/Escape/Tab 等局部 hotkey，但未看到通用 Tab 焦点导航或 focus ring。</td><td>键盘焦点导航属于 UI 系统级工作，不适合塞进一个小视觉增强补丁。</td></tr>
+          <tr><td>Focus Mode</td><td><span class="badge ok">related</span></td><td><code>QmFocusMode</code> 会隐藏 HUD、名字板、方向提示、聊天、特效和部分声音。</td><td>它能降低干扰，但不是完整无障碍模式；文档中应单独标为相关能力。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>颜色依赖风险</h2>
+      <p class="note warn">红/绿和纯颜色语义仍是主要缺口。先修一个高频路径，比一次性抽象全局 <code>GetAccessibleColor</code> 更容易验证。</p>
+      <table>
+        <thead><tr><th>位置</th><th>当前能力</th><th>缺口</th><th>建议处理</th></tr></thead>
+        <tbody>
+          <tr><td>服务器浏览器 ping</td><td>使用 green-red HSL 映射。</td><td>未确认有类似 <code>cl_enable_ping_color</code> 的浏览器侧关闭或替代入口。</td><td>优先加非红绿 palette 或文字/符号辅助。</td></tr>
+          <tr><td>计分板 ping</td><td><code>cl_enable_ping_color</code> 可关闭 ping 着色。</td><td>关闭后只是减少颜色依赖，不提供更好的色盲友好映射。</td><td>可作为第一批可控路径之一。</td></tr>
+          <tr><td>名字板 ping 圆环</td><td><code>tc_nameplate_ping_circle</code> 可关闭。</td><td>仍依赖延迟颜色语义。</td><td>新增模式前先确认圆环是否应跟随同一 ping palette。</td></tr>
+          <tr><td>队伍、状态、时间差</td><td>多处红/蓝、红/绿硬编码。</td><td>不同上下文语义不同，不能简单套同一渐变。</td><td>后续按上下文拆：team、status、delta、identity。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>可复用的现有入口</h2>
+      <table>
+        <thead><tr><th>能力</th><th>配置或入口</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>界面颜色/透明度</td><td><code>qm_ui_color</code>、<code>qm_ui_opacity</code></td><td>适合承载局部高对比改进，但不要把它误写成完整主题系统。</td></tr>
+          <tr><td>自定义字体</td><td><code>tc_custom_font</code></td><td>可读性相关，当前更多是字体选择，不等同于全局字号缩放。</td></tr>
+          <tr><td>局部缩放</td><td><code>tc_cursor_scale</code>、<code>qm_pie_menu_scale</code>、<code>qm_input_overlay_scale</code>、<code>qm_chat_bubble_font_size</code></td><td>可先做“可读性设置清单”，减少用户逐项搜索成本。</td></tr>
+          <tr><td>HUD 透明度</td><td><code>qm_monitoring_hud_opacity</code>、<code>qm_hud_island_bg_opacity</code></td><td>与高对比/低干扰体验相关。</td></tr>
+          <tr><td>低干扰模式</td><td><code>QmFocusMode</code></td><td>隐藏多个 HUD/nameplate/chat/effect 路径，适合作为“低干扰”而不是“无障碍”入口。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>旧计划修正</h2>
+      <table>
+        <thead><tr><th>旧判断</th><th>当前修正</th></tr></thead>
+        <tbody>
+          <tr><td>“当前项目几乎没有无障碍相关实现”。</td><td>专门无障碍模式基本缺失，但已有分散的可读性和低干扰控制。</td></tr>
+          <tr><td>新增配置写入 <code>config_variables_qimeng.h</code>。</td><td>该路径已过时；当前 QmClient 配置主文件是 <code>config_variables_qmclient.h</code>，新配置应使用 <code>qm_</code> / <code>Qm</code>。</td></tr>
+          <tr><td>直接新增全局 <code>qm_ui_scale</code> 并在 adapter 层统一缩放。</td><td>全局 UI 缩放影响范围大，必须先复核 UI 布局、文本裁切、鼠标命中和旧 DDNet UI 兼容。</td></tr>
+          <tr><td>一次性替换所有硬编码颜色。</td><td>建议先选 ping 或一条状态路径做可验证改造，再扩大到 team/status/delta/identity。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>建议下一版最小计划</h2>
+      <table>
+        <thead><tr><th>优先级</th><th>主题</th><th>范围</th><th>验收点</th></tr></thead>
+        <tbody>
+          <tr><td>P0</td><td>可读性设置盘点</td><td>把现有字体、缩放、透明度、Focus Mode、ping color 开关整理到用户可找到的位置。</td><td>不新增功能也能让用户知道哪些现有设置可用。</td></tr>
+          <tr><td>P1</td><td>ping 颜色替代方案</td><td>优先选浏览器 ping 或计分板 ping 一条路径，提供非红绿 palette 或非颜色辅助标识。</td><td>色盲友好模式可开关，默认不改变现有视觉。</td></tr>
+          <tr><td>P2</td><td>高对比小入口</td><td>基于现有 UI opacity/color 或单个 HUD 区块增强边框/背景对比。</td><td>不引入大范围主题系统，不破坏现有皮肤/主题。</td></tr>
+          <tr><td>P3</td><td>通用焦点导航</td><td>单独立项，先设计 UI focus model。</td><td>Tab 顺序、focus ring、鼠标/键盘状态一致性都有规格和测试点。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>源码位置</summary>
+        <ul>
+          <li><code>src/engine/shared/config_variables.h:61</code> 定义 <code>cl_enable_ping_color</code>。</li>
+          <li><code>src/engine/shared/config_variables_tclient.h:26</code> 定义 <code>tc_nameplate_ping_circle</code>；<code>:170</code> 定义 <code>tc_cursor_scale</code>；<code>:243</code> 定义 <code>tc_custom_font</code>。</li>
+          <li><code>src/engine/shared/config_variables_qmclient.h:23</code>、<code>:26</code>、<code>:112</code>、<code>:149</code>、<code>:174</code>、<code>:316</code>、<code>:385</code> 分别覆盖 UI color/opacity、pie menu scale、input overlay scale、monitoring HUD opacity、HUD island opacity 和聊天气泡字体。</li>
+          <li><code>src/game/client/components/menus_browser.cpp:379</code> 到 <code>:381</code> 使用浏览器 ping 颜色映射；<code>:384</code> 起处理 gametype 颜色。</li>
+          <li><code>src/game/client/components/scoreboard.cpp:1335</code> 到 <code>:1337</code> 通过 <code>cl_enable_ping_color</code> 控制 ping 颜色。</li>
+          <li><code>src/game/client/components/nameplates.cpp:848</code> 渲染名字板 ping circle；<code>:679</code>、<code>:716</code> 和 <code>:1628</code> 到 <code>:1730</code> 覆盖强弱钩状态显示。</li>
+          <li><code>src/game/client/components/key_binder.cpp:34</code> 到 <code>:90</code> 有按键读取按钮的局部激活状态，但不是通用焦点系统。</li>
+          <li><code>src/game/client/components/tclient/tclient.cpp:3730</code> 到 <code>:3774</code> 处理 Focus Mode 配置覆盖；聊天、特效、info messages 和 HUD 多处也读取 <code>QmFocusMode</code>。</li>
+        </ul>
+      </details>
+    </section>
+
+    <p class="footer">旧方案保留为 <a href="../archive/superseded-planning/accessibility-plan.md">accessibility-plan.md</a>，仅用于追溯。相关总览见 <a href="hud-visual-assist-status.html">HUD 与视觉辅助现状</a>。</p>
+  </div>
+</body>
+</html>
+

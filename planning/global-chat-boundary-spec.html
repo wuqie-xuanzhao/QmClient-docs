@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="research" />
+  <title>跨服务器全局聊天边界调研</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --paper: #fffdfa;
+      --paper-2: #f7f2ea;
+      --ink: #2d2924;
+      --muted: #6f675f;
+      --line: #ded4c6;
+      --accent: #4f6f73;
+      --accent-2: #b8795b;
+      --ok: #5f7f55;
+      --warn: #a57536;
+      --bad: #a94d45;
+      --shadow: 0 18px 45px rgba(62, 50, 39, 0.12);
+      --code-bg: #ede6dc;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(184, 121, 91, 0.16), transparent 30rem),
+        radial-gradient(circle at 88% 8%, rgba(79, 111, 115, 0.14), transparent 28rem),
+        linear-gradient(180deg, #f7f3ec 0%, var(--bg) 100%);
+      font-family: "Noto Sans SC", "Segoe UI", "Microsoft YaHei", sans-serif;
+      line-height: 1.72;
+    }
+    .page { max-width: 1180px; margin: 0 auto; padding: 28px 20px 56px; }
+    .hero, .card {
+      background: var(--paper);
+      border: 1px solid rgba(222, 212, 198, 0.95);
+      box-shadow: var(--shadow);
+      border-radius: 22px;
+    }
+    .hero { padding: 28px 28px 24px; margin-bottom: 18px; }
+    .card { padding: 22px 24px; margin-top: 18px; }
+    h1, h2, h3 { margin: 0 0 12px; line-height: 1.2; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 22px; }
+    h3 { font-size: 17px; margin-top: 18px; }
+    p { margin: 0 0 12px; }
+    ul, ol { margin: 10px 0 0 22px; padding: 0; }
+    li { margin: 4px 0; }
+    code {
+      padding: 0.12em 0.36em;
+      border-radius: 6px;
+      background: var(--code-bg);
+      color: #613c2e;
+      font-size: 0.94em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+      display: block;
+      overflow-x: auto;
+    }
+    th, td {
+      border-top: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th { background: #faf5ed; color: #4f463d; font-weight: 700; white-space: nowrap; }
+    tr:hover td { background: rgba(184, 121, 91, 0.03); }
+    a { color: #355f66; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 999px;
+      background: rgba(79, 111, 115, 0.10); color: var(--accent);
+      font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+    }
+    .pill.secondary { background: rgba(184, 121, 91, 0.10); color: var(--accent-2); }
+    .pill.warn { background: rgba(165, 117, 54, 0.12); color: var(--warn); }
+    .pill.bad { background: rgba(169, 77, 69, 0.12); color: var(--bad); }
+    .pill.ok { background: rgba(95, 127, 85, 0.12); color: var(--ok); }
+    .badge {
+      display: inline-block; padding: 2px 8px;
+      border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap;
+    }
+    .badge.ok { background: rgba(95, 127, 85, 0.12); color: var(--ok); }
+    .badge.warn { background: rgba(165, 117, 54, 0.12); color: var(--warn); }
+    .badge.bad { background: rgba(169, 77, 69, 0.12); color: var(--bad); }
+    .muted { color: var(--muted); }
+    .note {
+      border-left: 4px solid var(--accent);
+      padding: 10px 12px;
+      background: rgba(79, 111, 115, 0.06);
+      border-radius: 0 10px 10px 0;
+      color: #4c4238;
+    }
+    .note.warn { border-left-color: var(--warn); background: rgba(165, 117, 54, 0.08); }
+    .note.bad { border-left-color: var(--bad); background: rgba(169, 77, 69, 0.08); }
+    .toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin-top: 14px; }
+    .toc a {
+      display: block; padding: 10px 12px;
+      border: 1px solid var(--line); border-radius: 12px;
+      color: var(--ink); text-decoration: none;
+      background: rgba(255,255,255,0.72);
+    }
+    .toc a:hover { border-color: rgba(184, 121, 91, 0.45); }
+    details {
+      margin-top: 10px; border: 1px solid var(--line);
+      border-radius: 12px; background: rgba(255,255,255,0.65); padding: 10px 12px;
+    }
+    summary { cursor: pointer; font-weight: 700; color: #423b33; }
+    .footer { margin-top: 18px; color: var(--muted); font-size: 13px; }
+    @media (max-width: 920px) {
+      .hero, .card { padding-left: 18px; padding-right: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta">
+        <span class="pill bad">research</span>
+        <span class="pill secondary">2026-06-16</span>
+        <span class="pill warn">high-risk planning</span>
+      </div>
+      <h1>跨服务器全局聊天边界调研</h1>
+      <p class="muted">本文把“跨服务器全局聊天”从好友系统小改里拆出来：当前代码只有服务器内聊天、好友通知和进服问候；真正跨服聊天需要中心服务、身份、权限和滥用控制，不能直接复用当前聊天接口。</p>
+      <nav class="toc" aria-label="文档目录">
+        <a href="#answer">快速结论</a>
+        <a href="#current">当前事实</a>
+        <a href="#not-global">不要混淆的能力</a>
+        <a href="#phases">可行阶段</a>
+        <a href="#requirements">真正实现前置条件</a>
+        <a href="#evidence">复核证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="answer">
+      <h2>快速结论</h2>
+      <p class="note bad">跨服务器全局聊天当前不是已实现能力，也不应作为“好友分类/好友提醒”的小范围增强来做。它至少需要一个独立的中心服务或协议层，以及身份、认证、限流、举报/屏蔽、隐私和兼容性设计。</p>
+      <table>
+        <thead><tr><th>问题</th><th>结论</th><th>可信度</th></tr></thead>
+        <tbody>
+          <tr><td>当前 <code>global</code> 聊天是否跨服务器？</td><td>否。当前 <code>Team=0 global</code> 是当前服务器内全服频道。</td><td><span class="badge ok">高</span></td></tr>
+          <tr><td>好友上线提醒是否等于 presence 系统？</td><td>否。它基于服务器浏览器 HTTP 列表扫描，不提供可靠账号在线状态。</td><td><span class="badge ok">高</span></td></tr>
+          <tr><td>当前好友身份能否支撑跨服全局聊天？</td><td>不足。好友模型以 name + clan 为核心，没有唯一账号 ID。</td><td><span class="badge ok">高</span></td></tr>
+          <tr><td>是否可以直接调用 <code>CChat::SendChat()</code> 实现跨服聊天？</td><td>不可以。该接口面向当前服务器连接，不能绕过协议和服务端边界。</td><td><span class="badge ok">高</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="current">
+      <h2>当前事实</h2>
+      <ul>
+        <li>QmClient 当前聊天组件把消息发送到当前服务器连接，频道语义仍是服务器内 <code>global/team/whisper</code>。</li>
+        <li>好友系统当前是 name + clan + category + note 的本地模型，不是账号系统。</li>
+        <li>Qm 好友上线提醒通过刷新/扫描服务器列表来判断好友是否出现在某个服务器。</li>
+        <li>Qm 好友进服问候只在当前服务器玩家列表变化时触发，并向当前服务器聊天发送问候文本。</li>
+        <li>代码检索没有找到可证明跨服聊天已实现的 <code>GlobalChat</code> 组件、独立 socket、中心协议或服务端入口。</li>
+      </ul>
+      <p class="note warn">这意味着旧文档里的“好友分类 / 全局聊天”必须拆成两条线：好友分类和好友提醒是当前能力；跨服务器全局聊天是高风险规划/调研项。</p>
+    </section>
+
+    <section class="card" id="not-global">
+      <h2>不要混淆的能力</h2>
+      <table>
+        <thead><tr><th>能力</th><th>真实范围</th><th>不能推导出的结论</th></tr></thead>
+        <tbody>
+          <tr><td>服务器内 global chat</td><td>同一服务器里的所有玩家频道。</td><td>不能说明客户端有跨服消息总线。</td></tr>
+          <tr><td>好友上线提醒</td><td>从服务器浏览器列表中发现好友名/战队。</td><td>不能说明有账号身份、在线状态订阅或私信能力。</td></tr>
+          <tr><td>好友进服问候</td><td>检测当前服务器玩家加入后发送当前服务器消息。</td><td>不能扩展成自动跨服广播。</td></tr>
+          <tr><td>语音 <code>QmVoiceGroupGlobal</code></td><td>语音房间/收听范围语义。</td><td>不能证明文本跨服聊天存在。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="phases">
+      <h2>可行阶段</h2>
+      <table>
+        <thead><tr><th>阶段</th><th>目标</th><th>边界</th></tr></thead>
+        <tbody>
+          <tr><td>P0 文档边界</td><td>把跨服全局聊天从好友系统里拆出，避免误判为已实现或低成本任务。</td><td>只改文档，不改源码。</td></tr>
+          <tr><td>P1 本地好友活动流</td><td>如果需要更强好友体验，可先做本地“好友在哪些服务器出现过/最近上线”信息面板。</td><td>仍基于服务器浏览器扫描；不发送跨服消息，不做账号系统。</td></tr>
+          <tr><td>P2 中心服务调研</td><td>评估是否需要 QmClient 自有服务、登录身份、消息通道、审核和安全模型。</td><td>先写服务与协议调研，不直接嵌入客户端 UI。</td></tr>
+          <tr><td>P3 实现规格</td><td>只有在中心服务、身份和滥用控制明确后，才写客户端实现规格。</td><td>必须获得协议/服务端/隐私边界批准。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="requirements">
+      <h2>真正实现前置条件</h2>
+      <ul>
+        <li>身份：明确玩家唯一身份来源，不能只依赖可变的 name + clan。</li>
+        <li>认证：明确客户端如何登录、如何防止冒名和重放。</li>
+        <li>服务：明确是否自建中心聊天服务、如何部署、如何降级。</li>
+        <li>协议：明确消息格式、版本兼容、错误处理和断线重连。</li>
+        <li>滥用控制：至少需要限流、屏蔽、举报、管理员处理和日志策略。</li>
+        <li>隐私：明确默认开关、可见范围、好友关系是否暴露、是否记录聊天内容。</li>
+        <li>兼容性：不得把跨服聊天伪装成 DDNet 服务器内消息，也不得要求普通服务器改协议。</li>
+      </ul>
+      <p class="note bad">在这些前置条件未定义前，不应新增“跨服发送”按钮、自动跨服问候、匿名全局广播或把本地好友提醒扩展成消息系统。</p>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>源码与现状页证据</summary>
+        <ul>
+          <li><code>docs/dyl/QmClient_docs/current/friends-and-global-chat.html</code> - 当前状态页已确认好友分类、备注、Qm 好友通知已实现，跨服务器全局聊天未实现。</li>
+          <li><code>src/engine/shared/config_variables_qmclient.h:230</code> - Qm 好友通知/进服问候配置集中在好友提醒语义，不是全局聊天配置。</li>
+          <li><code>src/game/client/components/tclient/tclient.h:281</code> - TClient 维护好友上线/进服检测相关状态。</li>
+          <li><code>src/game/client/components/tclient/tclient.cpp:2324</code> - <code>CheckFriendOnline()</code> 负责好友上线扫描。</li>
+          <li><code>src/game/client/components/tclient/tclient.cpp:2483</code> - <code>CheckFriendEnterGreet()</code> 负责当前服务器内好友进服问候。</li>
+          <li><code>src/game/client/components/chat.h:420</code> - <code>CChat::SendChat()</code> 是当前聊天发送接口。</li>
+          <li><code>src/game/client/components/chat.cpp:1766</code> - 注释中的 <code>0 = global</code> 是当前服务器内频道语义。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>检索结论</summary>
+        <p>本轮未发现能够证明跨服文本聊天已落地的 <code>GlobalChat</code> 组件、中心连接、独立协议或服务端实现。该结论只用于文档边界，不代表未来不可实现。</p>
+      </details>
+    </section>
+
+    <p class="footer">相关入口：<a href="../current/friends-and-global-chat.html">好友分类与全局聊天现状</a>、<a href="candidate-backlog-status.html">候选 Backlog 路由</a>、<a href="feature-brainstorm-status.html">功能头脑风暴路由</a>。</p>
+  </div>
+</body>
+</html>

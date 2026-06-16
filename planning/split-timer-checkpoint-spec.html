@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="draft" />
+  <title>Split Timer 检查点分段计时小规格</title>
+  <style>
+    :root{--bg:#f4f1ea;--paper:#fffdfa;--ink:#2d2924;--muted:#6f675f;--line:#ded4c6;--accent:#4f6f73;--accent-2:#b8795b;--ok:#5f7f55;--warn:#a57536;--bad:#a94d45;--shadow:0 18px 45px rgba(62,50,39,.12);--code-bg:#ede6dc}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 12% 0%,rgba(184,121,91,.16),transparent 30rem),radial-gradient(circle at 88% 8%,rgba(79,111,115,.14),transparent 28rem),linear-gradient(180deg,#f7f3ec 0%,var(--bg) 100%);font-family:"Noto Sans SC","Segoe UI","Microsoft YaHei",sans-serif;line-height:1.72}.page{max-width:1180px;margin:0 auto;padding:28px 20px 56px}.hero,.card{background:var(--paper);border:1px solid rgba(222,212,198,.95);box-shadow:var(--shadow);border-radius:22px}.hero{padding:28px 28px 24px;margin-bottom:18px}.card{padding:22px 24px;margin-top:18px}h1,h2,h3{margin:0 0 12px;line-height:1.2}h1{font-size:28px}h2{font-size:22px}h3{font-size:17px;margin-top:18px}p{margin:0 0 12px}ul{margin:10px 0 0 22px;padding:0}li{margin:4px 0}code{padding:.12em .36em;border-radius:6px;background:var(--code-bg);color:#613c2e;font-size:.94em}table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px;display:block;overflow-x:auto}th,td{border-top:1px solid var(--line);padding:10px 12px;vertical-align:top;text-align:left}th{background:#faf5ed;color:#4f463d;font-weight:700;white-space:nowrap}tr:hover td{background:rgba(184,121,91,.03)}a{color:#355f66;text-decoration-thickness:1px;text-underline-offset:3px}.meta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(79,111,115,.10);color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.02em}.pill.secondary{background:rgba(184,121,91,.10);color:var(--accent-2)}.pill.warn{background:rgba(165,117,54,.12);color:var(--warn)}.pill.bad{background:rgba(169,77,69,.12);color:var(--bad)}.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}.badge.ok{background:rgba(95,127,85,.12);color:var(--ok)}.badge.warn{background:rgba(165,117,54,.12);color:var(--warn)}.badge.bad{background:rgba(169,77,69,.12);color:var(--bad)}.muted{color:var(--muted)}.note{border-left:4px solid var(--accent);padding:10px 12px;background:rgba(79,111,115,.06);border-radius:0 10px 10px 0;color:#4c4238}.note.warn{border-left-color:var(--warn);background:rgba(165,117,54,.08)}.toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:14px}.toc a{display:block;padding:10px 12px;border:1px solid var(--line);border-radius:12px;color:var(--ink);text-decoration:none;background:rgba(255,255,255,.72)}details{margin-top:10px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.65);padding:10px 12px}summary{cursor:pointer;font-weight:700;color:#423b33}.footer{margin-top:18px;color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill warn">draft spec</span><span class="pill secondary">2026-06-16</span><span class="pill bad">未实现</span></div>
+      <h1>Split Timer 检查点分段计时小规格</h1>
+      <p class="muted">本页把 BC 未落地项 Split Timer 收敛为一个只读 HUD 小规格：基于当前 race time 和检查点事件记录本地分段时间，用于练图复盘；不改协议、不改预测、不写 demo 格式、不做自动成绩系统。</p>
+      <nav class="toc" aria-label="文档目录">
+        <a href="#goal">① 目标与非目标</a>
+        <a href="#source">② 数据来源</a>
+        <a href="#state">③ 状态模型</a>
+        <a href="#ui">④ HUD 与设置</a>
+        <a href="#verification">⑤ 验收</a>
+        <a href="#evidence">⑥ 当前证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="goal">
+      <h2>① 目标与非目标</h2>
+      <table>
+        <thead><tr><th>类型</th><th>范围</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge ok">目标</span></td><td>在本地玩家经过 race checkpoint / tele checkpoint 类事件时记录当前 race time，显示最近分段差值。</td><td>当前已有 race time、status bar race item 和 Speedrun Timer HUD，可复用计时口径。</td></tr>
+          <tr><td><span class="badge ok">目标</span></td><td>只保留当前 run 的最近 N 个 split 和 best session 对比。</td><td>P0 先服务练图即时反馈，不做跨图数据库。</td></tr>
+          <tr><td><span class="badge warn">暂不做</span></td><td>跨局持久化 PB、排行榜、云同步、Kog 组队榜、成就。</td><td>这些已属于统计/本地历史或远端服务方向。</td></tr>
+          <tr><td><span class="badge warn">暂不做</span></td><td>自动 Finish Prediction、全地图路线识别、预测玩家未来完成时间。</td><td>Finish Prediction 是另一个 BC 未落地项，风险和数据需求不同；边界见 <a href="../research/finish-prediction-boundary.html">finish-prediction-boundary.html</a>。</td></tr>
+          <tr><td><span class="badge bad">禁止</span></td><td>改协议、snapshot、物理、预测、碰撞、rank 可达性或 demo 文件格式。</td><td>Split Timer 必须是客户端只读辅助，不影响玩法语义。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="source">
+      <h2>② 数据来源</h2>
+      <table>
+        <thead><tr><th>来源</th><th>P0 用法</th><th>边界</th></tr></thead>
+        <tbody>
+          <tr><td>Race time</td><td>优先复用 <code>CGameClient::CurrentRaceTime()</code> 或和 status bar 一致的 <code>GAMESTATEFLAG_RACETIME</code> 计算。</td><td>不要自己发明第二套计时基准。</td></tr>
+          <tr><td>Checkpoint 事件</td><td>优先监听当前客户端已经收到的 race/checkpoint 相关消息或事件；如果无法稳定识别，P0 降级为手动 split 热键。</td><td>不新增网络协议，不要求服务端发送新字段。</td></tr>
+          <tr><td>Run 重置</td><td>race 未开始、重新开始、换图、离线、gameover 时清空当前 run splits。</td><td>不跨地图继承状态。</td></tr>
+          <tr><td>Best session</td><td>同一地图同一会话内保存最优 split 时间，用于显示 +/- 差值。</td><td>P0 不写文件，避免隐私和存储边界扩大。</td></tr>
+        </tbody>
+      </table>
+      <p class="note warn">如果源码复核发现 checkpoint 事件没有可靠本地入口，不应硬做地图 tile 扫描或预测路径。先实现手动 split，或另写 checkpoint 事件调研。</p>
+    </section>
+
+    <section class="card" id="state">
+      <h2>③ 状态模型</h2>
+      <ul>
+        <li><code>CurrentRun</code>：保存当前地图、race start tick、最近 checkpoint index、split 时间数组。</li>
+        <li><code>SessionBest</code>：同一地图本客户端会话内的最佳 split 时间数组，换图或断线清空。</li>
+        <li><code>LastSplitPopup</code>：最近一次 split 的增量时间、相对 best 的差值、显示到期 tick。</li>
+        <li>重复 checkpoint index 在短时间内只记录一次，避免网络重复消息或回退误触发。</li>
+        <li>如果 race time 回退或 <code>LastRaceTick()</code> 变化，当前 run 必须重置。</li>
+      </ul>
+    </section>
+
+    <section class="card" id="ui">
+      <h2>④ HUD 与设置</h2>
+      <table>
+        <thead><tr><th>项</th><th>规格</th><th>默认</th></tr></thead>
+        <tbody>
+          <tr><td>主开关</td><td><code>qm_split_timer</code>。</td><td>关闭。</td></tr>
+          <tr><td>显示模式</td><td>最近一次 split popup、右侧小列表、两者都显示。</td><td>popup。</td></tr>
+          <tr><td>列表长度</td><td>最近 3-10 个 split。</td><td>5。</td></tr>
+          <tr><td>颜色</td><td>快于 session best 用绿色，慢于 best 用橙/红，首次记录用中性色。</td><td>跟随 HUD 透明度。</td></tr>
+          <tr><td>手动 split</td><td>可选命令 <code>qm_split_mark</code>，用于无法识别 checkpoint 的地图或调试。</td><td>P1 或 P0 降级项。</td></tr>
+        </tbody>
+      </table>
+      <p class="note">设置入口可以放在 QmClient 的 Speedrun Timer 模块附近，但文案必须区分：Speedrun Timer 是倒计时目标，Split Timer 是已发生分段记录。</p>
+    </section>
+
+    <section class="card" id="verification">
+      <h2>⑤ 验收</h2>
+      <table>
+        <thead><tr><th>检查项</th><th>验收标准</th></tr></thead>
+        <tbody>
+          <tr><td>功能</td><td>本地 race 已开始后，触发 split 能显示当前分段、总 race time 和相对 session best 差值。</td></tr>
+          <tr><td>重置</td><td>换图、重新开始、断线、gameover 或 race tick 变化时不会沿用上一轮 split。</td></tr>
+          <tr><td>兼容</td><td>不影响现有 status bar race time、Speedrun Timer、DDNet race message 和 demo 播放。</td></tr>
+          <tr><td>边界</td><td>没有 checkpoint 事件的地图不崩溃、不产生虚假 split；可降级到手动 split。</td></tr>
+          <tr><td>验证</td><td>实现后至少跑文档 gate、quick gate 或本地手动 race/checkpoint 验证，并回填 <a href="../current/bc-port-status.html">BC 功能移植现状</a>。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>⑥ 当前证据</h2>
+      <details open>
+        <summary>已存在计时基础</summary>
+        <ul>
+          <li><a href="../current/bc-port-status.html">bc-port-status.html</a> 已确认 Split Timer 当前未见实现，但 Speedrun Timer 已落地。</li>
+          <li><code>src/game/client/gameclient.h:939-940</code> 暴露 <code>LastRaceTick()</code> 和 <code>CurrentRaceTime()</code>。</li>
+          <li><code>src/game/client/gameclient.cpp:2189-2200</code> 基于 <code>m_LastRaceTick</code> 计算当前 race time。</li>
+          <li><code>src/game/client/gameclient.cpp:4119-4128</code> 根据 race 状态和 <code>GAMESTATEFLAG_RACETIME</code> 记录 <code>m_LastRaceTick</code>。</li>
+          <li><code>src/game/client/components/tclient/statusbar.cpp:148-170</code> 当前 status bar 已有 race time 显示和 time limit 闪烁逻辑。</li>
+          <li><code>src/game/client/components/hud.cpp:945-1033</code> 当前 Speedrun Timer 已使用 race started 状态、倒计时和过期行为。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>当前缺口</summary>
+        <ul>
+          <li><a href="../current/bc-port-status.html">bc-port-status.html</a> 已记录在源码中未找到 <code>split_timer</code>、<code>SplitTimer</code> 或 <code>qm_split</code>。</li>
+          <li>本轮只确认 race time 基础存在；checkpoint 事件稳定入口仍需要实现前继续复核，不能在规格中假设已经可用。</li>
+        </ul>
+      </details>
+      <p class="note warn">本页是后续实现规格，不证明 Split Timer 已落地。实现完成后，应更新 BC 现状页和创新路线图状态。</p>
+    </section>
+
+    <p class="footer">相关入口：<a href="../current/bc-port-status.html">BC 功能移植现状</a>、<a href="../research/finish-prediction-boundary.html">Finish Prediction 边界调研</a>、<a href="innovation-roadmap.html">创新功能候选路由</a>、<a href="todo-priority-status.html">新版 TODO 优先级路由</a>。</p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>皮肤混搭与资源编辑现状</title>
+  <style>
+    :root{--bg:#f4f1ea;--paper:#fffdfa;--ink:#2d2924;--muted:#6f675f;--line:#ded4c6;--accent:#4f6f73;--accent-2:#b8795b;--ok:#5f7f55;--warn:#a57536;--bad:#a94d45;--shadow:0 18px 45px rgba(62,50,39,.12);--code-bg:#ede6dc}*{box-sizing:border-box}body{margin:0;color:var(--ink);background:radial-gradient(circle at 12% 0%,rgba(184,121,91,.16),transparent 30rem),radial-gradient(circle at 88% 8%,rgba(79,111,115,.14),transparent 28rem),linear-gradient(180deg,#f7f3ec 0%,var(--bg) 100%);font-family:"Noto Sans SC","Segoe UI","Microsoft YaHei",sans-serif;line-height:1.72}.page{max-width:1180px;margin:0 auto;padding:28px 20px 56px}.hero,.card{background:var(--paper);border:1px solid rgba(222,212,198,.95);box-shadow:var(--shadow);border-radius:22px}.hero{padding:28px 28px 24px;margin-bottom:18px}.card{padding:22px 24px;margin-top:18px}h1,h2{margin:0 0 12px;line-height:1.2}h1{font-size:28px}h2{font-size:22px}p{margin:0 0 12px}ul{margin:10px 0 0 22px;padding:0}li{margin:4px 0}code{padding:.12em .36em;border-radius:6px;background:var(--code-bg);color:#613c2e;font-size:.94em}table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px;display:block;overflow-x:auto}th,td{border-top:1px solid var(--line);padding:10px 12px;vertical-align:top;text-align:left}th{background:#faf5ed;color:#4f463d;font-weight:700;white-space:nowrap}a{color:#355f66;text-decoration-thickness:1px;text-underline-offset:3px}.meta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(79,111,115,.10);color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.02em}.pill.secondary{background:rgba(184,121,91,.10);color:var(--accent-2)}.pill.warn{background:rgba(165,117,54,.12);color:var(--warn)}.pill.ok{background:rgba(95,127,85,.12);color:var(--ok)}.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}.badge.ok{background:rgba(95,127,85,.12);color:var(--ok)}.badge.warn{background:rgba(165,117,54,.12);color:var(--warn)}.badge.bad{background:rgba(169,77,69,.12);color:var(--bad)}.muted{color:var(--muted)}.note{border-left:4px solid var(--accent);padding:10px 12px;background:rgba(79,111,115,.06);border-radius:0 10px 10px 0;color:#4c4238}.note.warn{border-left-color:var(--warn);background:rgba(165,117,54,.08)}details{margin-top:10px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.65);padding:10px 12px}summary{cursor:pointer;font-weight:700;color:#423b33}.footer{margin-top:18px;color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill ok">active</span><span class="pill secondary">2026-06-16</span><span class="pill warn">planning + current status</span></div>
+      <h1>皮肤混搭与资源编辑现状</h1>
+      <p class="muted">本页接管旧 <code>skin-mixer-plan.md</code>。当前 QmClient 没有旧案描述的运行时 <code>.qmixin</code> 混搭配置、分享码或独立 Skin Mixer profile；但资源页资产编辑器已经支持 Skin 类型的 Frankenstein 部件拖拽、染色、预览和导出。</p>
+    </header>
+
+    <section class="card">
+      <h2>当前已存在的能力</h2>
+      <table>
+        <thead><tr><th>领域</th><th>状态</th><th>当前实现</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>皮肤 Profile</td><td><span class="badge ok">implemented</span></td><td><code>CSkinProfiles</code> 保存皮肤名、body/feet 颜色、旗帜、默认表情、名字和 clan，并写入 <code>QmClient/qmclient_profiles.cfg</code>。</td><td>这是 Tee profile，不是部件混搭配置。</td></tr>
+          <tr><td>Profile UI</td><td><span class="badge ok">implemented</span></td><td>TClient Profiles 页面支持保存、加载、删除、覆盖，并可选择是否保存/加载 Skin、Colors、Emote、Name、Clan、Flag。</td><td>旧文档提到的“皮肤配置文件”存在，但路径在 <code>components/tclient/</code>，不是 <code>components/qmclient/</code>。</td></tr>
+          <tr><td>资源页 Skin 编辑器</td><td><span class="badge ok">implemented</span></td><td>资源设置页可打开 <code>ASSETS_EDITOR_TYPE_SKIN</code>，编辑器左侧是 donor，右侧是 <code>Frankenstein</code> 画布。</td><td>这是当前最接近“皮肤混搭”的实现。</td></tr>
+          <tr><td>部件拖拽混搭</td><td><span class="badge ok">implemented</span></td><td>Skin 编辑器通过 <code>SAssetsEditorPartSlot</code> 跟踪目标区域、来源 asset、源区域和 tint；拖拽左侧部件到右侧可替换单个或同族同尺寸部件。</td><td>旧案中“无法混搭部位”已不符合资源编辑器现状。</td></tr>
+          <tr><td>部件染色</td><td><span class="badge ok">implemented</span></td><td>编辑器支持点击 Frankenstein 部件调整颜色，合成时按 blend mode 把颜色覆盖应用到对应图像区域。</td><td>这是资源图像染色，不等同于运行时 body/feet 自定义颜色。</td></tr>
+          <tr><td>导出格式</td><td><span class="badge ok">implemented</span></td><td>Skin 导出会写 <code>skins/&lt;name&gt;.png</code>、<code>skins7/body/&lt;name&gt;.png</code>、<code>skins7/feet/&lt;name&gt;.png</code>、<code>skins7/hands/&lt;name&gt;.png</code> 和 <code>skins7/&lt;name&gt;.json</code>。</td><td>导出后刷新 skin 列表，产物是标准 skin/skins7 资源，而不是独立混搭配置。</td></tr>
+          <tr><td>分享码 / Workshop 上传</td><td><span class="badge bad">not implemented</span></td><td>本轮未看到 <code>.qmixin</code>、分享码、混搭 JSON sidecar 或一键上传 Workshop 的实现。</td><td>旧案这部分仍是未规格化规划。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>旧计划修正</h2>
+      <table>
+        <thead><tr><th>旧计划点</th><th>当前判断</th><th>处理方式</th></tr></thead>
+        <tbody>
+          <tr><td>无法混搭部位。</td><td><span class="badge bad">已过时</span></td><td>资源页 Skin 资产编辑器已经支持 donor -> Frankenstein 部件替换和预览。</td></tr>
+          <tr><td>缺少实时预览。</td><td><span class="badge bad">已过时</span></td><td>资产编辑器有 composed preview texture，并在修改后刷新预览。</td></tr>
+          <tr><td>缺少保存。</td><td><span class="badge warn">部分过时</span></td><td>当前可以导出成标准 skin/skins7 文件；但没有保存“可继续编辑的混搭配方”。</td></tr>
+          <tr><td>扩展 <code>components/qmclient/skinprofiles.*</code>。</td><td><span class="badge bad">路径错误</span></td><td>当前 profile 代码在 <code>src/game/client/components/tclient/skinprofiles.*</code>。</td></tr>
+          <tr><td>新增 <code>qm_skin_mixer</code> 开关。</td><td><span class="badge warn">不建议直接做</span></td><td>当前混搭作为资源编辑器工具存在，不需要先加运行时总开关。若未来新增配置，应先明确它控制编辑器、导出还是运行时皮肤选择。</td></tr>
+          <tr><td>导出 <code>.qmixin</code> / 分享码 / Workshop 上传。</td><td><span class="badge warn">仍是规划</span></td><td>这会引入新格式和兼容问题；先不要替代现有标准 skin/skins7 导出。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>建议下一版最小计划</h2>
+      <table>
+        <thead><tr><th>优先级</th><th>主题</th><th>范围</th><th>验收点</th></tr></thead>
+        <tbody>
+          <tr><td>P0</td><td>状态固定</td><td>把旧“无法混搭/无预览/无保存”改为“资源编辑器已有一次性 Frankenstein 导出”。</td><td>后续不再按从零实现 Skin Mixer 立项。</td></tr>
+          <tr><td>P1</td><td>编辑器说明</td><td>补用户文档说明 Skin 编辑器入口、donor/Frankenstein 概念、拖拽、染色、Reset All 和 Export。</td><td>用户能找到并使用当前能力，不需要新增源码。</td></tr>
+          <tr><td>P1</td><td>可编辑配方</td><td>如果确实需要持续编辑混搭结果，先设计 sidecar recipe，不改变已导出的标准 skin 文件语义。</td><td>标准 DDNet/QmClient 皮肤加载仍可不依赖 sidecar。</td></tr>
+          <tr><td>P2</td><td>Profile 联动</td><td>只在导出 skin 后复用现有 Tee profile 保存皮肤名和颜色；不要把 profile 结构变成部件配方存储。</td><td><code>qmclient_profiles.cfg</code> 继续保持当前命令式格式。</td></tr>
+          <tr><td>P3</td><td>分享/Workshop</td><td>先支持打开导出目录或复制说明；一键上传需要单独处理鉴权、失败恢复和版权提示。</td><td>不把第三方分享链路作为基础混搭能力依赖。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>源码位置</summary>
+        <ul>
+          <li><code>CMakeLists.txt:2823</code> 到 <code>:2824</code>：当前 profile 源文件是 <code>components/tclient/skinprofiles.*</code>。</li>
+          <li><code>src/engine/shared/config_domains.h:10</code>：profile 保存域为 <code>QmClient/qmclient_profiles.cfg</code>。</li>
+          <li><code>src/game/client/components/tclient/skinprofiles.h:14</code> 到 <code>:24</code>：<code>CProfile</code> 只保存颜色、旗帜、表情、皮肤名、名字和 clan。</li>
+          <li><code>src/game/client/components/tclient/skinprofiles.cpp:28</code> 到 <code>:35</code>：注册 <code>add_profile</code> 和 <code>qm_profile_queue</code>。</li>
+          <li><code>src/game/client/components/tclient/skinprofiles.cpp:76</code> 到 <code>:98</code>：应用 profile 时写回当前 tee/dummy 的皮肤、颜色、表情、名字、clan 和旗帜，并发送 info。</li>
+          <li><code>src/game/client/components/tclient/menus_tclient.cpp:4728</code> 到 <code>:5015</code>：Profiles UI 渲染当前 profile、预览加载结果、保存/加载/删除/覆盖，并控制保存哪些字段。</li>
+          <li><code>src/game/client/components/menus.h:323</code> 到 <code>:335</code>：资产编辑器包含 <code>ASSETS_EDITOR_TYPE_SKIN</code>。</li>
+          <li><code>src/game/client/components/menus.h:437</code> 到 <code>:455</code>：<code>BuildSkinEditorSlots</code> 定义 skin body、feet、right/bottom strips 等可编辑槽位。</li>
+          <li><code>src/game/client/components/menus_assets_editor.cpp:796</code> 到 <code>:799</code>：Skin 类型打开时构建 Skin editor slots。</li>
+          <li><code>src/game/client/components/menus_assets_editor.cpp:1640</code> 到 <code>:1689</code>：拖拽 donor 部件到目标 slot，支持同族同尺寸批量替换并标记预览 dirty。</li>
+          <li><code>src/game/client/components/menus_assets_editor.cpp:1154</code> 到 <code>:1313</code>：合成图像时从 donor 复制区域，并应用颜色覆盖。</li>
+          <li><code>src/game/client/components/menus_assets_editor.cpp:2021</code> 到 <code>:2027</code>：UI 文案是 <code>Donor (drag parts from left)</code> 和 <code>Frankenstein (drop parts on right)</code>。</li>
+          <li><code>src/game/client/components/menus_assets_editor.cpp:1338</code> 到 <code>:1412</code>：Skin 导出写入 <code>skins/</code>、<code>skins7/body</code>、<code>skins7/feet</code>、<code>skins7/hands</code> 和 JSON，并刷新 skin 列表。</li>
+          <li><code>src/game/client/components/skins7.cpp:827</code> 到 <code>:850</code>：<code>SaveSkinfileFromParts</code> 写出标准 <code>skins7/&lt;name&gt;.json</code> skin part 引用。</li>
+          <li><code>src/game/client/components/menus_settings.cpp:2785</code>：资源页打开 Skin 资产编辑器。</li>
+        </ul>
+      </details>
+    </section>
+
+    <p class="footer">旧方案保留为 <a href="../archive/superseded-planning/skin-mixer-plan.md">skin-mixer-plan.md</a>，仅用于追溯。后续应从当前资源编辑器能力出发，而不是重建一套运行时混搭系统。</p>
+  </div>
+</body>
+</html>
+

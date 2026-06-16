@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="draft spec" />
+  <title>Bind 指令系统化边界规格</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --paper: #fffdfa;
+      --ink: #2d2924;
+      --muted: #6f675f;
+      --line: #ded4c6;
+      --accent: #4f6f73;
+      --accent-2: #b8795b;
+      --ok: #5f7f55;
+      --warn: #a57536;
+      --bad: #a94d45;
+      --shadow: 0 18px 45px rgba(62, 50, 39, 0.12);
+      --code-bg: #ede6dc;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(184, 121, 91, 0.16), transparent 30rem),
+        radial-gradient(circle at 88% 8%, rgba(79, 111, 115, 0.14), transparent 28rem),
+        linear-gradient(180deg, #f7f3ec 0%, var(--bg) 100%);
+      font-family: "Noto Sans SC", "Segoe UI", "Microsoft YaHei", sans-serif;
+      line-height: 1.72;
+    }
+    .page { max-width: 1180px; margin: 0 auto; padding: 28px 20px 56px; }
+    .hero, .card {
+      background: var(--paper);
+      border: 1px solid rgba(222, 212, 198, 0.95);
+      box-shadow: var(--shadow);
+      border-radius: 22px;
+    }
+    .hero { padding: 28px 28px 24px; margin-bottom: 18px; }
+    .card { padding: 22px 24px; margin-top: 18px; }
+    h1, h2, h3 { margin: 0 0 12px; line-height: 1.2; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 22px; }
+    h3 { font-size: 17px; margin-top: 18px; }
+    p { margin: 0 0 12px; }
+    ul, ol { margin: 10px 0 0 22px; padding: 0; }
+    li { margin: 4px 0; }
+    code {
+      padding: 0.12em 0.36em;
+      border-radius: 6px;
+      background: var(--code-bg);
+      color: #613c2e;
+      font-size: 0.94em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+      display: block;
+      overflow-x: auto;
+    }
+    th, td {
+      border-top: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th { background: #faf5ed; color: #4f463d; font-weight: 700; white-space: nowrap; }
+    tr:hover td { background: rgba(184, 121, 91, 0.03); }
+    a { color: #355f66; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 999px;
+      background: rgba(79, 111, 115, 0.10); color: var(--accent);
+      font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+    }
+    .pill.secondary { background: rgba(184, 121, 91, 0.10); color: var(--accent-2); }
+    .pill.warn { background: rgba(165, 117, 54, 0.12); color: var(--warn); }
+    .pill.bad { background: rgba(169, 77, 69, 0.12); color: var(--bad); }
+    .pill.ok { background: rgba(95, 127, 85, 0.12); color: var(--ok); }
+    .badge {
+      display: inline-block; padding: 2px 8px;
+      border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap;
+    }
+    .badge.ok { background: rgba(95, 127, 85, 0.12); color: var(--ok); }
+    .badge.warn { background: rgba(165, 117, 54, 0.12); color: var(--warn); }
+    .badge.bad { background: rgba(169, 77, 69, 0.12); color: var(--bad); }
+    .muted { color: var(--muted); }
+    .note {
+      border-left: 4px solid var(--accent);
+      padding: 10px 12px;
+      background: rgba(79, 111, 115, 0.06);
+      border-radius: 0 10px 10px 0;
+      color: #4c4238;
+    }
+    .note.warn { border-left-color: var(--warn); background: rgba(165, 117, 54, 0.08); }
+    .note.bad { border-left-color: var(--bad); background: rgba(169, 77, 69, 0.08); }
+    .toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin-top: 14px; }
+    .toc a {
+      display: block; padding: 10px 12px;
+      border: 1px solid var(--line); border-radius: 12px;
+      color: var(--ink); text-decoration: none;
+      background: rgba(255,255,255,0.72);
+    }
+    .toc a:hover { border-color: rgba(184, 121, 91, 0.45); }
+    details {
+      margin-top: 10px; border: 1px solid var(--line);
+      border-radius: 12px; background: rgba(255,255,255,0.65); padding: 10px 12px;
+    }
+    summary { cursor: pointer; font-weight: 700; color: #423b33; }
+    .footer { margin-top: 18px; color: var(--muted); font-size: 13px; }
+    @media (max-width: 920px) {
+      .hero, .card { padding-left: 18px; padding-right: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta">
+        <span class="pill warn">draft spec</span>
+        <span class="pill secondary">2026-06-16</span>
+        <span class="pill">bind boundary</span>
+      </div>
+      <h1>Bind 指令系统化边界规格</h1>
+      <p class="muted">本文把旧 “Bind 指令系统化” 拆成可执行边界：DDNet 原生 bind 保持不重写，BindWheel 快捷设置已有独立小规格，本页只定义 BindChat 管理 UI、Tab 补全接入和配置包边界。目标是让绑定能力更可发现，而不是把它扩成宏、脚本或自动化平台。</p>
+      <nav class="toc" aria-label="目录">
+        <a href="#summary">当前结论</a>
+        <a href="#split">三层边界</a>
+        <a href="#scope">本规格范围</a>
+        <a href="#phases">建议阶段</a>
+        <a href="#acceptance">验收边界</a>
+        <a href="#evidence">复核证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="summary">
+      <h2>当前结论</h2>
+      <table>
+        <thead><tr><th>主题</th><th>状态</th><th>后续口径</th></tr></thead>
+        <tbody>
+          <tr><td>DDNet 原生 bind</td><td><span class="badge ok">基础能力已存在</span></td><td>不重写 <code>CBinds</code>，不改原生 <code>bind</code>/<code>unbind</code> 语义。</td></tr>
+          <tr><td>BindWheel 快捷设置</td><td><span class="badge warn">已有独立规格</span></td><td>继续看 <a href="bindwheel-quick-settings-spec.html">bindwheel-quick-settings-spec.html</a>，不和 Chat Binds UI 合并实现。</td></tr>
+          <tr><td>Chat Binds 管理 UI</td><td><span class="badge warn">缺口明确</span></td><td>当前设置页主要管理默认绑定名；后续可补自定义绑定列表、命令编辑、删除和搜索。</td></tr>
+          <tr><td>Chat Binds Tab 补全</td><td><span class="badge warn">函数存在 / 未接入</span></td><td>可作为独立小任务接入聊天 Tab 补全，但必须不破坏玩家名、服务器命令和 slash command 补全。</td></tr>
+          <tr><td>配置导入/导出</td><td><span class="badge warn">归入配置包</span></td><td>Chat Binds 和 BindWheel 的统一备份/迁移应走 <a href="qmconfig-minimal-package-spec.html">.qmconfig 最小包规格</a>。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="split">
+      <h2>三层边界</h2>
+      <table>
+        <thead><tr><th>层级</th><th>数据/配置域</th><th>允许改进</th><th>禁止顺手做</th></tr></thead>
+        <tbody>
+          <tr><td>原生键盘 bind</td><td><code>CBinds</code> 与 DDNet 原生 bind 配置</td><td>只补文档和 UI 引导。</td><td>不重写输入系统、不改按住式命令释放语义。</td></tr>
+          <tr><td>Chat Binds</td><td><code>ConfigDomain::TCLIENTCHATBINDS</code>，<code>QmClient/qmclient_chatbinds.cfg</code></td><td>管理 UI、搜索、删除、自定义项编辑、Tab 补全。</td><td>不把普通聊天自动化，不推荐刷屏或服务端命令。</td></tr>
+          <tr><td>Bind Wheel</td><td><code>ConfigDomain::QMCLIENT</code>，普通 <code>add_bindwheel</code> 行</td><td>安全客户端设置白名单预设。</td><td>不做条件宏、多级轮盘、脚本平台或 TAS。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="scope">
+      <h2>本规格范围</h2>
+      <h3>允许进入 P0/P1</h3>
+      <ul>
+        <li>在 Chat Binds 设置页显示当前自定义绑定列表。</li>
+        <li>允许编辑自定义绑定的触发名和命令。</li>
+        <li>允许删除自定义绑定，并清楚地区分默认绑定和用户自定义绑定。</li>
+        <li>为新增自定义绑定提供 <code>!</code> 前缀建议或警告，降低普通聊天误触发。</li>
+        <li>把 <code>ChatDoAutocomplete()</code> 接入聊天框 Tab 补全，但只在当前 token 像 chat bind 触发名时参与。</li>
+      </ul>
+      <h3>不进入本规格</h3>
+      <ul>
+        <li>把 <code>m_vBinds</code> 立刻替换成 map 或重写保存排序。</li>
+        <li>把 Chat Binds 和 BindWheel 合并成一个统一数据结构。</li>
+        <li>新增宏语法、条件、延迟、循环、脚本执行或自动玩法。</li>
+        <li>改 DDNet 原生 bind 的配置格式。</li>
+        <li>在没有配置包计划的情况下做导入/导出 UI。</li>
+      </ul>
+    </section>
+
+    <section class="card" id="phases">
+      <h2>建议阶段</h2>
+      <table>
+        <thead><tr><th>阶段</th><th>最小闭环</th><th>验证重点</th></tr></thead>
+        <tbody>
+          <tr><td>P0 Chat Binds 列表</td><td>设置页显示自定义绑定列表，支持删除和只读命令展示。</td><td>默认绑定重命名仍可用；保存文件仍写 <code>bindchat</code>/<code>unbindchat</code>。</td></tr>
+          <tr><td>P1 自定义绑定编辑</td><td>增加 name/command 编辑和新增按钮，复用现有 <code>AddBind()</code> / <code>RemoveBind()</code>。</td><td>重复名称、空名称、超长命令、默认绑定覆盖行为清楚。</td></tr>
+          <tr><td>P1 Tab 补全接入</td><td>在聊天 Tab 补全中加入 Chat Binds 候选。</td><td>玩家名补全、服务器命令补全、slash command 不回归。</td></tr>
+          <tr><td>P2 配置包联动</td><td>把 Chat Binds / BindWheel 纳入 <code>.qmconfig</code> 文件级导出说明。</td><td>和 <code>qmconfig-minimal-package-spec.html</code> 保持一致，不另建格式。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="acceptance">
+      <h2>验收边界</h2>
+      <ul>
+        <li>Chat Binds 管理 UI 改动不得影响原生 <code>bind</code>、<code>+bindwheel</code> 和 BindWheel 设置页。</li>
+        <li>新增/删除/编辑 Chat Binds 后，保存文件仍是 <code>QmClient/qmclient_chatbinds.cfg</code> 中的 console command 行。</li>
+        <li>默认绑定未改时不应写出重复 <code>bindchat</code>；删除默认项仍应写 <code>unbindchat</code>。</li>
+        <li>Tab 补全必须保留 Shift 反向循环、玩家名补全和命令补全体验。</li>
+        <li>UI 文案要明确 Chat Binds 会拦截聊天输入，普通词绑定有误触发风险。</li>
+      </ul>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>源码证据</summary>
+        <ul>
+          <li><code>src/game/client/components/tclient/bindchat.h:11</code> 到 <code>:16</code>：Chat Binds 名称、命令和数量上限。</li>
+          <li><code>src/game/client/components/tclient/bindchat.h:51</code>：当前存储仍是 <code>std::vector&lt;CBind&gt;</code>，并标注 <code>TODO use map</code>。</li>
+          <li><code>src/game/client/components/tclient/bindchat.cpp:151</code> 到 <code>:160</code>：Chat Binds 注册 <code>bindchat</code>、<code>bindchats</code>、<code>unbindchat</code>、<code>unbindchatall</code>。</li>
+          <li><code>src/game/client/components/tclient/bindchat.cpp:193</code> 到 <code>:216</code>：聊天发送前按首个 token 匹配绑定并执行。</li>
+          <li><code>src/game/client/components/tclient/bindchat.cpp:218</code> 到 <code>:235</code>：Chat Binds Tab 补全函数已存在。</li>
+          <li><code>src/game/client/components/tclient/bindchat.cpp:296</code> 到 <code>:355</code>：保存到 <code>ConfigDomain::TCLIENTCHATBINDS</code>，默认项未改不写出，删除默认项写 <code>unbindchat</code>。</li>
+          <li><code>src/game/client/components/chat.cpp:1135</code> 到 <code>:1140</code>：聊天发送链路先执行 <code>ChatDoBinds()</code>。</li>
+          <li><code>src/game/client/components/chat.cpp:1148</code> 到 <code>:1180</code>：聊天 Tab 补全当前从 completion buffer 和玩家列表开始，需谨慎插入 Chat Binds 候选。</li>
+          <li><code>src/game/client/components/tclient/menus_tclient.cpp:3607</code> 到 <code>:3675</code>：当前 Chat Binds 设置页渲染默认绑定重命名，不是完整自定义列表编辑器。</li>
+          <li><code>src/game/client/components/tclient/bindwheel.cpp:109</code> 到 <code>:121</code>、<code>:329</code> 到 <code>:347</code>：BindWheel 已有命令和保存路径，后续快捷设置不应重写该层。</li>
+        </ul>
+      </details>
+    </section>
+
+    <p class="footer">相关入口：<a href="../current/bind-system.html">Bind 系统现状</a>、<a href="bindwheel-quick-settings-spec.html">BindWheel 快捷设置面板小规格</a>、<a href="qmconfig-minimal-package-spec.html">.qmconfig 最小配置包</a>、<a href="innovation-roadmap.html">创新功能候选路由</a>。</p>
+  </div>
+</body>
+</html>

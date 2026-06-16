@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>QmClient 功能头脑风暴路由</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --paper: #fffdfa;
+      --paper-2: #f7f2ea;
+      --ink: #2d2924;
+      --muted: #6f675f;
+      --line: #ded4c6;
+      --accent: #4f6f73;
+      --accent-2: #b8795b;
+      --ok: #5f7f55;
+      --warn: #a57536;
+      --bad: #a94d45;
+      --shadow: 0 18px 45px rgba(62, 50, 39, 0.12);
+      --code-bg: #ede6dc;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(184, 121, 91, 0.16), transparent 30rem),
+        radial-gradient(circle at 88% 8%, rgba(79, 111, 115, 0.14), transparent 28rem),
+        linear-gradient(180deg, #f7f3ec 0%, var(--bg) 100%);
+      font-family: "Noto Sans SC", "Segoe UI", "Microsoft YaHei", sans-serif;
+      line-height: 1.72;
+    }
+    .page { max-width: 1180px; margin: 0 auto; padding: 28px 20px 56px; }
+    .hero, .card {
+      background: var(--paper);
+      border: 1px solid rgba(222, 212, 198, 0.95);
+      box-shadow: var(--shadow);
+      border-radius: 22px;
+    }
+    .hero { padding: 28px 28px 24px; margin-bottom: 18px; }
+    .card { padding: 22px 24px; margin-top: 18px; }
+    h1, h2 { margin: 0 0 12px; line-height: 1.2; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 22px; }
+    p { margin: 0 0 12px; }
+    ul { margin: 10px 0 0 22px; padding: 0; }
+    li { margin: 4px 0; }
+    code {
+      padding: 0.12em 0.36em;
+      border-radius: 6px;
+      background: var(--code-bg);
+      color: #613c2e;
+      font-size: 0.94em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+      display: block;
+      overflow-x: auto;
+    }
+    th, td {
+      border-top: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th { background: #faf5ed; color: #4f463d; font-weight: 700; white-space: nowrap; }
+    tr:hover td { background: rgba(184, 121, 91, 0.03); }
+    a { color: #355f66; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 999px;
+      background: rgba(79, 111, 115, 0.10); color: var(--accent);
+      font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+    }
+    .pill.secondary { background: rgba(184, 121, 91, 0.10); color: var(--accent-2); }
+    .pill.warn { background: rgba(165, 117, 54, 0.12); color: var(--warn); }
+    .pill.bad { background: rgba(169, 77, 69, 0.12); color: var(--bad); }
+    .pill.ok { background: rgba(95, 127, 85, 0.12); color: var(--ok); }
+    .badge {
+      display: inline-block; padding: 2px 8px;
+      border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap;
+    }
+    .badge.ok { background: rgba(95, 127, 85, 0.12); color: var(--ok); }
+    .badge.warn { background: rgba(165, 117, 54, 0.12); color: var(--warn); }
+    .badge.bad { background: rgba(169, 77, 69, 0.12); color: var(--bad); }
+    .muted { color: var(--muted); }
+    .note {
+      border-left: 4px solid var(--accent);
+      padding: 10px 12px;
+      background: rgba(79, 111, 115, 0.06);
+      border-radius: 0 10px 10px 0;
+      color: #4c4238;
+    }
+    .note.warn { border-left-color: var(--warn); background: rgba(165, 117, 54, 0.08); }
+    .note.bad { border-left-color: var(--bad); background: rgba(169, 77, 69, 0.08); }
+    .toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin-top: 14px; }
+    .toc a {
+      display: block; padding: 10px 12px;
+      border: 1px solid var(--line); border-radius: 12px;
+      color: var(--ink); text-decoration: none;
+      background: rgba(255,255,255,0.72);
+    }
+    .toc a:hover { border-color: rgba(184, 121, 91, 0.45); }
+    .footer { margin-top: 18px; color: var(--muted); font-size: 13px; }
+    @media (max-width: 920px) {
+      .hero, .card { padding-left: 18px; padding-right: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta">
+        <span class="pill warn">brainstorm router</span>
+        <span class="pill secondary">2026-06-16</span>
+        <span class="pill bad">不可直接执行</span>
+      </div>
+      <h1>QmClient 功能头脑风暴路由</h1>
+      <p class="muted">这份页替代旧 <code>feature-brainstorm.md</code> 的“总想法池”角色。旧清单里很多条目已经被当前 HTML 现状页接管，有些已被新版 TODO 否决，还有些只是长期创意，不能再混成一个总方案。</p>
+      <nav class="toc" aria-label="文档目录">
+        <a href="#handled">已由 HTML 接管</a>
+        <a href="#rewrite">需要重写</a>
+        <a href="#declined">已排除/否决</a>
+        <a href="#source">来源文件</a>
+      </nav>
+    </header>
+
+    <section class="card" id="handled">
+      <h2>已由 HTML 接管</h2>
+      <table>
+        <thead><tr><th>旧想法</th><th>当前入口</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>聊天框翻译按钮</td><td><a href="../current/chat-translation-button.html">chat-translation-button.html</a></td><td>已不是“从零加鼠标基础设施”的状态；输入框侧翻译按钮和自动出站翻译已存在。</td></tr>
+          <tr><td>好友分类 / 全局聊天</td><td><a href="../current/friends-and-global-chat.html">friends-and-global-chat.html</a> / <a href="global-chat-boundary-spec.html">global-chat-boundary-spec.html</a></td><td>好友分类、备注和 Qm 好友提醒已实现；跨服务器全局聊天仍未实现，已拆成高风险边界调研。</td></tr>
+          <tr><td>NetGraph 网络延迟历史图表</td><td><a href="../current/network-stutter-visualization.html">network-stutter-visualization.html</a></td><td>已拆到网络诊断、Qm monitoring 和设置页性能报表三条线。</td></tr>
+          <tr><td>统一 UI 主题/样式系统</td><td><a href="hud-visual-assist-status.html">hud-visual-assist-status.html</a></td><td>UI 统一本质上要拆到主题、动画和组件级别，不是一个单点 TODO。</td></tr>
+          <tr><td>合并动画辅助函数</td><td><a href="hud-visual-assist-status.html">hud-visual-assist-status.html</a></td><td>当前已有多套动画 helper；需要按实际调用面重写，而不是继续放在旧头脑风暴里。</td></tr>
+          <tr><td>Chat Binds UI / Tab 补全</td><td><a href="../current/bind-system.html">bind-system.html</a></td><td>已进入当前绑定系统状态页；旧 brainstorm 里关于按钮和补全的描述过粗。</td></tr>
+          <tr><td>3D 粒子 / Media Background / Speedrun Timer / Auto Team Lock</td><td><a href="../current/bc-port-status.html">bc-port-status.html</a></td><td>已进入 BC 移植状态页，不能继续作为泛化想法池条目。</td></tr>
+          <tr><td>翻译完善 / 汉化完善</td><td><a href="../current/translation-system.html">translation-system.html</a> / <a href="../current/localization-status.html">localization-status.html</a></td><td>当前主链是英文 key + TOML 维护，不是旧 brainstorm 里的纯硬编码修补法。</td></tr>
+          <tr><td>配置变量命名统一</td><td><a href="../research/config-naming-status.html">config-naming-status.html</a></td><td>旧 brainstorm 的命名建议已被当前配置命名现状页接管。</td></tr>
+          <tr><td>Demo / 观战导演</td><td><a href="demo-spectator-status.html">demo-spectator-status.html</a></td><td>已有 marker、slice、ghost、live observer 和 MultiView 状态；画中画已否决。</td></tr>
+          <tr><td>自适应 AntiPing / 持久化统计</td><td><a href="adaptive-antiping-status.html">adaptive-antiping-status.html</a> / <a href="persistent-stats-status.html">persistent-stats-status.html</a></td><td>都已经有独立现状页，不应继续滞留在头脑风暴池里。</td></tr>
+          <tr><td>截图管理 / 皮肤混搭 / 收藏增强</td><td><a href="screenshot-manager-status.html">screenshot-manager-status.html</a> / <a href="skin-mixer-status.html">skin-mixer-status.html</a> / <a href="favorites-browser-status.html">favorites-browser-status.html</a></td><td>这三类都已经有当前状态页。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="rewrite">
+      <h2>需要重写</h2>
+      <table>
+        <thead><tr><th>旧想法</th><th>为什么要重写</th><th>建议入口</th></tr></thead>
+        <tbody>
+          <tr><td>自定义 HUD 布局编辑器</td><td>当前已有 HUD editor，但旧想法还把它当“从零创建”。</td><td>先看 <a href="hud-visual-assist-status.html">HUD/视觉辅助现状</a>，再拆布局导入导出或预设。</td></tr>
+          <tr><td>服务器收藏夹增强</td><td>旧 brainstorm 只写了备注和通知，没有区分当前收藏格式与 sidecar 元数据边界。</td><td>先看 <a href="server-favorites-status.html">服务器收藏增强现状</a>。</td></tr>
+          <tr><td>聊天记录导出</td><td>当前已有 F1 导出能力，但旧条目把需求写得太粗。</td><td>先看 <a href="chat-f1-export-status.html">F1/聊天记录导出现状</a>。</td></tr>
+          <tr><td>插件/Mod 系统</td><td>旧 brainstorm 把它和宏、TAS、插件 API 混在一起，风险级别过高。</td><td>先看 <a href="plugin-scripting-status.html">脚本/插件系统现状</a>。</td></tr>
+          <tr><td>性能监控面板</td><td>已与网络诊断、设置页性能报表和 QmMonitoring 混线。</td><td>先看 <a href="../current/network-stutter-visualization.html">网络卡顿可视化现状</a>。</td></tr>
+          <tr><td>编辑器 Lua 脚本 / 音频可视化 / 社交分享</td><td>这些是长期创意，旧 brainstorm 没有足够代码事实支撑。</td><td>必须重新调研，再决定是否进入 planning。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="declined">
+      <h2>已排除/否决</h2>
+      <ul>
+        <li>成就系统。</li>
+        <li>自定义准星。</li>
+        <li>Discord RPC 修复。</li>
+        <li>观战画中画 UI。</li>
+        <li>把所有功能合成一个大规模插件/宏系统。</li>
+      </ul>
+      <p class="note warn">这些条目要么已经在新版 TODO 里被排除，要么属于需要重新定义边界的高风险方向。不要再把它们当成近期执行清单。</p>
+    </section>
+
+    <section class="card" id="source">
+      <h2>来源文件</h2>
+      <p>旧脑暴稿保留在 <a href="../archive/superseded-planning/feature-brainstorm.md">feature-brainstorm.md</a>。新增条目应先进入 HTML 状态页或新的小规格，不要继续扩写这份旧大杂烩。</p>
+    </section>
+
+    <p class="footer">本页是路由，不是计划。真正实施前仍要回到当前源码和对应现状页。</p>
+  </div>
+</body>
+</html>
+

@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>QmClient 文档整理入口</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --paper: #fffdfa;
+      --paper-2: #f7f2ea;
+      --ink: #2d2924;
+      --muted: #6f675f;
+      --line: #ded4c6;
+      --accent: #4f6f73;
+      --accent-2: #b8795b;
+      --ok: #5f7f55;
+      --warn: #a57536;
+      --bad: #a94d45;
+      --shadow: 0 18px 45px rgba(62, 50, 39, 0.12);
+      --code-bg: #ede6dc;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(184, 121, 91, 0.16), transparent 30rem),
+        radial-gradient(circle at 88% 8%, rgba(79, 111, 115, 0.14), transparent 28rem),
+        linear-gradient(180deg, #f7f3ec 0%, var(--bg) 100%);
+      font-family: "Noto Sans SC", "Segoe UI", "Microsoft YaHei", sans-serif;
+      line-height: 1.72;
+    }
+    .page { max-width: 1180px; margin: 0 auto; padding: 28px 20px 56px; }
+    .hero, .card {
+      background: var(--paper);
+      border: 1px solid rgba(222, 212, 198, 0.95);
+      box-shadow: var(--shadow);
+      border-radius: 22px;
+    }
+    .hero { padding: 28px 28px 24px; margin-bottom: 18px; }
+    .card { padding: 22px 24px; margin-top: 18px; }
+    h1, h2, h3 { margin: 0 0 12px; line-height: 1.2; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 22px; }
+    h3 { font-size: 17px; margin-top: 18px; }
+    p { margin: 0 0 12px; }
+    code {
+      padding: 0.12em 0.36em;
+      border-radius: 6px;
+      background: var(--code-bg);
+      color: #613c2e;
+      font-size: 0.94em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+      display: block;
+      overflow-x: auto;
+    }
+    th, td {
+      border-top: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th { background: #faf5ed; color: #4f463d; font-weight: 700; white-space: nowrap; }
+    tr:hover td { background: rgba(184, 121, 91, 0.03); }
+    a { color: #355f66; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 999px;
+      background: rgba(79, 111, 115, 0.10); color: var(--accent);
+      font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+    }
+    .pill.secondary { background: rgba(184, 121, 91, 0.10); color: var(--accent-2); }
+    .pill.warn { background: rgba(165, 117, 54, 0.12); color: var(--warn); }
+    .pill.bad { background: rgba(169, 77, 69, 0.12); color: var(--bad); }
+    .pill.ok { background: rgba(95, 127, 85, 0.12); color: var(--ok); }
+    .badge {
+      display: inline-block; padding: 2px 8px;
+      border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap;
+    }
+    .badge.ok { background: rgba(95, 127, 85, 0.12); color: var(--ok); }
+    .badge.warn { background: rgba(165, 117, 54, 0.12); color: var(--warn); }
+    .badge.bad { background: rgba(169, 77, 69, 0.12); color: var(--bad); }
+    .muted { color: var(--muted); }
+    .note {
+      border-left: 4px solid var(--accent);
+      padding: 10px 12px;
+      background: rgba(79, 111, 115, 0.06);
+      border-radius: 0 10px 10px 0;
+      color: #4c4238;
+    }
+    .toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin-top: 14px; }
+    .toc a {
+      display: block; padding: 10px 12px;
+      border: 1px solid var(--line); border-radius: 12px;
+      color: var(--ink); text-decoration: none;
+      background: rgba(255,255,255,0.72);
+    }
+    .toc a:hover { border-color: rgba(184, 121, 91, 0.45); }
+    .footer { margin-top: 18px; color: var(--muted); font-size: 13px; }
+    @media (max-width: 920px) {
+      .hero, .card { padding-left: 18px; padding-right: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta">
+        <span class="pill ok">active</span>
+        <span class="pill secondary">2026-06-16</span>
+        <span class="pill warn">整理中</span>
+      </div>
+      <h1>QmClient 文档整理入口</h1>
+      <p class="muted">本页把旧调研资料拆成当前现状、规划草案、调研资料和历史归档。当前事实以源码、脚本和各 HTML 状态页标注的复核证据为准；归档 Markdown 只用于追溯来源。</p>
+      <div class="toc">
+        <a href="#current">① 当前可维护文档</a>
+        <a href="#planning">② 规划与候选 backlog</a>
+        <a href="#research">③ 调研资料</a>
+        <a href="#archive">④ 已归档旧文档</a>
+        <a href="#maintenance">⑤ 维护状态</a>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2>整理原则</h2>
+      <p class="note">本目录已经收敛为 HTML 状态页 + 归档来源材料的结构。后续维护重点是继续核对 HTML 页面中的源码证据、配置名、实现边界和规划状态。</p>
+      <table>
+        <thead><tr><th>状态</th><th>含义</th><th>使用方式</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge ok">current</span></td><td>仍值得维护为当前代码说明</td><td>可读，但进入实现前仍要按当前源码复核关键路径</td></tr>
+          <tr><td><span class="badge warn">superseded</span></td><td>已由 HTML 状态页接管的旧 Markdown 来源材料</td><td>只用于追溯，不能直接作为实现依据</td></tr>
+          <tr><td><span class="badge warn">planning</span></td><td>方案、愿望清单或候选 backlog</td><td>不能当作已实现功能</td></tr>
+          <tr><td><span class="badge bad">archived</span></td><td>已知过时、错误或不再适用</td><td>只用于追溯历史，不作为依据</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2 id="current">① 当前可维护文档</h2>
+      <table>
+        <thead><tr><th>文档</th><th>状态</th><th>第一轮判断</th></tr></thead>
+        <tbody>
+          <tr><td><a href="current/QmClient-current-overview.html">QmClient-current-overview.html</a></td><td><span class="badge ok">current</span></td><td>已按 2026-06 当前源码路径重写为 HTML 总览；旧 Markdown 只保留为来源材料。</td></tr>
+          <tr><td><a href="current/translation-system.html">translation-system.html</a></td><td><span class="badge ok">current</span></td><td>已按 <code>src/game/client/components/qmclient/translate/</code>、<code>qm_translate_*</code> 和 LLM provider 架构改写。</td></tr>
+          <tr><td><a href="current/voice-chat-status.html">voice-chat-status.html</a></td><td><span class="badge ok">current</span></td><td>已按 <code>src/game/client/components/qmclient/voice/</code> 和 <code>voice_capture_pipeline</code> 修正。</td></tr>
+          <tr><td><a href="current/qm-ui-runtime.html">qm-ui-runtime.html</a></td><td><span class="badge ok">current</span></td><td>已按当前 QmUi 文件集改写，并明确它不是 Rust UI 终局文档。</td></tr>
+          <tr><td><a href="current/localization-status.html">localization-status.html</a></td><td><span class="badge ok">current</span></td><td>已按 <code>qmclient_scripts/languages_qmclient/</code> TOML 维护库和生成链路改写。</td></tr>
+          <tr><td><a href="current/network-stutter-visualization.html">network-stutter-visualization.html</a></td><td><span class="badge ok">current</span></td><td>已拆清网络诊断、Qm monitoring 和设置页性能报表三条线，取消完整闭环强断言。</td></tr>
+          <tr><td><a href="current/resources-page.html">resources-page.html</a></td><td><span class="badge ok">current</span></td><td>已按当前资源页、preview scheduler 和设置页性能关系重写。</td></tr>
+          <tr><td><a href="current/bind-system.html">bind-system.html</a></td><td><span class="badge ok">current</span></td><td>已修正为 DDNet 原生 binds + TClient/QmClient 扩展 bindchat/bindwheel。</td></tr>
+          <tr><td><a href="current/chat-translation-button.html">chat-translation-button.html</a></td><td><span class="badge ok">current</span></td><td>已按输入框侧翻译按钮、出站翻译和聊天行翻译响应字段重写。</td></tr>
+          <tr><td><a href="current/friends-and-global-chat.html">friends-and-global-chat.html</a></td><td><span class="badge ok">current</span></td><td>已修正好友分类常量；明确全局聊天仍未实现。</td></tr>
+          <tr><td><a href="current/config-import-export.html">config-import-export.html</a></td><td><span class="badge ok">current</span></td><td>已修正配置域、独立目录和 legacy 迁移口径；统一归档导入导出仍标为规划。</td></tr>
+          <tr><td><a href="current/updater-status.html">updater-status.html</a></td><td><span class="badge ok">current</span></td><td>已按新版 TODO 和源码拆分中心服版本检测、Windows exe 下载替换、DDNet 更新器遗留结构。</td></tr>
+          <tr><td><a href="current/bc-port-status.html">bc-port-status.html</a></td><td><span class="badge ok">current</span></td><td>已修正 BC 移植状态，明确 3D 背景粒子、速通计时器、自动锁队等当前实现状态。</td></tr>
+          <tr><td><a href="research/page-switch-stutter-status.html">page-switch-stutter-status.html</a></td><td><span class="badge ok">current</span></td><td>已按当前 GPU upload limiter、资源页异步 job、皮肤和背景同步加载路径重写旧页面切换卡顿调研入口。</td></tr>
+          <tr><td><a href="research/script-tools-status.html">script-tools-status.html</a></td><td><span class="badge ok">current</span></td><td>已按 <code>qmclient_scripts/scripts_overview.md</code>、gate、perf 和 active i18n 主链重写旧脚本调研入口。</td></tr>
+          <tr><td><a href="research/config-naming-status.html">config-naming-status.html</a></td><td><span class="badge ok">current</span></td><td>已按当前配置域、文件名和前缀统计修正旧命名调研，避免继续引用 <code>QIMENG</code>、<code>RiVoice</code> 和 <code>qmc_</code> 旧口径。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2 id="planning">② 规划与候选 backlog</h2>
+      <p>这些文档已从旧功能模块目录移出。<code>planning/</code> 现在保留 HTML 状态页；旧 Markdown 草案已归档到 <a href="archive/superseded-planning/index.html">archive/superseded-planning/</a>，只能作为想法来源。进入开发前必须重新写规格或计划。</p>
+      <p><a href="planning/index.html">打开 planning HTML 索引</a>；创新功能候选见 <a href="planning/innovation-roadmap.html">innovation-roadmap.html</a>；新版 TODO PDF 路由见 <a href="planning/todo-priority-status.html">todo-priority-status.html</a>；聊天/F1 导出当前状态见 <a href="planning/chat-f1-export-status.html">chat-f1-export-status.html</a>；聊天框 UI 增强当前状态见 <a href="planning/chat-ui-status.html">chat-ui-status.html</a>；自适应 AntiPing 当前状态见 <a href="planning/adaptive-antiping-status.html">adaptive-antiping-status.html</a>；Demo/观战导演当前状态见 <a href="planning/demo-spectator-status.html">demo-spectator-status.html</a>；HUD/视觉辅助当前状态见 <a href="planning/hud-visual-assist-status.html">hud-visual-assist-status.html</a>；钩子进度条当前状态见 <a href="planning/hook-progress-status.html">hook-progress-status.html</a>；无障碍/可读性当前状态见 <a href="planning/accessibility-status.html">accessibility-status.html</a>；收藏/资源浏览当前状态见 <a href="planning/favorites-browser-status.html">favorites-browser-status.html</a>；服务器收藏增强当前状态见 <a href="planning/server-favorites-status.html">server-favorites-status.html</a>；脚本/插件系统当前状态见 <a href="planning/plugin-scripting-status.html">plugin-scripting-status.html</a>；截图管理/水印当前状态见 <a href="planning/screenshot-manager-status.html">screenshot-manager-status.html</a>；皮肤混搭/资源编辑当前状态见 <a href="planning/skin-mixer-status.html">skin-mixer-status.html</a>；统计/持久化当前状态见 <a href="planning/persistent-stats-status.html">persistent-stats-status.html</a>。</p>
+    </section>
+
+    <section class="card">
+      <h2 id="research">③ 调研资料</h2>
+      <p>调研资料保留在 <code>research/</code>，现在以 HTML 状态页为入口。旧 Markdown 调研原文已归档到 <a href="archive/superseded-research/index.html">archive/superseded-research/</a>；其中脚本工具调研需要和 <code>qmclient_scripts/scripts_overview.md</code> 对齐，HarmonyOS 可行性报告仍保留为独立 HTML。</p>
+      <p><a href="research/index.html">打开 research HTML 索引</a></p>
+    </section>
+
+    <section class="card">
+      <h2 id="archive">④ 已归档旧文档</h2>
+      <p>归档区包含明显不适合作为当前依据的旧报告，以及从 current、planning、research 移出的 superseded Markdown 来源材料。</p>
+      <p><a href="archive/index.html">打开归档索引</a></p>
+    </section>
+
+    <section class="card">
+      <h2 id="maintenance">⑤ 维护状态</h2>
+      <p>维护规则、归档边界、新版 TODO PDF 使用口径和后续验证要求已收敛到 <a href="maintenance-status.html">maintenance-status.html</a>。后续改本文档库时，先按该页确认入口和归档规则。</p>
+    </section>
+
+    <p class="footer">共享样式模板：<code>../../qmclient-html-template.html</code>。本页是整理入口，不替代逐篇代码复核。</p>
+  </div>
+</body>
+</html>
+
+
+

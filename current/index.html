@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>QmClient 当前文档索引</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --paper: #fffdfa;
+      --ink: #2d2924;
+      --muted: #6f675f;
+      --line: #ded4c6;
+      --accent: #4f6f73;
+      --accent-2: #b8795b;
+      --ok: #5f7f55;
+      --warn: #a57536;
+      --bad: #a94d45;
+      --shadow: 0 18px 45px rgba(62, 50, 39, 0.12);
+      --code-bg: #ede6dc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(184, 121, 91, 0.16), transparent 30rem),
+        radial-gradient(circle at 88% 8%, rgba(79, 111, 115, 0.14), transparent 28rem),
+        linear-gradient(180deg, #f7f3ec 0%, var(--bg) 100%);
+      font-family: "Noto Sans SC", "Segoe UI", "Microsoft YaHei", sans-serif;
+      line-height: 1.72;
+    }
+    .page { max-width: 1180px; margin: 0 auto; padding: 28px 20px 56px; }
+    .hero, .card {
+      background: var(--paper);
+      border: 1px solid rgba(222, 212, 198, 0.95);
+      box-shadow: var(--shadow);
+      border-radius: 22px;
+    }
+    .hero { padding: 28px 28px 24px; margin-bottom: 18px; }
+    .card { padding: 22px 24px; margin-top: 18px; }
+    h1, h2 { margin: 0 0 12px; line-height: 1.2; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 22px; }
+    p { margin: 0 0 12px; }
+    code {
+      padding: 0.12em 0.36em;
+      border-radius: 6px;
+      background: var(--code-bg);
+      color: #613c2e;
+      font-size: 0.94em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+      display: block;
+      overflow-x: auto;
+    }
+    th, td {
+      border-top: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th { background: #faf5ed; color: #4f463d; font-weight: 700; white-space: nowrap; }
+    a { color: #355f66; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 999px;
+      background: rgba(95, 127, 85, 0.12); color: var(--ok);
+      font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+    }
+    .badge {
+      display: inline-block; padding: 2px 8px;
+      border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap;
+    }
+    .badge.ok { background: rgba(95, 127, 85, 0.12); color: var(--ok); }
+    .badge.warn { background: rgba(165, 117, 54, 0.12); color: var(--warn); }
+    .muted { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <span class="pill">current</span>
+      <h1>QmClient 当前文档索引</h1>
+      <p class="muted">这里的文档是继续维护为“当前代码现状”的 HTML 入口。旧 Markdown 已归档为来源材料；新增事实说明应写入对应 HTML 页面。</p>
+    </header>
+    <section class="card">
+      <h2>HTML 现状页</h2>
+      <table>
+        <thead><tr><th>文档</th><th>状态</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><a href="QmClient-current-overview.html">QmClient-current-overview.html</a></td><td><span class="badge ok">active</span></td><td>当前功能总览，记录文档集状态和关键源码入口。</td></tr>
+          <tr><td><a href="translation-system.html">translation-system.html</a></td><td><span class="badge ok">active</span></td><td>已按 <code>qmclient/translate/</code>、<code>qm_translate_*</code> 和 LLM provider 分流重写。</td></tr>
+          <tr><td><a href="voice-chat-status.html">voice-chat-status.html</a></td><td><span class="badge ok">active</span></td><td>已按 <code>qmclient/voice/</code> 子目录和 <code>voice_capture_pipeline</code> 修正，并降级旧 WebRTC/中心服重启方案。</td></tr>
+          <tr><td><a href="qm-ui-runtime.html">qm-ui-runtime.html</a></td><td><span class="badge ok">active</span></td><td>已按当前 QmUi 文件集重写，明确不是 Rust UI 终局文档。</td></tr>
+          <tr><td><a href="localization-status.html">localization-status.html</a></td><td><span class="badge ok">active</span></td><td>已按 <code>qmclient_scripts/languages_qmclient/</code> TOML 维护库和生成链路重写。</td></tr>
+          <tr><td><a href="resources-page.html">resources-page.html</a></td><td><span class="badge ok">active</span></td><td>已按当前资源页、preview scheduler 和设置页性能关系重写。</td></tr>
+          <tr><td><a href="bind-system.html">bind-system.html</a></td><td><span class="badge ok">active</span></td><td>已修正为 DDNet 原生 binds + TClient/QmClient 扩展 bindchat/bindwheel。</td></tr>
+          <tr><td><a href="network-stutter-visualization.html">network-stutter-visualization.html</a></td><td><span class="badge ok">active</span></td><td>已拆清网络诊断、Qm monitoring 和设置页性能报表三条线，取消完整闭环强断言。</td></tr>
+          <tr><td><a href="chat-translation-button.html">chat-translation-button.html</a></td><td><span class="badge ok">active</span></td><td>已按输入框侧翻译按钮、出站翻译和聊天行翻译响应字段重写。</td></tr>
+          <tr><td><a href="friends-and-global-chat.html">friends-and-global-chat.html</a></td><td><span class="badge ok">active</span></td><td>已修正好友分类常量；明确全局聊天仍未实现。</td></tr>
+          <tr><td><a href="config-import-export.html">config-import-export.html</a></td><td><span class="badge ok">active</span></td><td>已修正配置域为 <code>QMCLIENT</code>、当前路径为 <code>QmClient/</code>，并把 <code>.qmconfig</code> 方案标为规划。</td></tr>
+          <tr><td><a href="updater-status.html">updater-status.html</a></td><td><span class="badge ok">active</span></td><td>已拆分中心服版本检测、Windows exe 下载替换和 DDNet 引擎更新器遗留结构。</td></tr>
+          <tr><td><a href="bc-port-status.html">bc-port-status.html</a></td><td><span class="badge ok">active</span></td><td>已按当前源码修正 BC 移植状态，尤其是 3D 背景粒子已存在 Qm 版实现。</td></tr>
+        </tbody>
+      </table>
+    </section>
+    <section class="card">
+      <h2>已归档来源 Markdown</h2>
+      <p class="muted">这些 Markdown 已移入 <code>../archive/superseded-current/</code>，由对应 HTML 现状页替代。新增事实说明应优先写入 HTML 页面。</p>
+      <table>
+        <thead><tr><th>文档</th><th>状态</th><th>下一步</th></tr></thead>
+        <tbody>
+          <tr><td><a href="../archive/superseded-current/network-stutter-visualization.md">network-stutter-visualization.md</a></td><td><span class="badge warn">superseded</span></td><td>已由 HTML 现状页替代，旧文档保留作来源材料。</td></tr>
+          <tr><td><a href="../archive/superseded-current/QmClient-current-overview.md">QmClient-current-overview.md</a></td><td><span class="badge warn">superseded</span></td><td>已由 HTML 总览替代；新增总览事实应写入 <code>QmClient-current-overview.html</code>。</td></tr>
+          <tr><td><a href="../archive/superseded-current/translation-system.md">translation-system.md</a></td><td><span class="badge warn">superseded</span></td><td>已由 HTML 现状页替代；旧文档中的路径和 provider 口径可能落后。</td></tr>
+          <tr><td><a href="../archive/superseded-current/voice-chat-status.md">voice-chat-status.md</a></td><td><span class="badge warn">superseded</span></td><td>已由 HTML 现状页替代；旧文档保留作语音模块来源材料。</td></tr>
+          <tr><td><a href="../archive/superseded-current/qm-ui-runtime.md">qm-ui-runtime.md</a></td><td><span class="badge warn">superseded</span></td><td>已由 HTML 现状页替代；QmUi 当前口径以 HTML 为准。</td></tr>
+          <tr><td><a href="../archive/superseded-current/localization-status.md">localization-status.md</a></td><td><span class="badge warn">superseded</span></td><td>已由 HTML 现状页替代；翻译维护源以 TOML 主链说明为准。</td></tr>
+          <tr><td><a href="../archive/superseded-current/resources-page.md">resources-page.md</a></td><td><span class="badge warn">superseded</span></td><td>已由 HTML 现状页替代；资源页当前状态需看 preview scheduler 和设置页性能预算。</td></tr>
+          <tr><td><a href="../archive/superseded-current/bind-system.md">bind-system.md</a></td><td><span class="badge warn">superseded</span></td><td>已由 HTML 现状页替代；绑定系统当前口径以 DDNet binds + bindchat/bindwheel 为准。</td></tr>
+          <tr><td><a href="../archive/superseded-current/chat-translation-button.md">chat-translation-button.md</a></td><td><span class="badge warn">superseded</span></td><td>已由 HTML 现状页替代；旧文档不要再描述为历史消息行尾按钮。</td></tr>
+          <tr><td><a href="../archive/superseded-current/friends-and-global-chat.md">friends-and-global-chat.md</a></td><td><span class="badge warn">superseded</span></td><td>已由 HTML 现状页替代；全局聊天仍未实现的口径以 HTML 为准。</td></tr>
+          <tr><td><a href="../archive/superseded-current/config-import-export.md">config-import-export.md</a></td><td><span class="badge warn">superseded</span></td><td>已由 HTML 现状页替代；旧文档内 <code>QIMENG</code> 等说法过时。</td></tr>
+          <tr><td><a href="../archive/superseded-current/updater-status.md">updater-status.md</a></td><td><span class="badge warn">superseded</span></td><td>已由 HTML 现状页替代；旧文档把增强规划和现状混写。</td></tr>
+          <tr><td><a href="../archive/superseded-current/bc-port-status.md">bc-port-status.md</a></td><td><span class="badge warn">superseded</span></td><td>已由 HTML 现状页替代；旧文档中 3D 粒子状态已过时。</td></tr>
+          <tr><td><a href="../archive/superseded-current/legacy-report-maintenance-notes.md">legacy-report-maintenance-notes.md</a></td><td><span class="badge warn">maintenance note</span></td><td>第一轮旧报告分层说明，仍可追溯整理过程，但不作为功能事实来源。</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+</body>
+</html>
+
+

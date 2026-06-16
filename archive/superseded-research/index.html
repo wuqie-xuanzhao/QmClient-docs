@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="archived" />
+  <title>QmClient 已接管调研原文</title>
+  <style>
+    :root { --bg:#f4f1ea; --paper:#fffdfa; --ink:#2d2924; --muted:#6f675f; --line:#ded4c6; --accent:#4f6f73; --warn:#a57536; --bad:#a94d45; --shadow:0 18px 45px rgba(62,50,39,.12); --code-bg:#ede6dc; }
+    *{box-sizing:border-box} body{margin:0;color:var(--ink);background:radial-gradient(circle at 12% 0%,rgba(184,121,91,.16),transparent 30rem),radial-gradient(circle at 88% 8%,rgba(79,111,115,.14),transparent 28rem),linear-gradient(180deg,#f7f3ec 0%,var(--bg) 100%);font-family:"Noto Sans SC","Segoe UI","Microsoft YaHei",sans-serif;line-height:1.72}
+    .page{max-width:1180px;margin:0 auto;padding:28px 20px 56px}.hero,.card{background:var(--paper);border:1px solid rgba(222,212,198,.95);box-shadow:var(--shadow);border-radius:22px}.hero{padding:28px 28px 24px;margin-bottom:18px}.card{padding:22px 24px;margin-top:18px}
+    h1,h2{margin:0 0 12px;line-height:1.2}h1{font-size:28px}h2{font-size:22px}p{margin:0 0 12px}code{padding:.12em .36em;border-radius:6px;background:var(--code-bg);color:#613c2e;font-size:.94em}
+    table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px;display:block;overflow-x:auto}th,td{border-top:1px solid var(--line);padding:10px 12px;vertical-align:top;text-align:left}th{background:#faf5ed;color:#4f463d;font-weight:700;white-space:nowrap}
+    a{color:#355f66;text-decoration-thickness:1px;text-underline-offset:3px}.muted{color:var(--muted)}.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(169,77,69,.12);color:var(--bad);font-size:12px;font-weight:700;letter-spacing:.02em}.note{border-left:4px solid var(--accent);padding:10px 12px;background:rgba(79,111,115,.06);border-radius:0 10px 10px 0;color:#4c4238}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <span class="pill">superseded research</span>
+      <h1>QmClient 已接管调研原文</h1>
+      <p class="muted">这些 Markdown 曾位于 <code>research/</code>，现在已由对应 HTML 状态页接管。它们只保留历史观察，不再作为当前事实入口。</p>
+      <p class="note">日常阅读请先使用 <a href="../../research/index.html">../../research/index.html</a>。引用旧原文前必须核对当前源码。</p>
+    </header>
+    <section class="card">
+      <h2>旧调研路由</h2>
+      <table>
+        <thead><tr><th>旧 Markdown</th><th>当前入口</th><th>处置口径</th></tr></thead>
+        <tbody>
+          <tr><td><a href="script-tools-research.md">script-tools-research.md</a></td><td><a href="../../research/script-tools-status.html">script-tools-status.html</a></td><td>旧脚本调研保留背景；当前脚本主链以 `qmclient_scripts/scripts_overview.md` 和状态页为准。</td></tr>
+          <tr><td><a href="page-switch-stutter-research.md">page-switch-stutter-research.md</a></td><td><a href="../../research/page-switch-stutter-status.html">page-switch-stutter-status.html</a></td><td>旧卡顿调研已被 GPU upload limiter、资源页 preview scheduler 和设置页性能总纲覆盖。</td></tr>
+          <tr><td><a href="config-naming-research.md">config-naming-research.md</a></td><td><a href="../../research/config-naming-status.html">config-naming-status.html</a></td><td>旧 `QIMENG`、`config_variables_qimeng.h`、`qmc_` 等口径已过时。</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+</body>
+</html>

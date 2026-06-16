@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>QmClient 网络卡顿与性能监控现状</title>
+  <style>
+    :root { --bg:#f4f1ea; --paper:#fffdfa; --ink:#2d2924; --muted:#6f675f; --line:#ded4c6; --accent:#4f6f73; --accent-2:#b8795b; --ok:#5f7f55; --warn:#a57536; --bad:#a94d45; --shadow:0 18px 45px rgba(62,50,39,.12); --code-bg:#ede6dc; }
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;color:var(--ink);background:radial-gradient(circle at 12% 0%,rgba(184,121,91,.16),transparent 30rem),radial-gradient(circle at 88% 8%,rgba(79,111,115,.14),transparent 28rem),linear-gradient(180deg,#f7f3ec 0%,var(--bg) 100%);font-family:"Noto Sans SC","Segoe UI","Microsoft YaHei",sans-serif;line-height:1.72}
+    .page{max-width:1180px;margin:0 auto;padding:28px 20px 56px}.hero,.card{background:var(--paper);border:1px solid rgba(222,212,198,.95);box-shadow:var(--shadow);border-radius:22px}.hero{padding:28px 28px 24px;margin-bottom:18px}.card{padding:22px 24px;margin-top:18px}
+    h1,h2,h3{margin:0 0 12px;line-height:1.2}h1{font-size:28px}h2{font-size:22px}h3{font-size:17px;margin-top:18px}p{margin:0 0 12px}ul{margin:10px 0 0 22px;padding:0}li{margin:4px 0}code{padding:.12em .36em;border-radius:6px;background:var(--code-bg);color:#613c2e;font-size:.94em}
+    table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px;display:block;overflow-x:auto}th,td{border-top:1px solid var(--line);padding:10px 12px;vertical-align:top;text-align:left}th{background:#faf5ed;color:#4f463d;font-weight:700;white-space:nowrap}tr:hover td{background:rgba(184,121,91,.03)}
+    a{color:#355f66;text-decoration-thickness:1px;text-underline-offset:3px}.meta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(79,111,115,.10);color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.02em}.pill.secondary{background:rgba(184,121,91,.10);color:var(--accent-2)}.pill.ok{background:rgba(95,127,85,.12);color:var(--ok)}.pill.warn{background:rgba(165,117,54,.12);color:var(--warn)}.muted{color:var(--muted)}.note{border-left:4px solid var(--warn);padding:10px 12px;background:rgba(165,117,54,.08);border-radius:0 10px 10px 0;color:#4c4238}.toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:14px}.toc a{display:block;padding:10px 12px;border:1px solid var(--line);border-radius:12px;color:var(--ink);text-decoration:none;background:rgba(255,255,255,.72)}.footer{margin-top:18px;color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill ok">active</span><span class="pill secondary">2026-06-16</span><span class="pill">源码复核</span><span class="pill warn">旧报告已纠偏</span></div>
+      <h1>QmClient 网络卡顿与性能监控现状</h1>
+      <p class="muted">本页把旧“网络卡顿诊断 + 性能监控面板”报告改成当前实现说明。核心实现是 <code>CQmMonitoring</code>、TClient 状态栏高密度条目、QmClient debug graph 设置，以及 <code>qm_perf_*</code> 性能日志链。</p>
+      <div class="toc"><a href="#conclusion">① 当前结论</a><a href="#signals">② 采样信号</a><a href="#verdict">③ 诊断规则</a><a href="#ui">④ UI 与入口</a><a href="#statusbar">⑤ 状态栏</a><a href="#perf">⑥ 性能日志边界</a><a href="#obsolete">⑦ 旧文档修正</a><a href="#evidence">⑧ 复核证据</a></div>
+    </header>
+    <section class="card">
+      <h2 id="conclusion">① 当前结论</h2>
+      <p>网络卡顿可视化已经有实装主体：<code>CQmMonitoring</code> 每秒约 20 次采样网络和性能指标，维护 180 个历史样本，生成 <code>SQmMonitoringSnapshot</code>，并在 <code>dbg_graphs</code> 打开时渲染诊断面板。</p>
+      <p>它可以区分连接等级、主因类别、网络历史曲线、FPS/游戏时间边距曲线、实时指标卡片和调试细项。TClient 状态栏还可以把同一套快照压缩成常驻条目。</p>
+      <p class="note">它仍不是“服务器卡顿 vs 客户端卡顿”的最终裁判。客户端只能基于本机观测和网络统计推断；公共服务器的服务端帧耗时、队列拥塞等权威信号不在当前客户端实现内。</p>
+    </section>
+    <section class="card">
+      <h2 id="signals">② 采样信号</h2>
+      <table><thead><tr><th>类别</th><th>字段</th><th>来源/语义</th></tr></thead><tbody>
+        <tr><td>网络</td><td><code>SnapshotLatencyMs</code>、<code>PredictionLatencyMs</code>、<code>PredictionMarginMs</code>、<code>PredictionJitterMs</code>、<code>GameTimeMarginMs</code></td><td>来自 <code>IClient</code> 暴露的连接和预测指标。</td></tr>
+        <tr><td>连接状态</td><td><code>IsGameConnectionAlive()</code>、<code>ConnectionProblems()</code></td><td>决定 disconnected/severe 等基础判断。</td></tr>
+        <tr><td>吞吐</td><td><code>NetStatsSnapshot()</code>、send/recv packets/bytes</td><td>计算上下行速率、包数、payload、overhead 和平均 payload。</td></tr>
+        <tr><td>丢包估计</td><td><code>PendingResendCount()</code> + send packets delta</td><td>是重发待处理数推导值，不是网络层原始丢包真值。</td></tr>
+        <tr><td>本机性能</td><td>FPS、frame time、prediction time、CPU、内存、图形内存</td><td>用于把网络异常和客户端性能压力分开看。</td></tr>
+        <tr><td>设备采样</td><td>GPU util、dedicated/shared VRAM、disk read</td><td>仅在 <code>QmPerfEnabled()</code> 时启用异步设备采样。</td></tr>
+      </tbody></table>
+    </section>
+    <section class="card">
+      <h2 id="verdict">③ 诊断规则</h2>
+      <p>当前连接等级是四档：<code>NORMAL</code>、<code>ELEVATED</code>、<code>SEVERE</code>、<code>DISCONNECTED</code>。阈值写在 <code>QmDetermineConnectionGrade()</code> 中：未连接直接 disconnected；抖动达到 25ms、snapshot/prediction 延迟达到 180ms 或连接问题会进入 severe；抖动达到 10ms、延迟达到 90ms 或带连接问题的较高丢包会进入 elevated。</p>
+      <p>主因分类是：<code>DOWNSTREAM</code>、<code>UPSTREAM</code>、<code>JITTER</code>、<code>PACKET_LOSS</code>、<code>CLIENT_PERFORMANCE</code>。规则优先级会先看明显丢包和抖动，再看 snapshot/prediction 延迟差，正常连接下如果 frame time、CPU 或 prediction stress 明显异常，则归到客户端性能。</p>
+      <p>这些 helper 有单测覆盖，包括等级阈值、主因优先级、丢包估计、rollback、峰值选择、UI scale 和 panel opacity。</p>
+    </section>
+    <section class="card">
+      <h2 id="ui">④ UI 与入口</h2>
+      <ul>
+        <li><code>CGameClient::RenderQmMonitoringHud()</code> 只有在 <code>dbg_graphs</code> 打开时渲染面板。</li>
+        <li>QmClient 设置页的 Debug graph 模块提供全局按键绑定行，命令是 <code>toggle dbg_graphs 0 1</code>。</li>
+        <li>同一模块提供 <code>qm_monitoring_hud_opacity</code> 面板透明度配置。</li>
+        <li>面板布局由 <code>QmComputeMonitoringHudLayout()</code> 和 <code>QmComputeMonitoringBodyLayout()</code> 计算，会按屏幕尺寸和可用高度缩放。</li>
+        <li>面板区域包括 header、主网络图、FPS/游戏时间边距图、8 个主指标卡片和 debug details。</li>
+      </ul>
+      <p class="note">因此它当前更像开发者/高阶玩家诊断面板，不是普通用户默认会看到的 HUD 提醒。</p>
+    </section>
+    <section class="card">
+      <h2 id="statusbar">⑤ 状态栏</h2>
+      <table><thead><tr><th>编码</th><th>条目</th><th>数据来源</th></tr></thead><tbody>
+        <tr><td><code>u</code></td><td>Snapshot Latency</td><td><code>m_QmMonitoring.Snapshot().m_Network.m_SnapshotLatencyMs</code></td></tr>
+        <tr><td><code>n</code></td><td>Prediction Latency</td><td><code>m_PredictionLatencyMs</code></td></tr>
+        <tr><td><code>j</code></td><td>Latency Jitter</td><td><code>m_JitterMs</code></td></tr>
+        <tr><td><code>k</code></td><td>Resend Loss</td><td><code>m_PacketLossPct</code></td></tr>
+        <tr><td><code>i</code></td><td>Receive Rate</td><td><code>m_DownBytesPerSec</code></td></tr>
+        <tr><td><code>o</code></td><td>Send Rate</td><td><code>m_UpBytesPerSec</code></td></tr>
+        <tr><td><code>q</code></td><td>Connection Quality</td><td><code>m_Verdict.m_Grade</code></td></tr>
+        <tr><td><code>x</code></td><td>DDNet / Total CPU</td><td><code>SQmPerformanceMetrics</code> CPU 字段</td></tr>
+        <tr><td><code>y</code></td><td>DDNet Memory</td><td><code>m_MemoryUsageMb</code></td></tr>
+      </tbody></table>
+      <p>这些条目已经注册在 <code>CStatusBar::m_StatusItemTypes</code> 中，但默认 <code>tc_statusbar_scheme</code> 是 <code>ac pf r</code>，不会默认展示全部网络诊断项。需要用户在 TClient 状态栏设置里调整 scheme。</p>
+    </section>
+    <section class="card">
+      <h2 id="perf">⑥ 性能日志边界</h2>
+      <ul>
+        <li><code>qm_perf_debug</code>、<code>qm_perf_logfile</code>、<code>qm_perf_debug_threshold_ms</code> 是性能日志链的主要配置。</li>
+        <li><code>CQmMonitoring</code> 在 <code>QmPerfEnabled()</code> 时会采集并输出 <code>perf/device</code> 设备采样 payload。</li>
+        <li>设置页、资源页、TClient 页等 <code>perf/*</code> 日志主要用于 UI/资源/文本/帧时间归因。</li>
+        <li><code>qmclient_scripts/perf/</code> 的 HTML 报表可分析设置页/资源页等性能数据，但不等同于网络质量诊断面板。</li>
+      </ul>
+    </section>
+    <section class="card">
+      <h2 id="obsolete">⑦ 旧文档修正点</h2>
+      <ul>
+        <li>旧文档里“仍需逐文件复核 Qm monitoring 组件”的保守表述已过时；当前 <code>CQmMonitoring</code> 已有明确实现和测试。</li>
+        <li>“GPU 没有进入持续监控面板”不再准确；当前 snapshot 有 GPU/VRAM/disk 字段，但设备采样受 <code>QmPerfEnabled()</code> 控制，平台能力也可能不同。</li>
+        <li>“丢包率已接入”必须补充限定：当前是 resend-based packet loss estimate，不是底层真实丢包计数。</li>
+        <li>“普通用户默认能看到诊断”不成立；主面板受 <code>dbg_graphs</code> 控制，状态栏高级项也不在默认 scheme 中。</li>
+        <li>不要把设置页性能 HTML 报表和网络卡顿诊断面板混为一体；它们共享性能观测方向，但服务不同问题域。</li>
+      </ul>
+    </section>
+    <section class="card">
+      <h2 id="evidence">⑧ 复核证据</h2>
+      <ul>
+        <li><code>src/game/client/components/qmclient/monitoring/monitoring.h:17-65</code>：连接等级、诊断主因和网络指标结构。</li>
+        <li><code>src/game/client/components/qmclient/monitoring/monitoring.h:66-136</code>：性能指标、GPU/VRAM/disk 设备采样字段。</li>
+        <li><code>src/game/client/components/qmclient/monitoring/monitoring.h:391-438</code>：丢包估计、连接等级和主因判断规则。</li>
+        <li><code>src/game/client/components/qmclient/monitoring/monitoring.cpp:602-742</code>：20Hz 采样、网络/性能更新和 snapshot 生成。</li>
+        <li><code>src/game/client/components/qmclient/monitoring/monitoring.cpp:746-1165</code>：header、主图、FPS 图、指标卡片和 debug details 渲染。</li>
+        <li><code>src/game/client/gameclient.cpp:2296-2306</code>：<code>dbg_graphs</code> 控制 Qm monitoring HUD 渲染。</li>
+        <li><code>src/game/client/components/qmclient/menus_qmclient.cpp:6036-6049</code>：Debug graph 设置模块、全局切换按键和透明度配置。</li>
+        <li><code>src/game/client/components/tclient/statusbar.h:53-75</code>：状态栏网络/性能条目注册。</li>
+        <li><code>src/game/client/components/tclient/statusbar.cpp:262-357</code>：状态栏从 <code>m_QmMonitoring.Snapshot()</code> 渲染网络、CPU 和内存。</li>
+        <li><code>src/engine/shared/config_variables_tclient.h:206-218</code>：状态栏开关、样式和默认 scheme。</li>
+        <li><code>src/engine/shared/config_variables_qmclient.h:13-15</code>、<code>:174</code>：性能日志配置和监控面板透明度。</li>
+        <li><code>src/test/qmclient_monitoring_test.cpp:373-466</code>：监控 helper 单测覆盖等级、主因和丢包估计。</li>
+      </ul>
+    </section>
+    <p class="footer">原始 Markdown 保留为 <a href="../archive/superseded-current/network-stutter-visualization.md">network-stutter-visualization.md</a>，只供追溯旧判断，不再作为当前实现依据。</p>
+  </div>
+</body>
+</html>
+

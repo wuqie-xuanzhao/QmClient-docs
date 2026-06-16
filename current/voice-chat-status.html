@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>QmClient 语音聊天现状</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --paper: #fffdfa;
+      --paper-2: #f7f2ea;
+      --ink: #2d2924;
+      --muted: #6f675f;
+      --line: #ded4c6;
+      --accent: #4f6f73;
+      --accent-2: #b8795b;
+      --ok: #5f7f55;
+      --warn: #a57536;
+      --bad: #a94d45;
+      --shadow: 0 18px 45px rgba(62, 50, 39, 0.12);
+      --code-bg: #ede6dc;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(184, 121, 91, 0.16), transparent 30rem),
+        radial-gradient(circle at 88% 8%, rgba(79, 111, 115, 0.14), transparent 28rem),
+        linear-gradient(180deg, #f7f3ec 0%, var(--bg) 100%);
+      font-family: "Noto Sans SC", "Segoe UI", "Microsoft YaHei", sans-serif;
+      line-height: 1.72;
+    }
+    .page { max-width: 1180px; margin: 0 auto; padding: 28px 20px 56px; }
+    .hero, .card {
+      background: var(--paper);
+      border: 1px solid rgba(222, 212, 198, 0.95);
+      box-shadow: var(--shadow);
+      border-radius: 22px;
+    }
+    .hero { padding: 28px 28px 24px; margin-bottom: 18px; }
+    .card { padding: 22px 24px; margin-top: 18px; }
+    h1, h2, h3 { margin: 0 0 12px; line-height: 1.2; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 22px; }
+    h3 { font-size: 17px; margin-top: 18px; }
+    p { margin: 0 0 12px; }
+    ul { margin: 10px 0 0 22px; padding: 0; }
+    li { margin: 4px 0; }
+    code {
+      padding: 0.12em 0.36em;
+      border-radius: 6px;
+      background: var(--code-bg);
+      color: #613c2e;
+      font-size: 0.94em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+      display: block;
+      overflow-x: auto;
+    }
+    th, td {
+      border-top: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th { background: #faf5ed; color: #4f463d; font-weight: 700; white-space: nowrap; }
+    tr:hover td { background: rgba(184, 121, 91, 0.03); }
+    a { color: #355f66; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 999px;
+      background: rgba(79, 111, 115, 0.10); color: var(--accent);
+      font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+    }
+    .pill.secondary { background: rgba(184, 121, 91, 0.10); color: var(--accent-2); }
+    .pill.warn { background: rgba(165, 117, 54, 0.12); color: var(--warn); }
+    .pill.ok { background: rgba(95, 127, 85, 0.12); color: var(--ok); }
+    .badge {
+      display: inline-block; padding: 2px 8px;
+      border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap;
+    }
+    .badge.ok { background: rgba(95, 127, 85, 0.12); color: var(--ok); }
+    .badge.warn { background: rgba(165, 117, 54, 0.12); color: var(--warn); }
+    .muted { color: var(--muted); }
+    .note {
+      border-left: 4px solid var(--accent);
+      padding: 10px 12px;
+      background: rgba(79, 111, 115, 0.06);
+      border-radius: 0 10px 10px 0;
+      color: #4c4238;
+    }
+    .note.warn { border-left-color: var(--warn); background: rgba(165, 117, 54, 0.08); }
+    .toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin-top: 14px; }
+    .toc a {
+      display: block; padding: 10px 12px;
+      border: 1px solid var(--line); border-radius: 12px;
+      color: var(--ink); text-decoration: none;
+      background: rgba(255,255,255,0.72);
+    }
+    .toc a:hover { border-color: rgba(184, 121, 91, 0.45); }
+    details {
+      margin-top: 10px; border: 1px solid var(--line);
+      border-radius: 12px; background: rgba(255,255,255,0.65); padding: 10px 12px;
+    }
+    summary { cursor: pointer; font-weight: 700; color: #423b33; }
+    .footer { margin-top: 18px; color: var(--muted); font-size: 13px; }
+    @media (max-width: 920px) {
+      .hero, .card { padding-left: 18px; padding-right: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta">
+        <span class="pill ok">active</span>
+        <span class="pill secondary">2026-06-16</span>
+        <span class="pill">current / voice</span>
+        <span class="pill warn">旧 Rust 报告已归档口径</span>
+      </div>
+      <h1>QmClient 语音聊天现状</h1>
+      <p class="muted">本文以当前源码为准，替代旧版围绕 Rust 语音模块、平铺文件路径和早期测试缺口的调研口径。当前主实现是 <code>src/game/client/components/qmclient/voice/</code> 下的 C++ 语音子系统。</p>
+      <nav class="toc" aria-label="目录">
+        <a href="#summary">当前结论</a>
+        <a href="#architecture">架构与文件边界</a>
+        <a href="#runtime">运行时线程模型</a>
+        <a href="#protocol">协议与房间边界</a>
+        <a href="#webrtc">WebRTC / 中心服旧案边界</a>
+        <a href="#config-ui">配置与 UI</a>
+        <a href="#coverage">测试覆盖</a>
+        <a href="#obsolete">旧报告修正</a>
+        <a href="#evidence">复核证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="summary">
+      <h2>当前结论</h2>
+      <ul>
+        <li><span class="badge ok">当前有效</span> 语音模块是纯 C++ 运行路径：组件入口 <code>CVoiceComponent</code> 只持有 <code>CRClientVoice m_Voice</code>，没有 Rust/C++ 双运行时切换成员。</li>
+        <li><span class="badge ok">当前有效</span> 功能链路包含 SDL 音频设备、Opus 编解码、自定义 UDP 包头、PTT/VAD/本地测试/服务器回环、空间音频、名单过滤、房间 Token 和说话叠加层。</li>
+        <li><span class="badge ok">当前有效</span> 当前源码未见 WebRTC 语音实现或 WebRTC 构建入口；旧 backlog 中“考虑使用 WebRTC 或其他语音库”的说法应降级为历史想法，不作为下一步默认方案。</li>
+        <li><span class="badge ok">当前有效</span> 捕获处理已经拆到 <code>voice_capture_pipeline</code>，顺序为 AGC 增益、麦克风增益、降噪、HPF/压缩/限幅。</li>
+        <li><span class="badge warn">仍需外部验证</span> 单元测试覆盖了协议、状态 helper、设备提示、降噪默认值和 capture pipeline 顺序，但真实双端互听、真设备热插拔和系统权限弹窗仍属于集成/真机验证。</li>
+      </ul>
+    </section>
+
+    <section class="card" id="architecture">
+      <h2>架构与文件边界</h2>
+      <table>
+        <thead><tr><th>文件</th><th>当前职责</th><th>文档口径</th></tr></thead>
+        <tbody>
+          <tr><td><code>voice_component.h/.cpp</code></td><td>组件生命周期、控制台命令、开关驱动、叠加层状态导出与 HUD editor preview 渲染。</td><td>入口层，不再使用旧文档的平铺路径。</td></tr>
+          <tr><td><code>voice_core.h/.cpp</code></td><td>语音运行时主体：socket、SDL 设备、worker、Opus、jitter、混音、配置快照、UI 状态导出。</td><td>核心维护面。</td></tr>
+          <tr><td><code>voice_capture_pipeline.h/.cpp</code></td><td>采集帧处理：AGC、麦克风增益、简单降噪/RNNoise、HPF、压缩、限幅。</td><td>旧报告缺失，应作为当前主链路记录。</td></tr>
+          <tr><td><code>voice_utils.h/.cpp</code></td><td>协议读写、包分类、token/group 规则、设备下拉 helper、状态文案 helper、音频数学辅助。</td><td>测试覆盖的主要工具层。</td></tr>
+          <tr><td><code>qmclient.cpp / qmclient_utils.*</code></td><td>Qm 标识、在线分布、<code>voice_supported</code> 标记和 <code>/qm/*</code> JSON 解析。</td><td>不是 PCM/UDP 媒体本体，但会影响用户对语音可用性的感知。</td></tr>
+        </tbody>
+      </table>
+      <p class="note">旧 Markdown 中的 <code>src/game/client/components/qmclient/voice_component.*</code>、<code>voice_core.*</code> 平铺路径已经不适合作为当前入口。</p>
+    </section>
+
+    <section class="card" id="runtime">
+      <h2>运行时线程模型</h2>
+      <table>
+        <thead><tr><th>线程/阶段</th><th>职责</th><th>关键边界</th></tr></thead>
+        <tbody>
+          <tr><td>主线程</td><td><code>CVoiceComponent::OnRender()</code> 在 <code>qm_voice_enable</code> 开启时调用 <code>m_Voice.OnFrame()</code>；关闭时 shutdown 并清空 overlay。</td><td>主线程负责配置/客户端快照和请求态锁存，不直接在 worker 中读取 live 设备配置。</td></tr>
+          <tr><td>worker 线程</td><td><code>WorkerLoop()</code> 轮询音频重建、服务端解析、收包、jitter 解码、编码参数更新和采集发送。</td><td>循环末尾约 5ms sleep；设备失败会按重试间隔重新 EnsureAudio。</td></tr>
+          <tr><td>SDL 输出回调</td><td><code>SDLAudioCallback</code> 调用 <code>MixAudio()</code> 从各 peer 解码帧混音。</td><td>输出缓冲复用 <code>m_MixBuffer</code>，避免每次回调临时分配。</td></tr>
+          <tr><td>采集处理</td><td><code>ProcessCapture()</code> 从 SDL capture 队列取 960 samples 帧，处理后按 PTT/VAD/test mode 决定发送或本地回放。</td><td>本地测试模式不需要网络；服务器回环会设置 loopback flag。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="protocol">
+      <h2>协议与房间边界</h2>
+      <p>当前语音协议常量为 <code>VOICE_VERSION = 3</code>，魔数为 <code>RV01</code>，固定包头包含版本、类型、payload 大小、context hash、token hash、flags、sender id、sequence 和发送者位置。包类型分为 <code>AUDIO</code>、<code>PING</code>、<code>PONG</code>。</p>
+      <table>
+        <thead><tr><th>边界</th><th>当前行为</th></tr></thead>
+        <tbody>
+          <tr><td>context</td><td>接收侧按 <code>m_ContextHash</code> 过滤当前游戏/服务上下文，context 不一致直接丢弃。</td></tr>
+          <tr><td>房间 token</td><td><code>BuildLegacyVoiceTokenHash()</code> 仍以 room token hash 为基础；<code>VoiceTokenGroupHash()</code> 使用低 30 位做 group 兼容判断。</td></tr>
+          <tr><td>keepalive</td><td>token 变化或空闲超过约 2 秒会发送 <code>PING</code>；匹配 outstanding ping 时更新 RTT。</td></tr>
+          <tr><td>可听性</td><td>音频包在进入 jitter 前还会经过 self、active/spec、team visibility、mute/white/black list、VAD allow、距离半径和全图收听规则。</td></tr>
+          <tr><td>Qm 同步</td><td><code>/qm/token</code>、<code>/qm/report</code>、<code>/qm/users.json</code> 位于语音服务 host:port 的 <code>/qm/*</code> 命名空间；中心服务 <code>:8080</code> 不使用该前缀。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="webrtc">
+      <h2>WebRTC / 中心服旧案边界</h2>
+      <p class="note warn">旧 backlog 的“考虑使用 WebRTC 或其他语音库”不应继续作为当前默认路线。当前语音系统已经是 SDL 采集/播放、Opus 编解码、自定义 UDP 包头和语音服务 host:port 组合；迁移到 WebRTC 会变成一次新的音频网络架构设计，而不是整理现有语音功能。</p>
+      <table>
+        <thead><tr><th>旧想法</th><th>当前事实</th><th>处理口径</th></tr></thead>
+        <tbody>
+          <tr><td>改用 WebRTC。</td><td>本轮在 <code>src/game/client/components/qmclient/</code>、<code>config_variables_qmclient.h</code>、<code>CMakeLists.txt</code> 和 <code>cmake/</code> 未见 WebRTC 语音实现或构建开关。</td><td><span class="badge warn">不作为默认后续</span> 除非另写新架构调研，不能从旧 TODO 直接开工。</td></tr>
+          <tr><td>依赖中心服做语音聊天。</td><td>当前 <code>/qm/token</code>、<code>/qm/report</code>、<code>/qm/users.json</code> 使用语音服务 host:port 下的 <code>/qm/*</code> 路由；中心服务 <code>:8080</code> 不承载该命名空间。</td><td><span class="badge ok">已拆清</span> 调试时区分媒体面、语音服务 <code>/qm/*</code> 和中心服识别。</td></tr>
+          <tr><td>从零做语音系统。</td><td>CMake 已编入 <code>voice_capture_pipeline</code>、<code>voice_component</code>、<code>voice_core</code>、<code>voice_utils</code>，测试侧也编入相关工具层。</td><td><span class="badge ok">已过时</span> 后续应先补真实环境验证、状态文案和失败恢复，不重建主链路。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="config-ui">
+      <h2>配置与 UI</h2>
+      <p>配置项集中在 <code>config_variables_qmclient.h</code>，统一使用 <code>QmVoice*</code> / <code>qm_voice_*</code> 前缀。默认语音关闭，默认服务端为 <code>42.194.185.210:9987</code>，默认协议版本为 3。</p>
+      <table>
+        <thead><tr><th>区域</th><th>当前状态</th></tr></thead>
+        <tbody>
+          <tr><td>降噪/动态处理</td><td><code>qm_voice_noise_suppress_enable</code> 是三态：0 关闭、1 简单、2 RNNoise；默认 2。默认强度 35，压缩阈值 24%，ratio 2.0，attack 12ms，release 140ms，makeup 125%，limiter 92%。</td></tr>
+          <tr><td>控制方式</td><td>支持 <code>+qm_voice_ptt</code>、VAD、PTT release delay、本地测试模式和服务器回环测试模式。</td></tr>
+          <tr><td>设备</td><td>设置页提供输入/输出设备下拉、刷新按钮、默认设备、断开设备回显和切换中/已切换/失败状态。</td></tr>
+          <tr><td>状态面板</td><td>高级选项中可展示麦克风、扬声器、输入切换、输出切换、服务器、房间、收发、排障建议、音频问题和详细原因。</td></tr>
+          <tr><td>叠加层</td><td><code>CVoiceOverlayState</code> 记录最近听到/本地发声者，HUD editor 中无真实条目时会绘制 preview。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="coverage">
+      <h2>测试覆盖</h2>
+      <ul>
+        <li>协议层：读写 U16/U32/float、<code>RV01</code> 固定向量、AUDIO/PING/PONG 分类、payload 长度、版本/类型/context/group/sender/drop 分支。</li>
+        <li>房间与收发规则：legacy/mode packed token 兼容、keepalive token 不同组拒绝、PING RTT 前置条件、jitter 起始序列和 wrap-around。</li>
+        <li>UI 状态：麦克风/扬声器/服务器/房间/收发状态、排障建议、权限拒绝、设备不存在、输入/输出路由切换状态。</li>
+        <li>音频处理：默认降噪/压缩参数与配置一致、trace callback、capture pipeline 顺序、手动码率档位、网络质量下的编码复杂度调整。</li>
+        <li>Qm 同步：<code>users.json</code> 中 <code>server_address|server</code>、<code>player_id|id</code>、<code>voice_supported</code> 和本服 marks 聚合规则。</li>
+      </ul>
+      <p class="note warn">测试不等价于完整语音可用性闭环。真实双客户端、真实语音服务、OS 权限弹窗、耳机热插拔和默认路由漂移仍需要人工或集成环境补位。</p>
+    </section>
+
+    <section class="card" id="obsolete">
+      <h2>旧报告修正</h2>
+      <table>
+        <thead><tr><th>旧口径</th><th>当前处理</th></tr></thead>
+        <tbody>
+          <tr><td>Rust 语音模块、Rust 覆盖率、<code>RiVoiceUseRust</code> 双模切换。</td><td><span class="badge warn">归档</span> 当前组件没有 Rust 运行路径，不应作为现状依据。</td></tr>
+          <tr><td>考虑使用 WebRTC 或从中心服重启语音方案。</td><td><span class="badge warn">降级</span> 当前代码没有 WebRTC 语音实现；语音服务 <code>/qm/*</code> 和中心服 <code>:8080</code> 也不是同一职责。除非另写架构调研，否则不从旧 TODO 直接推进。</td></tr>
+          <tr><td>核心文件只写 <code>voice_component/core/utils</code>，且路径为旧平铺目录。</td><td><span class="badge ok">修正</span> 当前路径在 <code>voice/</code> 子目录，并包含 <code>voice_capture_pipeline</code>。</td></tr>
+          <tr><td>“缺 OnReset/OnShutdown”一类旧风险。</td><td><span class="badge ok">修正</span> 组件有 <code>OnShutdown()</code>，运行时有 <code>Shutdown()</code>、runtime reset flags 和 token/context 变化重置逻辑。</td></tr>
+          <tr><td>“测试主要是工具函数，缺协议与设备诊断覆盖”。</td><td><span class="badge ok">修正</span> 当前测试已覆盖协议分类、设备/权限 UI hint、capture 顺序和 Qm users 解析；仍缺外部真机闭环。</td></tr>
+          <tr><td>“RNNoise 只是编译时可选能力”。</td><td><span class="badge ok">修正</span> 配置默认值已切到 RNNoise 模式，运行时仍有不可用时回退到简单降噪的保护分支。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>源码证据</summary>
+        <ul>
+          <li><code>src/game/client/components/qmclient/voice/voice_component.h:10-32</code>：<code>CVoiceComponent</code> 只持有 <code>CRClientVoice</code> 和 overlay state。</li>
+          <li><code>src/game/client/components/qmclient/voice/voice_component.cpp:223-283</code>：初始化、关闭、启用开关、overlay 渲染和控制台命令注册。</li>
+          <li><code>src/game/client/components/qmclient/voice/voice_utils.h:10-43</code>：协议常量、<code>VOICE_VERSION=3</code>、<code>SVoicePacketHeader</code> 字段。</li>
+          <li><code>src/game/client/components/qmclient/voice/voice_utils.cpp:16-165</code>：<code>RV01</code> 魔数与包头读写实现。</li>
+          <li><code>src/game/client/components/qmclient/voice/voice_capture_pipeline.cpp:221-248</code>：capture pipeline 的 AGC、mic gain、denoise、HPF/compressor 顺序。</li>
+          <li><code>src/game/client/components/qmclient/voice/voice_core.cpp:1384-1680</code>：采集、PTT/VAD、本地测试、PING keepalive 和 AUDIO 发送。</li>
+          <li><code>src/game/client/components/qmclient/voice/voice_core.cpp:1686-1900</code>：收包过滤、packet decision、可听性、距离和音量处理。</li>
+          <li><code>src/game/client/components/qmclient/voice/voice_core.cpp:2232-2400</code>：worker 线程循环和调试状态日志。</li>
+          <li><code>src/game/client/components/qmclient/voice/voice_core.cpp:996-1058</code>：UI 状态导出结构填充。</li>
+          <li><code>src/game/client/components/qmclient/menus_qmclient.cpp:6186-6436</code>：语音设置页统一状态面板和排障建议。</li>
+          <li><code>src/engine/shared/config_variables_qmclient.h:176-222</code>：当前 <code>qm_voice_*</code> 配置定义与默认值。</li>
+          <li><code>src/game/client/components/qmclient/qmclient.cpp:63-97</code>：<code>/qm/*</code> 与中心服务路由分工注释。</li>
+          <li><code>CMakeLists.txt:2762-2769</code>：客户端编入 <code>components/qmclient/voice/</code> 下的 capture pipeline、component、core 和 utils。</li>
+          <li><code>CMakeLists.txt:3744-3745</code>：测试目标编入 <code>voice_capture_pipeline.cpp</code> 和 <code>voice_utils.cpp</code>。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>未采用 WebRTC 的检索证据</summary>
+        <p>在 <code>src/game/client/components/qmclient/</code>、<code>src/engine/shared/config_variables_qmclient.h</code>、<code>CMakeLists.txt</code> 和 <code>cmake/</code> 中检索 <code>webrtc</code> / <code>WebRTC</code> 未发现当前语音实现或构建入口。旧 backlog 中的 WebRTC 方向因此只保留为历史想法。</p>
+      </details>
+      <details>
+        <summary>测试证据</summary>
+        <ul>
+          <li><code>src/test/voice_core_test.cpp:93-260</code>：语音包头读写与固定向量。</li>
+          <li><code>src/test/voice_core_test.cpp:538-575</code>：UI 排障建议优先级和具体音频失败引导。</li>
+          <li><code>src/test/voice_core_test.cpp:1549-1656</code>：默认音频处理参数与 capture pipeline 顺序。</li>
+          <li><code>src/test/voice_core_test.cpp:1691-1886</code>：收包分类、payload、group/token、AUDIO/PING/PONG 路径。</li>
+          <li><code>src/test/voice_core_test.cpp:1956-2029</code>：Qm users JSON 与 <code>voice_supported</code> 解析。</li>
+        </ul>
+      </details>
+      <p class="footer">原始 Markdown 保留为 <a href="../archive/superseded-current/voice-chat-status.md">voice-chat-status.md</a>，仅作为来源材料；新增状态修正应写入本 HTML 页面。</p>
+    </section>
+  </div>
+</body>
+</html>
+

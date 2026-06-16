@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="research" />
+  <title>Finish Prediction 边界调研</title>
+  <style>
+    :root{--bg:#f4f1ea;--paper:#fffdfa;--ink:#2d2924;--muted:#6f675f;--line:#ded4c6;--accent:#4f6f73;--accent-2:#b8795b;--ok:#5f7f55;--warn:#a57536;--bad:#a94d45;--shadow:0 18px 45px rgba(62,50,39,.12);--code-bg:#ede6dc}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 12% 0%,rgba(184,121,91,.16),transparent 30rem),radial-gradient(circle at 88% 8%,rgba(79,111,115,.14),transparent 28rem),linear-gradient(180deg,#f7f3ec 0%,var(--bg) 100%);font-family:"Noto Sans SC","Segoe UI","Microsoft YaHei",sans-serif;line-height:1.72}.page{max-width:1180px;margin:0 auto;padding:28px 20px 56px}.hero,.card{background:var(--paper);border:1px solid rgba(222,212,198,.95);box-shadow:var(--shadow);border-radius:22px}.hero{padding:28px 28px 24px;margin-bottom:18px}.card{padding:22px 24px;margin-top:18px}h1,h2,h3{margin:0 0 12px;line-height:1.2}h1{font-size:28px}h2{font-size:22px}h3{font-size:17px;margin-top:18px}p{margin:0 0 12px}ul{margin:10px 0 0 22px;padding:0}li{margin:4px 0}code{padding:.12em .36em;border-radius:6px;background:var(--code-bg);color:#613c2e;font-size:.94em}table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px;display:block;overflow-x:auto}th,td{border-top:1px solid var(--line);padding:10px 12px;vertical-align:top;text-align:left}th{background:#faf5ed;color:#4f463d;font-weight:700;white-space:nowrap}tr:hover td{background:rgba(184,121,91,.03)}a{color:#355f66;text-decoration-thickness:1px;text-underline-offset:3px}.meta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(79,111,115,.10);color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.02em}.pill.secondary{background:rgba(184,121,91,.10);color:var(--accent-2)}.pill.warn{background:rgba(165,117,54,.12);color:var(--warn)}.pill.bad{background:rgba(169,77,69,.12);color:var(--bad)}.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}.badge.ok{background:rgba(95,127,85,.12);color:var(--ok)}.badge.warn{background:rgba(165,117,54,.12);color:var(--warn)}.badge.bad{background:rgba(169,77,69,.12);color:var(--bad)}.muted{color:var(--muted)}.note{border-left:4px solid var(--accent);padding:10px 12px;background:rgba(79,111,115,.06);border-radius:0 10px 10px 0;color:#4c4238}.note.warn{border-left-color:var(--warn);background:rgba(165,117,54,.08)}.note.bad{border-left-color:var(--bad);background:rgba(169,77,69,.08)}.toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:14px}.toc a{display:block;padding:10px 12px;border:1px solid var(--line);border-radius:12px;color:var(--ink);text-decoration:none;background:rgba(255,255,255,.72)}details{margin-top:10px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.65);padding:10px 12px}summary{cursor:pointer;font-weight:700;color:#423b33}.footer{margin-top:18px;color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill warn">research</span><span class="pill secondary">2026-06-16</span><span class="pill bad">未实现 / 高风险规划</span></div>
+      <h1>Finish Prediction 边界调研</h1>
+      <p class="muted">本文修正 BC 移植清单里的 Finish Prediction 口径：当前 QmClient 没有“预测何时到达终点”的功能。Race Time、Speedrun Timer、Split Timer、Gores 路线进度和 AntiPing 预测都不能等同为 Finish Prediction。</p>
+      <nav class="toc" aria-label="文档目录">
+        <a href="#conclusion">① 快速结论</a>
+        <a href="#not-same">② 不应混淆的已有能力</a>
+        <a href="#risk">③ 风险边界</a>
+        <a href="#path">④ 可行推进路径</a>
+        <a href="#evidence">⑤ 源码证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="conclusion">
+      <h2>① 快速结论</h2>
+      <p class="note warn">Finish Prediction 当前应保持为“未见实现 / 不直接开发”。它需要从玩家当前位置、速度、路线、检查点和终点关系推导 ETA，和已有计时显示不是同一类功能。</p>
+      <table>
+        <thead><tr><th>问题</th><th>结论</th><th>可信度</th></tr></thead>
+        <tbody>
+          <tr><td>当前是否已有 Finish Prediction？</td><td>未见同名配置、渲染入口或功能模块。</td><td><span class="badge ok">高</span></td></tr>
+          <tr><td>Speedrun Timer 是否等同于 Finish Prediction？</td><td>不是。它是用户配置目标时长后的倒计时和过期自动 kill。</td><td><span class="badge ok">高</span></td></tr>
+          <tr><td>Split Timer 是否覆盖 Finish Prediction？</td><td>不是。Split Timer 规格只记录已经发生的分段，不预测未来完成时间。</td><td><span class="badge ok">高</span></td></tr>
+          <tr><td>Gores 进度/距离场能否直接泛化为 Finish Prediction？</td><td>不应直接泛化。它是特定地图路线/进度辅助，不是通用 DDNet ETA 模型。</td><td><span class="badge warn">中高</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="not-same">
+      <h2>② 不应混淆的已有能力</h2>
+      <table>
+        <thead><tr><th>已有能力</th><th>当前用途</th><th>为什么不是 Finish Prediction</th></tr></thead>
+        <tbody>
+          <tr><td>Race Time</td><td>按 race start tick 计算当前 run 已用时间。</td><td>只显示已经过去的时间，不估算终点 ETA。</td></tr>
+          <tr><td>Speedrun Timer</td><td>按配置目标时长倒计时，过期后可自动 kill。</td><td>目标时长来自用户配置，不来自地图路线或玩家状态预测。</td></tr>
+          <tr><td><a href="../planning/split-timer-checkpoint-spec.html">Split Timer</a></td><td>规划为本地 checkpoint 分段记录和 session best 对比。</td><td>只记录已发生 split；规格明确不做自动 Finish Prediction。</td></tr>
+          <tr><td>Finish Name helper</td><td>TClient 辅助逻辑会检测附近 finish tile 并改名。</td><td>它检测邻近终点 tile，不预测剩余路线或完成时间。</td></tr>
+          <tr><td>Gores 路线进度/距离场</td><td>基于地图 tile、tele、penalty/reward 等构建到终点的距离/进度辅助。</td><td>它偏向 Gores 路线进度和调试，不是所有 DDNet 地图的公平通用 ETA。</td></tr>
+          <tr><td>AntiPing / prediction latency</td><td>客户端网络预测、平滑和延迟显示。</td><td>这是输入/网络预测，不是“到达终点”的成绩预测。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="risk">
+      <h2>③ 风险边界</h2>
+      <ul>
+        <li><strong>不要改物理或预测</strong>：Finish Prediction 不能为了“更准”触碰协议、snapshot、物理、碰撞、rank 可达性或 demo 格式。</li>
+        <li><strong>不要把路线搜索做成默认优势工具</strong>：自动路线、ETA、可达性提示可能影响公平性，应先做单独设计和审查。</li>
+        <li><strong>不要把 Gores 进度场当通用基础</strong>：Gores 逻辑读取地图结构并处理特殊 tile；普通 DDNet、race、dummy/team 场景不能直接套用。</li>
+        <li><strong>不要和 Split Timer 合并</strong>：Split Timer 是过去分段数据；Finish Prediction 是未来状态估计，数据来源、风险和 UI 文案都不同。</li>
+      </ul>
+      <p class="note bad">默认结论：在没有独立规格、效果边界和公平性审查前，不应实现自动终点 ETA。</p>
+    </section>
+
+    <section class="card" id="path">
+      <h2>④ 可行推进路径</h2>
+      <table>
+        <thead><tr><th>阶段</th><th>允许做什么</th><th>不做什么</th></tr></thead>
+        <tbody>
+          <tr><td>P0 文档边界</td><td>把 BC 状态页、TODO 路由和 Split Timer 规格统一到“Finish Prediction 未实现且需另行设计”。</td><td>不改源码。</td></tr>
+          <tr><td>P1 被动信息整理</td><td>如果继续推进，只能先整理当前 Race Time、checkpoint、Gores progress、status bar 现状。</td><td>不做自动路线搜索或 ETA。</td></tr>
+          <tr><td>P2 明确 opt-in 原型</td><td>若用户明确批准，可做本地、可关闭、非权威的实验性 ETA 原型，并标明误差和适用地图范围。</td><td>不作为 rank、demo、服务端或共享成绩依据。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>⑤ 源码证据</h2>
+      <details open>
+        <summary>未见同名实现</summary>
+        <p>在 <code>src</code>、<code>data</code>、<code>CMakeLists.txt</code>、<code>cmake</code> 和 <code>qmclient_scripts</code> 中检索 <code>finish_prediction</code>、<code>RenderFinishPrediction</code>、<code>qm_finish</code> 未发现功能入口；同一结论已同步到 <a href="../current/bc-port-status.html">bc-port-status.html</a>。</p>
+      </details>
+      <details>
+        <summary>Race Time 只是当前用时</summary>
+        <ul>
+          <li><code>src/game/client/gameclient.h:939-940</code> 暴露 <code>LastRaceTick()</code> 和 <code>CurrentRaceTime()</code>。</li>
+          <li><code>src/game/client/gameclient.cpp:2189-2200</code> 用 <code>m_LastRaceTick</code> 计算当前 race time。</li>
+          <li><code>src/game/client/gameclient.cpp:4119-4128</code> 根据 <code>GAMESTATEFLAG_RACETIME</code> 记录 race tick。</li>
+          <li><code>src/game/client/components/tclient/statusbar.cpp:144-175</code> 渲染 race time，而不是预测剩余完成时间。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>Speedrun Timer 是目标倒计时</summary>
+        <ul>
+          <li><code>src/game/client/components/hud.cpp:945-1033</code> 根据配置时长渲染倒计时、过期文案、自动 kill 和自动关闭。</li>
+          <li><code>src/game/client/components/hud.cpp:5723-5726</code> 在 HUD render flow 中调用 <code>RenderSpeedrunTimer()</code>。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>Gores 进度不是通用 ETA</summary>
+        <ul>
+          <li><code>src/game/client/components/tclient/tclient.cpp:3421-4146</code> 构建 Gores 地图距离/进度字段，处理地图 tile、teleport、penalty 和 reward 等路线语义。</li>
+          <li><code>src/game/client/components/tclient/tclient.cpp:1604-1685</code> 的 finish-name helper 是附近 finish tile 检测和改名辅助，不是未来完成时间预测。</li>
+          <li><code>src/game/client/components/tclient/statusbar.cpp:119-127</code> 的 prediction 显示来自 <code>Client()->GetPredictionTime()</code>，属于网络/客户端预测耗时，不是 finish ETA。</li>
+        </ul>
+      </details>
+    </section>
+
+    <p class="footer">相关入口：<a href="../current/bc-port-status.html">BC 功能移植现状</a>、<a href="../planning/innovation-roadmap.html">创新功能候选路由</a>、<a href="../planning/todo-priority-status.html">新版 TODO 优先级路由</a>、<a href="../planning/split-timer-checkpoint-spec.html">Split Timer 小规格</a>。探索基准提交：<code>c60df3990</code>。</p>
+  </div>
+</body>
+</html>

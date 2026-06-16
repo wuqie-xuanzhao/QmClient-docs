@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="draft spec" />
+  <title>Qimeng 到 QmClient 品牌迁移边界规格</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --paper: #fffdfa;
+      --ink: #2d2924;
+      --muted: #6f675f;
+      --line: #ded4c6;
+      --accent: #4f6f73;
+      --accent-2: #b8795b;
+      --ok: #5f7f55;
+      --warn: #a57536;
+      --bad: #a94d45;
+      --shadow: 0 18px 45px rgba(62, 50, 39, 0.12);
+      --code-bg: #ede6dc;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(184, 121, 91, 0.16), transparent 30rem),
+        radial-gradient(circle at 88% 8%, rgba(79, 111, 115, 0.14), transparent 28rem),
+        linear-gradient(180deg, #f7f3ec 0%, var(--bg) 100%);
+      font-family: "Noto Sans SC", "Segoe UI", "Microsoft YaHei", sans-serif;
+      line-height: 1.72;
+    }
+    .page { max-width: 1180px; margin: 0 auto; padding: 28px 20px 56px; }
+    .hero, .card {
+      background: var(--paper);
+      border: 1px solid rgba(222, 212, 198, 0.95);
+      box-shadow: var(--shadow);
+      border-radius: 22px;
+    }
+    .hero { padding: 28px 28px 24px; margin-bottom: 18px; }
+    .card { padding: 22px 24px; margin-top: 18px; }
+    h1, h2, h3 { margin: 0 0 12px; line-height: 1.2; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 22px; }
+    h3 { font-size: 17px; margin-top: 18px; }
+    p { margin: 0 0 12px; }
+    ul, ol { margin: 10px 0 0 22px; padding: 0; }
+    li { margin: 4px 0; }
+    code {
+      padding: 0.12em 0.36em;
+      border-radius: 6px;
+      background: var(--code-bg);
+      color: #613c2e;
+      font-size: 0.94em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+      display: block;
+      overflow-x: auto;
+    }
+    th, td {
+      border-top: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th { background: #faf5ed; color: #4f463d; font-weight: 700; white-space: nowrap; }
+    tr:hover td { background: rgba(184, 121, 91, 0.03); }
+    a { color: #355f66; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 999px;
+      background: rgba(79, 111, 115, 0.10); color: var(--accent);
+      font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+    }
+    .pill.secondary { background: rgba(184, 121, 91, 0.10); color: var(--accent-2); }
+    .pill.warn { background: rgba(165, 117, 54, 0.12); color: var(--warn); }
+    .pill.bad { background: rgba(169, 77, 69, 0.12); color: var(--bad); }
+    .pill.ok { background: rgba(95, 127, 85, 0.12); color: var(--ok); }
+    .badge {
+      display: inline-block; padding: 2px 8px;
+      border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap;
+    }
+    .badge.ok { background: rgba(95, 127, 85, 0.12); color: var(--ok); }
+    .badge.warn { background: rgba(165, 117, 54, 0.12); color: var(--warn); }
+    .badge.bad { background: rgba(169, 77, 69, 0.12); color: var(--bad); }
+    .muted { color: var(--muted); }
+    .note {
+      border-left: 4px solid var(--accent);
+      padding: 10px 12px;
+      background: rgba(79, 111, 115, 0.06);
+      border-radius: 0 10px 10px 0;
+      color: #4c4238;
+    }
+    .note.warn { border-left-color: var(--warn); background: rgba(165, 117, 54, 0.08); }
+    .note.bad { border-left-color: var(--bad); background: rgba(169, 77, 69, 0.08); }
+    .toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin-top: 14px; }
+    .toc a {
+      display: block; padding: 10px 12px;
+      border: 1px solid var(--line); border-radius: 12px;
+      color: var(--ink); text-decoration: none;
+      background: rgba(255,255,255,0.72);
+    }
+    .toc a:hover { border-color: rgba(184, 121, 91, 0.45); }
+    details {
+      margin-top: 10px; border: 1px solid var(--line);
+      border-radius: 12px; background: rgba(255,255,255,0.65); padding: 10px 12px;
+    }
+    summary { cursor: pointer; font-weight: 700; color: #423b33; }
+    .footer { margin-top: 18px; color: var(--muted); font-size: 13px; }
+    @media (max-width: 920px) {
+      .hero, .card { padding-left: 18px; padding-right: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta">
+        <span class="pill warn">draft spec</span>
+        <span class="pill secondary">2026-06-16</span>
+        <span class="pill">branding boundary</span>
+      </div>
+      <h1>Qimeng 到 QmClient 品牌迁移边界规格</h1>
+      <p class="muted">本文接管旧清单里的“品牌化迁移 Qimeng -&gt; QmClient”。当前代码已经大量使用 QmClient / QMCLIENT / qm_，但仍保留 Q1menG 识别链路和少量历史注释；因此后续不能做全局替换，只能按“用户可见品牌、配置兼容、远端服务协议、历史内部标识”分层处理。</p>
+      <nav class="toc" aria-label="目录">
+        <a href="#summary">当前结论</a>
+        <a href="#layers">迁移分层</a>
+        <a href="#non-goals">非目标</a>
+        <a href="#phases">建议阶段</a>
+        <a href="#evidence">复核证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="summary">
+      <h2>当前结论</h2>
+      <table>
+        <thead><tr><th>范围</th><th>状态</th><th>维护口径</th></tr></thead>
+        <tbody>
+          <tr><td>用户可见 UI 品牌</td><td><span class="badge ok">主线已是 QmClient</span></td><td>设置页、配置文件入口、配置筛选和若干模块标题已显示 QmClient。</td></tr>
+          <tr><td>配置域 / 保存路径</td><td><span class="badge ok">已是 QMCLIENT / QmClient</span></td><td><code>ConfigDomain::QMCLIENT</code> 保存到 <code>QmClient/settings_qmclient.cfg</code>，并保留旧根路径迁移。</td></tr>
+          <tr><td>新配置命名</td><td><span class="badge ok">规则明确</span></td><td>新增 QmClient 配置使用 <code>qm_</code> / <code>Qm</code>，不再写 <code>config_variables_qimeng.h</code>、<code>QIMENG</code> 或 <code>qmc_</code>。</td></tr>
+          <tr><td>Q1menG 识别链路</td><td><span class="badge warn">历史内部名仍在</span></td><td><code>ClearQ1menGSyncMarks()</code>、<code>MarkQ1menGSyncClient()</code> 和数组成员仍在识别/远程粒子链路中，不应无计划改名。</td></tr>
+          <tr><td>远端服务 / 包名 / 文件名</td><td><span class="badge warn">需单独评估</span></td><td>更新 URL、<code>qmclient</code> 数据目录、<code>/qm/*</code> 服务路径和发布包名不能跟 UI 文案一起改。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="layers">
+      <h2>迁移分层</h2>
+      <table>
+        <thead><tr><th>层级</th><th>可以推进</th><th>需要谨慎</th></tr></thead>
+        <tbody>
+          <tr><td>用户可见文字</td><td>把旧文档和新增 UI 文案统一写成 QmClient。</td><td>不要把服务端协议、日志字段、存档文件名一起重命名。</td></tr>
+          <tr><td>配置与文件路径</td><td>新文档统一引用 <code>ConfigDomain::QMCLIENT</code> 和 <code>QmClient/settings_qmclient.cfg</code>。</td><td>现有用户 cfg 需要 legacy 路径和兼容策略，不能删除旧迁移入口。</td></tr>
+          <tr><td>源码内部命名</td><td>新代码使用 <code>QmClient</code>、<code>Qm</code>、<code>qm_</code>。</td><td>Q1menG 识别函数与数组要等专门重构任务处理，避免破坏远程识别和粒子展示。</td></tr>
+          <tr><td>远端服务和发布链路</td><td>文档可以标明当前 <code>/qm/*</code> 命名空间和 GitHub release URL。</td><td>不要在纯文档整理中改变中心服接口、User-Agent、更新 URL、包名或数据目录。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="non-goals">
+      <h2>非目标</h2>
+      <ul>
+        <li>不做全仓库 <code>Q1menG</code> / <code>Qimeng</code> 文本替换。</li>
+        <li>不删除 <code>settings_qmclient.cfg</code> legacy 迁移路径。</li>
+        <li>不把 <code>qmclient</code> 数据目录、GitHub release URL、中心服 <code>/qm/*</code> 路径改名。</li>
+        <li>不在没有迁移测试的情况下改配置变量脚本名。</li>
+        <li>不把 DDNet/TClient 来源能力改写成 QmClient 原生能力。</li>
+      </ul>
+      <p class="note bad">品牌迁移最容易出错的是把“用户可见名字统一”误扩成“协议、文件、配置、远端服务全重命名”。这会破坏兼容性。</p>
+    </section>
+
+    <section class="card" id="phases">
+      <h2>建议阶段</h2>
+      <table>
+        <thead><tr><th>阶段</th><th>内容</th><th>验收</th></tr></thead>
+        <tbody>
+          <tr><td>P0 文档收口</td><td>所有新版 HTML 文档引用当前 <code>QMCLIENT</code>、<code>QmClient/</code>、<code>qm_</code> 规则，并把旧 Qimeng 口径标为历史。</td><td>文档链接检查和 <code>check_docs.py</code> 通过。</td></tr>
+          <tr><td>P1 用户可见文案审计</td><td>只审计 UI 文案、设置页标题、帮助文本和文档，不改配置脚本名。</td><td>新增一页文案清单或小补丁，附截图/翻译生成验证。</td></tr>
+          <tr><td>P2 内部命名重构提案</td><td>如果确实要改 Q1menG 识别链路，先写影响面：函数、数组、中心服报告、远程粒子、badge。</td><td>有迁移计划、测试点和回滚策略后再动源码。</td></tr>
+          <tr><td>P3 服务/包名迁移</td><td>更新 URL、User-Agent、数据目录或 release 包名属于发布链路任务。</td><td>需要服务端、发布包、自动更新和用户数据迁移一起验证。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>源码证据</summary>
+        <ul>
+          <li><code>src/engine/shared/config_domains.h:8</code> 到 <code>:12</code>：当前配置域包含 <code>QMCLIENT</code>，保存到 <code>QmClient/settings_qmclient.cfg</code>，并保留 <code>settings_qmclient.cfg</code> legacy 路径。</li>
+          <li><code>src/engine/shared/config_includes.h:11</code> 到 <code>:15</code>：TClient 与 QmClient 配置变量都归入 <code>ConfigDomain::QMCLIENT</code>。</li>
+          <li><code>src/engine/shared/config_variables_qmclient.h:10</code> 到 <code>:30</code>：QmClient 自研变量已使用 <code>Qm</code> / <code>qm_</code> 主前缀。</li>
+          <li><code>src/engine/shared/config_variables_qmclient.h:99</code> 到 <code>:101</code>：Q1menG 识别注释仍在，但配置脚本名是 <code>qm_client_mark_trail</code> 和 <code>qm_client_show_badge</code>。</li>
+          <li><code>src/game/client/components/menus.cpp:802</code>：设置页主标签显示 <code>QmClient</code>。</li>
+          <li><code>src/game/client/components/tclient/menus_tclient.cpp:4587</code> 到 <code>:4590</code>：配置文件入口显示 <code>QmClient Settings</code> 并打开 <code>ConfigDomain::QMCLIENT</code> 路径。</li>
+          <li><code>src/game/client/components/tclient/menus_tclient.cpp:5233</code> 到 <code>:5248</code>、<code>:5520</code> 到 <code>:5525</code>：配置浏览筛选和来源名称使用 <code>QmClient</code>。</li>
+          <li><code>src/game/client/gameclient.h:1197</code> 到 <code>:1202</code>、<code>:1257</code> 到 <code>:1261</code>：Q1menG 识别函数和数组成员仍是内部接口。</li>
+          <li><code>src/game/client/gameclient.cpp:8098</code> 到 <code>:8147</code>：Q1menG 识别链路负责标记、qid 和远程 foot particles 判断。</li>
+          <li><code>src/game/client/components/qmclient/qmclient.cpp:62</code> 到 <code>:65</code>：识别、在线分布和语音 presence 使用语音服务 <code>/qm/*</code> 命名空间。</li>
+        </ul>
+      </details>
+    </section>
+
+    <p class="footer">相关入口：<a href="../research/config-naming-status.html">配置变量命名现状</a>、<a href="candidate-backlog-status.html">候选 Backlog 路由</a>、<a href="innovation-roadmap.html">创新功能候选路由</a>、<a href="todo-priority-status.html">新版 TODO 优先级路由</a>。</p>
+  </div>
+</body>
+</html>

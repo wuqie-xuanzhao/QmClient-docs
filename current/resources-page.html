@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>QmClient 资源页面现状</title>
+  <style>
+    :root { --bg:#f4f1ea; --paper:#fffdfa; --ink:#2d2924; --muted:#6f675f; --line:#ded4c6; --accent:#4f6f73; --accent-2:#b8795b; --ok:#5f7f55; --warn:#a57536; --bad:#a94d45; --shadow:0 18px 45px rgba(62,50,39,.12); --code-bg:#ede6dc; }
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;color:var(--ink);background:radial-gradient(circle at 12% 0%,rgba(184,121,91,.16),transparent 30rem),radial-gradient(circle at 88% 8%,rgba(79,111,115,.14),transparent 28rem),linear-gradient(180deg,#f7f3ec 0%,var(--bg) 100%);font-family:"Noto Sans SC","Segoe UI","Microsoft YaHei",sans-serif;line-height:1.72}
+    .page{max-width:1180px;margin:0 auto;padding:28px 20px 56px}.hero,.card{background:var(--paper);border:1px solid rgba(222,212,198,.95);box-shadow:var(--shadow);border-radius:22px}.hero{padding:28px 28px 24px;margin-bottom:18px}.card{padding:22px 24px;margin-top:18px}
+    h1,h2,h3{margin:0 0 12px;line-height:1.2}h1{font-size:28px}h2{font-size:22px}h3{font-size:17px;margin-top:18px}p{margin:0 0 12px}ul{margin:10px 0 0 22px;padding:0}li{margin:4px 0}code{padding:.12em .36em;border-radius:6px;background:var(--code-bg);color:#613c2e;font-size:.94em}
+    table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px;display:block;overflow-x:auto}th,td{border-top:1px solid var(--line);padding:10px 12px;vertical-align:top;text-align:left}th{background:#faf5ed;color:#4f463d;font-weight:700;white-space:nowrap}tr:hover td{background:rgba(184,121,91,.03)}
+    a{color:#355f66;text-decoration-thickness:1px;text-underline-offset:3px}.meta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(79,111,115,.10);color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.02em}.pill.secondary{background:rgba(184,121,91,.10);color:var(--accent-2)}.pill.warn{background:rgba(165,117,54,.12);color:var(--warn)}.pill.ok{background:rgba(95,127,85,.12);color:var(--ok)}.muted{color:var(--muted)}.note{border-left:4px solid var(--warn);padding:10px 12px;background:rgba(165,117,54,.08);border-radius:0 10px 10px 0;color:#4c4238}.toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:14px}.toc a{display:block;padding:10px 12px;border:1px solid var(--line);border-radius:12px;color:var(--ink);text-decoration:none;background:rgba(255,255,255,.72)}.footer{margin-top:18px;color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill ok">active</span><span class="pill secondary">2026-06-16</span><span class="pill warn">当前工作区源码观察</span><span class="pill">旧报告已纠偏</span></div>
+      <h1>QmClient 资源页面现状</h1>
+      <p class="muted">本页按当前工作区源码复核资源页结构。相关源码本身仍有未提交改动，因此本文适合作为当前整理依据；提交或发布前应重新以最终源码复核一次。</p>
+      <div class="toc"><a href="#conclusion">① 当前结论</a><a href="#tabs">② 资源分类</a><a href="#workshop">③ Workshop 与本地资源</a><a href="#preview">④ 预览与性能调度</a><a href="#editor">⑤ 编辑器边界</a><a href="#obsolete">⑥ 旧文档修正</a><a href="#evidence">⑦ 复核证据</a></div>
+    </header>
+    <section class="card">
+      <h2 id="conclusion">① 当前结论</h2>
+      <p>资源页面当前不是旧文档里的“6 类 Assets 页”，而是 10 个 Assets tab + 统一资源注册表 + 本地列表/Workshop 合并展示 + 资源预览预算调度。皮肤仍主要在 Tee/Skins 体系中，不属于本页的统一 Assets tab。</p>
+      <p>资源页入口仍是 <code>CMenus::RenderSettingsCustom()</code>。页面通过 <code>menus.h</code> 的 <code>ASSETS_TAB_*</code> 枚举选择当前 tab，通过 <code>assets_resource_registry.*</code> 描述资源类别、安装路径、Workshop 分类、预览类型和单文件资源候选路径。</p>
+      <p class="note">资源页与“设置页性能优化”已经强相关：当前代码有异步目录扫描、分帧 merge、可见区域优先、缩略图/预览上传预算和显存预算配置。后续写资源页计划时不能只按 UI 功能罗列。</p>
+    </section>
+    <section class="card">
+      <h2 id="tabs">② 资源分类</h2>
+      <table><thead><tr><th>Tab</th><th>注册 ID / 安装位置</th><th>资源形态</th><th>预览口径</th></tr></thead><tbody>
+        <tr><td>Entities</td><td><code>entities</code> / <code>assets/entities</code></td><td>目录资源</td><td>PNG 纹理，可选实体/game tile 预览。</td></tr>
+        <tr><td>Game</td><td><code>game</code> / <code>assets/game</code></td><td>目录资源</td><td>PNG 纹理。</td></tr>
+        <tr><td>Emoticons</td><td><code>emoticons</code> / <code>assets/emoticons</code></td><td>目录资源</td><td>PNG 纹理。</td></tr>
+        <tr><td>Particles</td><td><code>particles</code> / <code>assets/particles</code></td><td>目录资源</td><td>PNG 纹理。</td></tr>
+        <tr><td>HUD</td><td><code>hud</code> / <code>assets/hud</code></td><td>目录资源</td><td>PNG 纹理。</td></tr>
+        <tr><td>Mouse</td><td><code>gui_cursor</code> / <code>assets/gui_cursor</code></td><td>命名单文件资源</td><td>支持 <code>gui_cursor.png</code> legacy/builtin 候选路径。</td></tr>
+        <tr><td>Direction Keys</td><td><code>arrow</code> / <code>assets/arrow</code></td><td>命名单文件资源</td><td>支持 <code>arrow.png</code> legacy/builtin 候选路径。</td></tr>
+        <tr><td>Strong Weak Hook</td><td><code>strong_weak</code> / <code>assets/strong_weak</code></td><td>命名单文件资源</td><td>支持 <code>strong_weak.png</code> legacy/builtin 候选路径。</td></tr>
+        <tr><td>Entity Background Image</td><td><code>entity_bg</code> / <code>assets/entity_bg</code></td><td>地图文件资源</td><td><code>MAP_PREVIEW_OR_ICON</code>，含层级目录和 Workshop 根目录。</td></tr>
+        <tr><td>Other</td><td><code>extras</code> / <code>assets/extras</code></td><td>目录资源</td><td>PNG 纹理。</td></tr>
+      </tbody></table>
+      <p>这 10 类都在 <code>SAssetResourceCategory</code> 注册表中声明。旧文档中“Extras 没有 Workshop 支持”“方向键没有独立资源浏览页面”的结论已经不符合当前源码。</p>
+    </section>
+    <section class="card">
+      <h2 id="workshop">③ Workshop 与本地资源</h2>
+      <ul>
+        <li>Workshop catalog URL 仍是 <code>https://www.ddrace.cn/data/assets.json</code>，页面按当前 tab 的 category/alias 过滤。</li>
+        <li>每个 tab 有独立 <code>SWorkshopHudState</code>，保存列表任务、资源列表、错误、缓存时间、缩略图队列、下载任务和 entity background 预览状态。</li>
+        <li>资源卡片支持标题、作者、状态 tag、下载/删除按钮、下载失败状态、本地资源和 Workshop 资源合并展示。</li>
+        <li>本地资源作者信息通过 <code>qmclient/workshop/local_asset_authors.json</code> 持久化缓存辅助补齐。</li>
+        <li>Entity background 的 Workshop 资源会进入独立层级视图，支持本地/Workshop 来源合并、目录导航和 Workshop 根目录显示。</li>
+        <li>下载会弹确认框，通过 <code>HttpGetFile</code> 写入当前类别的安装路径；删除本地资源也需要确认。</li>
+      </ul>
+      <p class="note">当前代码有“Show Workshop Assets”和“Sync Workshop Assets”工具按钮，显示和同步能力按资源注册表的 <code>m_WorkshopEnabled</code> 判断。</p>
+    </section>
+    <section class="card">
+      <h2 id="preview">④ 预览与性能调度</h2>
+      <table><thead><tr><th>能力</th><th>当前实现</th><th>文档口径</th></tr></thead><tbody>
+        <tr><td>异步列表加载</td><td><code>menus_settings_assets.cpp</code> 使用后台 job 扫描目录，避免 <code>Storage()->ListDirectory()</code> 阻塞渲染线程。</td><td>资源切页卡顿治理的一部分。</td></tr>
+        <tr><td>预览缓存</td><td><code>CSettingsResourcePreviewCache</code> 用 <code>SResourcePreviewKey</code> 区分 type、id、Workshop、语言 hash、UI scale、卡片宽度。</td><td>不是简单“每次绘制都解码贴图”。</td></tr>
+        <tr><td>优先级调度</td><td><code>CSettingsResourcePreviewScheduler</code> 按 visible、near-visible、background 和 upload budget 分配每帧准入。</td><td>文档必须写可见优先和滚动/切页降载。</td></tr>
+        <tr><td>GPU 上传预算</td><td><code>SResourcePreviewUploadBudget</code> 可接入 merge budget、frame budget 和 <code>CGpuUploadLimiter</code>。</td><td>上传受预算限制，不是一次性全部上传。</td></tr>
+        <tr><td>显存预算</td><td><code>qm_assets_preview_budget_mb_override</code>、<code>qm_assets_preview_budget_percent</code> 控制资源预览预算。</td><td>属于 QmClient 配置，不是 DDNet 原生资源页描述。</td></tr>
+        <tr><td>降级显示</td><td><code>SettingsResourcePreviewDrawResult()</code> 返回 placeholder、ready texture 或 failed placeholder。</td><td>加载失败和未就绪应写成可预期状态。</td></tr>
+      </tbody></table>
+    </section>
+    <section class="card">
+      <h2 id="editor">⑤ 编辑器边界</h2>
+      <p>Assets 页面底部有 <code>Assets editor</code> 工具入口，但不是所有 tab 都支持。当前支持 Entities、Game、Emoticons、Particles、HUD、Mouse、Direction Keys、Strong Weak Hook 和 Other；<code>entity_bg</code> 不在该编辑器支持列表里。</p>
+      <p><code>menus.h</code> 中的 <code>SAssetsEditorState</code> 已包含素材加载、主/供体资源索引、网格、同尺寸应用、颜色混合、拖拽、导出名称、未保存变更、全屏预览和组合预览贴图等状态。它应被描述为当前资源组合/编辑入口，而不是旧文档里的“普通贴图编辑器”。</p>
+      <p>Audio pack editor 是另一个独立状态机，和本页的 Assets editor 相邻但不是同一个资源 tab 功能。</p>
+    </section>
+    <section class="card">
+      <h2 id="obsolete">⑥ 旧文档修正点</h2>
+      <ul>
+        <li>旧的 6 类 Assets 表已过时；当前是 10 个 tab。</li>
+        <li><code>ASSETS_TAB_EXTRAS</code> 不应继续写成“没有 Workshop 支持”；当前注册表里 <code>extras</code> 的 <code>m_WorkshopEnabled</code> 为 true。</li>
+        <li>方向键、鼠标、强弱钩子已经是命名单文件资源 tab，不应写成待纳入统一管理。</li>
+        <li>Entity background 不是普通 PNG 资源；它是 <code>MAP_FILE</code>，并有 Workshop 根目录、层级路径和预览 URL 映射。</li>
+        <li>皮肤仍归 Tee/Skins 体系，不能把 Skins 下载、Skin Queue 和 Assets Workshop 写成同一个资源页。</li>
+        <li>资源上传、面对面分享、跨端资源同步、哈希去重市场化分发，本轮源码未见完整实现，继续放 planning，不写成现有能力；上传市场边界见 <a href="../research/workshop-upload-boundary.html">workshop-upload-boundary.html</a>。</li>
+      </ul>
+    </section>
+    <section class="card">
+      <h2 id="evidence">⑦ 复核证据</h2>
+      <ul>
+        <li><code>src/game/client/components/menus.h:57-66</code>：10 个 Assets tab 枚举。</li>
+        <li><code>src/game/client/components/assets_resource_registry.cpp:72-82</code>：10 类资源注册表、安装目录、Workshop 分类和预览类型。</li>
+        <li><code>src/game/client/components/assets_resource_registry.cpp:223-270</code>：命名单文件资源 legacy/builtin 候选路径与保留名判断。</li>
+        <li><code>src/game/client/components/assets_resource_registry.cpp:297-350</code>：entity background 层级目录、Workshop/local 来源处理。</li>
+        <li><code>src/game/client/components/menus_settings_assets.cpp:1478</code>：Workshop catalog URL。</li>
+        <li><code>src/game/client/components/menus_settings_assets.cpp:4056-4102</code>：<code>RenderSettingsCustom()</code> tab 渲染入口和 10 个 tab 名称。</li>
+        <li><code>src/game/client/components/menus_settings_assets.cpp:6044-7204</code>：Workshop 列表请求、下载、卡片渲染、删除/下载确认和 HTTP 下载。</li>
+        <li><code>src/game/client/components/menus_settings_assets.cpp:7293-7389</code>：Assets editor 支持范围、Show/Sync Workshop Assets 工具按钮。</li>
+        <li><code>src/game/client/components/qmclient/settings_resource_preview.h:21-180</code>：资源预览 key、状态、cache、scheduler、upload scheduler 和 job。</li>
+        <li><code>src/game/client/components/qmclient/settings_resource_preview.cpp:91-306</code>：预览预算、上传队列、缩放 artifact 和 draw result。</li>
+        <li><code>src/engine/shared/config_variables_qmclient.h:17-18</code>：资源预览显存预算配置。</li>
+      </ul>
+    </section>
+    <p class="footer">原始 Markdown 保留为 <a href="../archive/superseded-current/resources-page.md">resources-page.md</a>，只供追溯旧判断，不再作为资源页实现依据。</p>
+  </div>
+</body>
+</html>
+

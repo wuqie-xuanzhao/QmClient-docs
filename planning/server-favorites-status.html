@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>服务器收藏增强现状</title>
+  <style>
+    :root{--bg:#f4f1ea;--paper:#fffdfa;--ink:#2d2924;--muted:#6f675f;--line:#ded4c6;--accent:#4f6f73;--accent-2:#b8795b;--ok:#5f7f55;--warn:#a57536;--bad:#a94d45;--shadow:0 18px 45px rgba(62,50,39,.12);--code-bg:#ede6dc}*{box-sizing:border-box}body{margin:0;color:var(--ink);background:radial-gradient(circle at 12% 0%,rgba(184,121,91,.16),transparent 30rem),radial-gradient(circle at 88% 8%,rgba(79,111,115,.14),transparent 28rem),linear-gradient(180deg,#f7f3ec 0%,var(--bg) 100%);font-family:"Noto Sans SC","Segoe UI","Microsoft YaHei",sans-serif;line-height:1.72}.page{max-width:1180px;margin:0 auto;padding:28px 20px 56px}.hero,.card{background:var(--paper);border:1px solid rgba(222,212,198,.95);box-shadow:var(--shadow);border-radius:22px}.hero{padding:28px 28px 24px;margin-bottom:18px}.card{padding:22px 24px;margin-top:18px}h1,h2{margin:0 0 12px;line-height:1.2}h1{font-size:28px}h2{font-size:22px}p{margin:0 0 12px}ul{margin:10px 0 0 22px;padding:0}li{margin:4px 0}code{padding:.12em .36em;border-radius:6px;background:var(--code-bg);color:#613c2e;font-size:.94em}table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px;display:block;overflow-x:auto}th,td{border-top:1px solid var(--line);padding:10px 12px;vertical-align:top;text-align:left}th{background:#faf5ed;color:#4f463d;font-weight:700;white-space:nowrap}a{color:#355f66;text-decoration-thickness:1px;text-underline-offset:3px}.meta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(79,111,115,.10);color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.02em}.pill.secondary{background:rgba(184,121,91,.10);color:var(--accent-2)}.pill.warn{background:rgba(165,117,54,.12);color:var(--warn)}.pill.ok{background:rgba(95,127,85,.12);color:var(--ok)}.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}.badge.ok{background:rgba(95,127,85,.12);color:var(--ok)}.badge.warn{background:rgba(165,117,54,.12);color:var(--warn)}.badge.bad{background:rgba(169,77,69,.12);color:var(--bad)}.muted{color:var(--muted)}.note{border-left:4px solid var(--accent);padding:10px 12px;background:rgba(79,111,115,.06);border-radius:0 10px 10px 0;color:#4c4238}.note.warn{border-left-color:var(--warn);background:rgba(165,117,54,.08)}details{margin-top:10px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.65);padding:10px 12px}summary{cursor:pointer;font-weight:700;color:#423b33}.footer{margin-top:18px;color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill ok">active</span><span class="pill secondary">2026-06-16</span><span class="pill warn">planning + compatibility</span></div>
+      <h1>服务器收藏增强现状</h1>
+      <p class="muted">本页接管旧 <code>server-favorites-plan.md</code>。旧方案的“备注、标签、人数通知”方向仍可作为候选，但当前服务器收藏不是单地址 JSON 模型，而是 DDNet 原生多地址 favorite group、<code>allow_ping</code> 和 favorite community 组合。</p>
+    </header>
+
+    <section class="card">
+      <h2>当前事实</h2>
+      <table>
+        <thead><tr><th>领域</th><th>状态</th><th>当前实现</th><th>影响</th></tr></thead>
+        <tbody>
+          <tr><td>服务器地址收藏</td><td><span class="badge ok">implemented</span></td><td><code>IFavorites::CEntry</code> 保存最多 <code>MAX_SERVER_ADDRESSES</code> 个地址和 <code>m_AllowPing</code>。</td><td>一个收藏可以是地址组，不应按单地址结构体直接重写。</td></tr>
+          <tr><td>持久化格式</td><td><span class="badge ok">config commands</span></td><td>保存为 <code>add_favorite</code>、<code>begin_favorite_group</code>、<code>end_favorite_group</code>，<code>allow_ping</code> 作为可选参数。</td><td>新增元数据时要兼容 DDNet 配置导入/导出，不宜替换原格式。</td></tr>
+          <tr><td>浏览器 UI</td><td><span class="badge ok">implemented</span></td><td>服务器详情面板已有 <code>Favorite</code> 三态勾选和 <code>Leak IP</code> / allow ping 切换。</td><td>备注/标签 UI 应靠近详情面板或右键菜单，不要抢占现有收藏语义。</td></tr>
+          <tr><td>收藏社区</td><td><span class="badge ok">implemented</span></td><td><code>FavoriteCommunitiesFilter</code> 保存最多 5 个 favorite community，并按用户顺序生成浏览器页面。</td><td>旧“标签分组”不能忽略已有 community 页面；标签应只做用户私有补充。</td></tr>
+          <tr><td>地图收藏</td><td><span class="badge ok">separate</span></td><td>地图收藏、地图备注和 Favorite Maps 页已经在 <a href="favorites-browser-status.html">favorites-browser-status.html</a> 里维护。</td><td>不要把地图收藏 JSON 方案直接套到服务器收藏核心。</td></tr>
+          <tr><td>人数变化通知</td><td><span class="badge warn">missing</span></td><td>本轮未看到专门监控收藏服务器人数变化的实现。</td><td>需要先定义刷新频率、只监控 allow ping 或当前列表内服务器、通知去重和隐私边界。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>旧计划修正</h2>
+      <table>
+        <thead><tr><th>旧判断/方案</th><th>当前修正</th></tr></thead>
+        <tbody>
+          <tr><td><code>IFavorites</code> 只有 <code>Add(const NETADDR &amp;Addr)</code> / <code>Remove</code> / <code>AllFavorites</code>。</td><td>已过时。当前接口接收地址数组，返回 <code>TRISTATE</code>，支持 <code>AllowPing</code> 和 <code>AllEntries</code>。</td></tr>
+          <tr><td>直接新增 <code>SFavoriteInfo</code> 到 <code>favorites.h</code>，把 note/tag/add time 放进核心收藏。</td><td>风险偏高。核心收藏是 DDNet 兼容模型，建议优先做 QmClient sidecar 元数据，用地址组 key 关联 note/tag。</td></tr>
+          <tr><td>保存到 <code>qmclient_favorites.json</code> 替代原收藏。</td><td>不应替代原收藏。可以新增 sidecar，但 <code>add_favorite</code>、favorite group 和 <code>allow_ping</code> 必须继续可用。</td></tr>
+          <tr><td>新增 <code>cl_favorite_monitor*</code> 配置。</td><td>命名不适合 QmClient 新配置；若新增应使用 <code>qm_</code> / <code>Qm</code>，并先明确是否属于浏览器、通知或 QmClient 设置域。</td></tr>
+          <tr><td>人数变化通知直接定时遍历所有收藏服务器。</td><td>需要降级。服务器浏览器刷新有网络、隐私和误报成本，默认不应后台高频 ping 未允许 ping 的收藏。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>建议下一版最小计划</h2>
+      <table>
+        <thead><tr><th>优先级</th><th>主题</th><th>范围</th><th>验收点</th></tr></thead>
+        <tbody>
+          <tr><td>P0</td><td>服务器收藏现状固定</td><td>用户文档明确 Favorite、Leak IP、favorite group、favorite community 的区别。</td><td>旧“单地址收藏接口”不再作为实现依据。</td></tr>
+          <tr><td>P1</td><td>sidecar 备注最小版</td><td>新增 QmClient 私有元数据文件，按规范化地址组 key 保存 note；不改 <code>IFavorites</code> 存储语义。</td><td>删除收藏时能清理或保留孤儿 note 有明确策略；旧收藏仍可加载。</td></tr>
+          <tr><td>P2</td><td>标签/分组</td><td>在 sidecar 上做用户标签，不取代 favorite community 页面。</td><td>标签筛选只影响 UI 视图，不改变 DDNet 原生 favorite community。</td></tr>
+          <tr><td>P3</td><td>人数变化通知</td><td>只监控允许 ping 或浏览器当前已知的收藏服务器，并使用现有 Qm 通知/HUD 通知边界。</td><td>有冷却、去重、禁用开关和刷新成本说明。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>源码位置</summary>
+        <ul>
+          <li><code>src/engine/favorites.h:22</code> 到 <code>:37</code> 定义 <code>IFavorites::CEntry</code>、多地址接口、<code>AllowPing</code> 和 <code>AllEntries</code>。</li>
+          <li><code>src/engine/client/favorites.cpp:38</code> 到 <code>:82</code> 保存 <code>begin_favorite_group</code>、<code>add_favorite</code>、<code>allow_ping</code> 和 <code>end_favorite_group</code>。</li>
+          <li><code>src/engine/client/favorites.cpp:151</code> 到 <code>:193</code> 添加收藏时会清理旧地址归属并建立新的地址组。</li>
+          <li><code>src/game/client/components/menus_browser.cpp:1861</code> 到 <code>:1892</code> 渲染服务器详情里的 <code>Favorite</code> 和 <code>Leak IP</code> 控件。</li>
+          <li><code>src/engine/client/serverbrowser.cpp:1268</code> 到 <code>:1292</code> 刷新 favorites 类型时会把未在列表中的收藏地址组加入浏览器，并只在允许 ping 时请求。</li>
+          <li><code>src/game/client/components/menus_browser.cpp:1670</code> 到 <code>:1725</code> 渲染 community favorite 按钮。</li>
+          <li><code>src/engine/client/serverbrowser.cpp:1847</code> 到 <code>:1861</code> 按用户顺序返回 favorite communities。</li>
+          <li><code>src/engine/client/serverbrowser.cpp:1965</code> 到 <code>:2027</code> 限制 favorite communities 最多 5 个并保存为 <code>add_favorite_community</code>。</li>
+        </ul>
+      </details>
+    </section>
+
+    <p class="footer">旧方案保留为 <a href="../archive/superseded-planning/server-favorites-plan.md">server-favorites-plan.md</a>，仅用于追溯。地图收藏和资源浏览见 <a href="favorites-browser-status.html">favorites-browser-status.html</a>。</p>
+  </div>
+</body>
+</html>
+

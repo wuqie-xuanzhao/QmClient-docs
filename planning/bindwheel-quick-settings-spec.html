@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="draft" />
+  <title>BindWheel 快捷设置面板小规格</title>
+  <style>
+    :root{--bg:#f4f1ea;--paper:#fffdfa;--ink:#2d2924;--muted:#6f675f;--line:#ded4c6;--accent:#4f6f73;--accent-2:#b8795b;--ok:#5f7f55;--warn:#a57536;--bad:#a94d45;--shadow:0 18px 45px rgba(62,50,39,.12);--code-bg:#ede6dc}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 12% 0%,rgba(184,121,91,.16),transparent 30rem),radial-gradient(circle at 88% 8%,rgba(79,111,115,.14),transparent 28rem),linear-gradient(180deg,#f7f3ec 0%,var(--bg) 100%);font-family:"Noto Sans SC","Segoe UI","Microsoft YaHei",sans-serif;line-height:1.72}.page{max-width:1180px;margin:0 auto;padding:28px 20px 56px}.hero,.card{background:var(--paper);border:1px solid rgba(222,212,198,.95);box-shadow:var(--shadow);border-radius:22px}.hero{padding:28px 28px 24px;margin-bottom:18px}.card{padding:22px 24px;margin-top:18px}h1,h2,h3{margin:0 0 12px;line-height:1.2}h1{font-size:28px}h2{font-size:22px}h3{font-size:17px;margin-top:18px}p{margin:0 0 12px}ul{margin:10px 0 0 22px;padding:0}li{margin:4px 0}code{padding:.12em .36em;border-radius:6px;background:var(--code-bg);color:#613c2e;font-size:.94em}table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px;display:block;overflow-x:auto}th,td{border-top:1px solid var(--line);padding:10px 12px;vertical-align:top;text-align:left}th{background:#faf5ed;color:#4f463d;font-weight:700;white-space:nowrap}tr:hover td{background:rgba(184,121,91,.03)}a{color:#355f66;text-decoration-thickness:1px;text-underline-offset:3px}.meta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(79,111,115,.10);color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.02em}.pill.secondary{background:rgba(184,121,91,.10);color:var(--accent-2)}.pill.warn{background:rgba(165,117,54,.12);color:var(--warn)}.pill.bad{background:rgba(169,77,69,.12);color:var(--bad)}.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}.badge.ok{background:rgba(95,127,85,.12);color:var(--ok)}.badge.warn{background:rgba(165,117,54,.12);color:var(--warn)}.badge.bad{background:rgba(169,77,69,.12);color:var(--bad)}.muted{color:var(--muted)}.note{border-left:4px solid var(--accent);padding:10px 12px;background:rgba(79,111,115,.06);border-radius:0 10px 10px 0;color:#4c4238}.note.warn{border-left-color:var(--warn);background:rgba(165,117,54,.08)}.toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:14px}.toc a{display:block;padding:10px 12px;border:1px solid var(--line);border-radius:12px;color:var(--ink);text-decoration:none;background:rgba(255,255,255,.72)}details{margin-top:10px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.65);padding:10px 12px}summary{cursor:pointer;font-weight:700;color:#423b33}.footer{margin-top:18px;color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill warn">draft spec</span><span class="pill secondary">2026-06-16</span><span class="pill bad">未实现</span></div>
+      <h1>BindWheel 快捷设置面板小规格</h1>
+      <p class="muted">本页把“BindChat/BindWheel 产品化”拆成一个可控创新小规格：在现有 BindWheel 轮盘和设置页编辑器基础上，新增少量客户端设置白名单预设，让玩家能把常用开关放进轮盘；不重写 DDNet bind，不做宏、插件或 TAS。</p>
+      <nav class="toc" aria-label="文档目录">
+        <a href="#goal">① 目标与非目标</a>
+        <a href="#model">② 数据与命令模型</a>
+        <a href="#whitelist">③ 白名单建议</a>
+        <a href="#ui">④ UI 与交互</a>
+        <a href="#verification">⑤ 验收</a>
+        <a href="#evidence">⑥ 当前证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="goal">
+      <h2>① 目标与非目标</h2>
+      <table>
+        <thead><tr><th>类型</th><th>范围</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge ok">目标</span></td><td>在 BindWheel 设置页提供“添加快捷设置”入口，把少量安全客户端开关生成为普通 bindwheel 命令。</td><td>复用当前 <code>add_bindwheel</code>、轮盘渲染、保存和按键绑定，不新建第二套轮盘系统。</td></tr>
+          <tr><td><span class="badge ok">目标</span></td><td>固定 P0 白名单，只允许本地表现层、HUD、翻译、截图/资源辅助这类低风险开关。</td><td>避免把控制台任意命令包装成宏平台。</td></tr>
+          <tr><td><span class="badge warn">暂不做</span></td><td>多级轮盘、条件宏、延迟命令、脚本 API、插件自动加载。</td><td>这些会进入自动化/脚本平台风险，不属于快捷设置面板。</td></tr>
+          <tr><td><span class="badge warn">暂不做</span></td><td>重写 DDNet 原生 <code>bind</code>、Chat Binds 或现有 BindWheel 配置格式。</td><td>当前三层 bind 能力边界不同，P0 应避免迁移成本。</td></tr>
+          <tr><td><span class="badge bad">禁止</span></td><td>加入影响物理、预测、协议、输入录制、自动玩法或远端同步的设置。</td><td>快捷入口不能改变玩法公平性和 DDNet 兼容性。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="model">
+      <h2>② 数据与命令模型</h2>
+      <p class="note">P0 不新增持久化结构。快捷设置预设最终仍落成现有 BindWheel 的 <code>name + command</code>，由 <code>ConfigDomain::QMCLIENT</code> 保存。</p>
+      <table>
+        <thead><tr><th>项目</th><th>规格</th><th>边界</th></tr></thead>
+        <tbody>
+          <tr><td>名称</td><td>使用用户可见短名称，例如 <code>Hitbox</code>、<code>Auto translate</code>、<code>Focus Mode</code>。</td><td>仍受 <code>BINDWHEEL_MAX_NAME = 64</code> 限制。</td></tr>
+          <tr><td>命令</td><td>生成单条控制台命令，优先使用 <code>toggle &lt;config&gt; 0 1</code> 或已有显式命令。</td><td>不生成多命令串，不生成带等待/循环/条件的命令。</td></tr>
+          <tr><td>来源标记</td><td>P0 可以只在 UI 上标识“Preset”，不写入配置。</td><td>如果未来需要区分用户自定义和预设，另行设计 metadata。</td></tr>
+          <tr><td>保存</td><td>沿用当前 <code>add_bindwheel "name" "command"</code> 写出。</td><td>不引入 <code>.qmconfig</code> 或独立 JSON sidecar。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="whitelist">
+      <h2>③ 白名单建议</h2>
+      <p>白名单必须小而稳。以下是 P0 可选候选，不要求一次全部实现；实现前仍需逐项确认配置存在、含义清晰、不会触碰玩法逻辑。</p>
+      <table>
+        <thead><tr><th>分组</th><th>候选设置</th><th>命令形态</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td>视觉辅助</td><td><code>qm_hitbox_mode</code>、<code>qm_show_collision_hitbox</code></td><td><code>toggle ... 0 1</code></td><td>纯本地可视化，适合作为轮盘快速开关。</td></tr>
+          <tr><td>HUD/可读性</td><td><code>qm_ui_motion_level</code> 降级切换、Focus Mode 对应命令/绑定。</td><td>优先用已有命令；没有稳定命令则暂缓。</td><td>玩家常在录制、低性能或专注场景切换。</td></tr>
+          <tr><td>聊天/翻译</td><td><code>qm_translate_auto</code>、<code>qm_translate_auto_outgoing</code>。</td><td><code>toggle ... 0 1</code></td><td>当前已有输入框按钮，但放进轮盘可服务手柄/快捷操作。</td></tr>
+          <tr><td>资源/截图</td><td>截图、打开资源目录、切换资源预览调试类入口。</td><td>仅允许已有显式命令。</td><td>如无当前稳定命令，P0 不新增。</td></tr>
+          <tr><td>分身辅助</td><td><code>qm_dummy_miniview</code>、<code>qm_dummy_miniview_auto</code>。</td><td><code>toggle ... 0 1</code></td><td>本地 UI 辅助，可作为高价值候选。</td></tr>
+        </tbody>
+      </table>
+      <p class="note warn">不要把 <code>kill</code>、移动输入、武器切换、投票、聊天刷屏、自动回复、自动操作或服务端命令加入预设白名单。用户仍可手写任意 bindwheel 命令，但“快捷设置面板”不应主动推荐高风险命令。</p>
+    </section>
+
+    <section class="card" id="ui">
+      <h2>④ UI 与交互</h2>
+      <ul>
+        <li>在现有 BindWheel 设置页编辑器旁增加一个紧凑的 preset 区域，使用分组下拉或简短列表。</li>
+        <li>选择 preset 后填充当前 Name / Command 输入框，用户确认后仍走 <code>Add Bind</code> 或 <code>Override Selected</code>。</li>
+        <li>预设项必须显示最终命令，避免用户不知道轮盘会执行什么。</li>
+        <li>如果当前轮盘已有同名同命令项，按钮应显示为已存在或禁用，避免重复添加。</li>
+        <li>右侧圆形预览、左键选择、右键交换、中键选择只读行为保持不变。</li>
+      </ul>
+    </section>
+
+    <section class="card" id="verification">
+      <h2>⑤ 验收</h2>
+      <table>
+        <thead><tr><th>检查项</th><th>验收标准</th></tr></thead>
+        <tbody>
+          <tr><td>功能</td><td>能从 preset 添加至少 3 个白名单设置到 BindWheel，并在轮盘中执行对应 toggle。</td></tr>
+          <tr><td>兼容</td><td>原有 <code>add_bindwheel</code>、<code>remove_bindwheel</code>、设置页手写 Name/Command、轮盘预览和 <code>+bindwheel</code> 不回归。</td></tr>
+          <tr><td>持久化</td><td>重启后 preset 生成的条目仍以普通 bindwheel 配置恢复，不需要新文件。</td></tr>
+          <tr><td>安全</td><td>preset 列表不包含服务端命令、聊天刷屏、自动输入、物理/预测/协议相关开关。</td></tr>
+          <tr><td>验证</td><td>实现后至少跑文档 gate、相关 quick gate 或手动设置页/轮盘截图检查，并回填 <a href="../current/bind-system.html">Bind 系统现状</a>。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>⑥ 当前证据</h2>
+      <details open>
+        <summary>BindWheel 当前能力</summary>
+        <ul>
+          <li><a href="../current/bind-system.html">bind-system.html</a> 已确认 BindWheel 支持轮盘打开、hover 执行、添加/删除/清空、设置页编辑、圆形预览和快捷键绑定。</li>
+          <li><code>src/game/client/components/tclient/bindwheel.h:12-15</code> 定义名称、命令和绑定数量上限；<code>:35-44</code> 定义普通 <code>name + command</code> 条目。</li>
+          <li><code>src/game/client/components/tclient/bindwheel.cpp:109-121</code> 注册 <code>+bindwheel</code>、<code>add_bindwheel</code>、<code>remove_bindwheel</code>、<code>delete_all_bindwheel_binds</code>。</li>
+          <li><code>src/game/client/components/tclient/bindwheel.cpp:329-347</code> 通过 <code>add_bindwheel</code> 写回 <code>ConfigDomain::QMCLIENT</code>。</li>
+          <li><code>src/game/client/components/tclient/menus_tclient.cpp:3441-3596</code> 渲染 BindWheel 设置页编辑器、圆形预览、增删覆盖按钮和按键绑定。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>可作为白名单来源的当前配置</summary>
+        <ul>
+          <li><code>src/engine/shared/config_variables_qmclient.h:20</code> 定义 <code>qm_ui_motion_level</code>。</li>
+          <li><code>src/engine/shared/config_variables_qmclient.h:75-85</code> 定义碰撞体/Hitbox 可视化配置。</li>
+          <li><code>src/engine/shared/config_variables_qmclient.h:393-396</code> 定义分身迷你视图配置。</li>
+          <li><code>src/engine/shared/config_variables_qmclient.h:414</code> 和 <code>:451</code> 定义入站/出站自动翻译开关。</li>
+        </ul>
+      </details>
+      <p class="note warn">本页是后续实现规格，不证明快捷设置面板已落地。实现完成后，应把本页状态从 draft 更新，并补充实际截图/验证证据。</p>
+    </section>
+
+    <p class="footer">相关入口：<a href="../current/bind-system.html">Bind 系统现状</a>、<a href="innovation-roadmap.html">创新功能候选路由</a>、<a href="todo-priority-status.html">新版 TODO 优先级路由</a>。</p>
+  </div>
+</body>
+</html>

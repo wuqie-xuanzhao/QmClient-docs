@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>QmClient 规划与候选 Backlog 索引</title>
+  <style>
+    :root{--bg:#f4f1ea;--paper:#fffdfa;--ink:#2d2924;--muted:#6f675f;--line:#ded4c6;--accent:#4f6f73;--accent-2:#b8795b;--ok:#5f7f55;--warn:#a57536;--bad:#a94d45;--shadow:0 18px 45px rgba(62,50,39,.12);--code-bg:#ede6dc}*{box-sizing:border-box}body{margin:0;color:var(--ink);background:radial-gradient(circle at 12% 0%,rgba(184,121,91,.16),transparent 30rem),radial-gradient(circle at 88% 8%,rgba(79,111,115,.14),transparent 28rem),linear-gradient(180deg,#f7f3ec 0%,var(--bg) 100%);font-family:"Noto Sans SC","Segoe UI","Microsoft YaHei",sans-serif;line-height:1.72}.page{max-width:1180px;margin:0 auto;padding:28px 20px 56px}.hero,.card{background:var(--paper);border:1px solid rgba(222,212,198,.95);box-shadow:var(--shadow);border-radius:22px}.hero{padding:28px 28px 24px;margin-bottom:18px}.card{padding:22px 24px;margin-top:18px}h1,h2{margin:0 0 12px;line-height:1.2}h1{font-size:28px}h2{font-size:22px}p{margin:0 0 12px}code{padding:.12em .36em;border-radius:6px;background:var(--code-bg);color:#613c2e;font-size:.94em}table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px;display:block;overflow-x:auto}th,td{border-top:1px solid var(--line);padding:10px 12px;vertical-align:top;text-align:left}th{background:#faf5ed;color:#4f463d;font-weight:700;white-space:nowrap}a{color:#355f66;text-decoration-thickness:1px;text-underline-offset:3px}.meta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(79,111,115,.10);color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.02em}.pill.secondary{background:rgba(184,121,91,.10);color:var(--accent-2)}.pill.warn{background:rgba(165,117,54,.12);color:var(--warn)}.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}.badge.warn{background:rgba(165,117,54,.12);color:var(--warn)}.badge.bad{background:rgba(169,77,69,.12);color:var(--bad)}.muted{color:var(--muted)}.note{border-left:4px solid var(--accent);padding:10px 12px;background:rgba(79,111,115,.06);border-radius:0 10px 10px 0;color:#4c4238}.note.warn{border-left-color:var(--warn);background:rgba(165,117,54,.08)}.footer{margin-top:18px;color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill warn">planning</span><span class="pill secondary">2026-06-16</span><span class="pill">不可直接执行</span></div>
+      <h1>QmClient 规划与候选 Backlog 索引</h1>
+      <p class="muted">本目录只说明“可以考虑做什么”。这里的文档不是当前功能清单，也不是可直接交给开发的实施计划。</p>
+    </header>
+
+    <section class="card">
+      <h2>新版 TODO 路由</h2>
+      <p class="note">新版 TODO PDF 已整理成 <a href="todo-priority-status.html">todo-priority-status.html</a>。后续判断优先级时先读它，再回到本页查旧规划草案。</p>
+    </section>
+
+    <section class="card">
+      <h2>进入开发前必须补齐</h2>
+      <p class="note warn">任何条目真正开始实现前，都需要重新读当前源码、按新版 TODO 和现有 HTML 现状页核对范围，再写新的规格/计划。旧方案里的路径、配置名、UI 位置和实现状态都可能过时。</p>
+      <table>
+        <thead><tr><th>检查点</th><th>要求</th></tr></thead>
+        <tbody>
+          <tr><td>当前事实</td><td>用源码和当前 HTML 现状页确认功能是否已经部分实现。</td></tr>
+          <tr><td>范围</td><td>拆出一个可验证的小功能，不把整份报告一次性实现。</td></tr>
+          <tr><td>兼容性</td><td>避免默认触碰协议、物理、demo 格式、文件格式和上游核心行为。</td></tr>
+          <tr><td>验证</td><td>按 <code>docs/ai-workflow/verification.md</code> 和对应 gate 设计验证。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>候选规划清单</h2>
+      <table>
+        <thead><tr><th>文档</th><th>状态</th><th>主题</th><th>使用口径</th></tr></thead>
+        <tbody>
+          <tr><td><a href="candidate-backlog-status.html">candidate-backlog-status.html</a></td><td><span class="badge warn">backlog router</span></td><td>总 backlog 路由</td><td>旧功能集合入口已接管；先看 HTML 路由，再回到旧 Markdown 追溯想法来源。</td></tr>
+          <tr><td><a href="global-chat-boundary-spec.html">global-chat-boundary-spec.html</a></td><td><span class="badge bad">research</span></td><td>跨服务器全局聊天边界</td><td>把跨服聊天从好友系统小改里拆出；当前没有中心服务、账号身份、协议和滥用控制基础，不直接实现。</td></tr>
+          <tr><td><a href="brand-migration-boundary-spec.html">brand-migration-boundary-spec.html</a></td><td><span class="badge warn">draft spec</span></td><td>Qimeng 到 QmClient 品牌迁移边界</td><td>把用户可见品牌、配置兼容、Q1menG 历史识别链路和远端服务命名分层；禁止全局搜索替换。</td></tr>
+          <tr><td><a href="qmconfig-minimal-package-spec.html">qmconfig-minimal-package-spec.html</a></td><td><span class="badge warn">draft spec</span></td><td>.qmconfig 最小配置包</td><td>基于现有配置域和 <code>QmClient/</code> 配置文件，定义文件级备份/迁移、manifest 和敏感项过滤；不做智能合并。</td></tr>
+          <tr><td><a href="innovation-roadmap.html">innovation-roadmap.html</a></td><td><span class="badge warn">innovation router</span></td><td>创新功能候选路由</td><td>综合新版 TODO、候选 backlog 和当前状态页，筛选近期/中期/需调研的产品化方向。</td></tr>
+          <tr><td><a href="feature-brainstorm-status.html">feature-brainstorm-status.html</a></td><td><span class="badge warn">brainstorm router</span></td><td>功能头脑风暴路由</td><td>旧脑暴稿已接管；已实现、已否决和需重写的条目先看 HTML 路由。</td></tr>
+          <tr><td><a href="hud-visual-assist-status.html">hud-visual-assist-status.html</a></td><td><span class="badge warn">active planning</span></td><td>HUD/视觉辅助</td><td>已按当前 HUD editor、武器切换动画、强弱钩和无限钩图标重写入口；无障碍已拆到独立状态页。</td></tr>
+          <tr><td><a href="accessibility-status.html">accessibility-status.html</a></td><td><span class="badge warn">active planning</span></td><td>无障碍/可读性</td><td>已按当前分散可读性控制、颜色依赖、Focus Mode 和专门模式缺口重写入口。</td></tr>
+          <tr><td><a href="../archive/superseded-planning/accessibility-plan.md">accessibility-plan.md</a></td><td><span class="badge warn">superseded</span></td><td>无障碍旧案</td><td>旧案中的“几乎为零”、配置路径和 UI 缩放推断已经由 HTML 状态页接管。</td></tr>
+          <tr><td><a href="adaptive-antiping-status.html">adaptive-antiping-status.html</a></td><td><span class="badge bad">high-risk planning</span></td><td>自适应 AntiPing</td><td>已按当前 AntiPing、TClient 平滑、预测 margin 自动补偿、QmMonitoring 和 status bar 网络指标重写入口；默认只做诊断建议，不自动改预测参数。</td></tr>
+          <tr><td><a href="network-diagnostics-panel-spec.html">network-diagnostics-panel-spec.html</a></td><td><span class="badge warn">draft spec</span></td><td>网络诊断面板与状态栏预设</td><td>复用现有 QmMonitoring 和状态栏，补网络诊断预设与只读解释；不新建 NetGraph、不自动调预测参数。</td></tr>
+          <tr><td><a href="../archive/superseded-planning/adaptive-antiping-plan.md">adaptive-antiping-plan.md</a></td><td><span class="badge warn">superseded</span></td><td>自适应 AntiPing 旧案</td><td>旧案低估了现有网络指标和预测风险，并建议新增 <code>cl_</code> 前缀配置；已由 HTML 状态页接管。</td></tr>
+          <tr><td><a href="bindwheel-quick-settings-spec.html">bindwheel-quick-settings-spec.html</a></td><td><span class="badge warn">draft spec</span></td><td>BindWheel 快捷设置面板</td><td>基于现有 BindWheel 轮盘和设置页编辑器，定义少量安全客户端设置白名单预设；不做宏、插件或 TAS。</td></tr>
+          <tr><td><a href="bind-systematization-boundary-spec.html">bind-systematization-boundary-spec.html</a></td><td><span class="badge warn">draft spec</span></td><td>Bind 指令系统化边界</td><td>把 DDNet 原生 bind、Chat Binds 管理 UI、BindWheel 快捷设置和配置包导出分层；不扩成宏或脚本平台。</td></tr>
+          <tr><td><a href="chat-f1-export-status.html">chat-f1-export-status.html</a></td><td><span class="badge warn">active planning</span></td><td>聊天/F1 导出</td><td>已按当前 F1 控制台 TXT/HTML/PNG 导出能力重写入口；后续重点是 JSON/TOML、完整 F1 范围和卡顿控制。</td></tr>
+          <tr><td><a href="resources-workshop-status-spec.html">resources-workshop-status-spec.html</a></td><td><span class="badge warn">draft spec</span></td><td>资源页 Workshop 状态收口</td><td>把已下载/未下载、作者、下载失败、删除确认和 entity background 层级状态收敛成 P0 小规格；资源分享和上传市场不进入本规格。</td></tr>
+          <tr><td><a href="../archive/superseded-planning/chat-log-export-plan.md">chat-log-export-plan.md</a></td><td><span class="badge warn">superseded</span></td><td>聊天/F1 导出旧案</td><td>旧方案仍说无法导出且只规划 TXT/JSON，已不符合当前源码。</td></tr>
+          <tr><td><a href="chat-ui-status.html">chat-ui-status.html</a></td><td><span class="badge warn">active planning</span></td><td>聊天框 UI 增强</td><td>已按当前聊天渲染、翻译按钮、复制、右键菜单、草稿和头顶气泡动画重写入口。</td></tr>
+          <tr><td><a href="chat-input-feedback-spec.html">chat-input-feedback-spec.html</a></td><td><span class="badge warn">draft spec</span></td><td>聊天输入与消息行反馈</td><td>基于已存在的输入、翻译按钮、复制和右键菜单，只定义输入框焦点态与消息行 hover/按下反馈；不迁移聊天渲染。</td></tr>
+          <tr><td><a href="qmui-consolidation-boundary-spec.html">qmui-consolidation-boundary-spec.html</a></td><td><span class="badge warn">draft spec</span></td><td>QmUi 组件 / 动画 / Theme 收口</td><td>只收口现有 QmUi 资产的使用规则；不做全局 UI 重构，也不把局部动画 helper 一次性扫全仓库替换。</td></tr>
+          <tr><td><a href="../archive/superseded-planning/chat-ui-enhancement-plan.md">chat-ui-enhancement-plan.md</a></td><td><span class="badge warn">superseded</span></td><td>聊天框增强旧案</td><td>旧案仍把已实现的鼠标交互、复制和翻译按钮当作缺口；已由 HTML 状态页接管。</td></tr>
+          <tr><td><a href="demo-spectator-status.html">demo-spectator-status.html</a></td><td><span class="badge warn">active planning</span></td><td>Demo/观战导演</td><td>已按当前 Demo marker/slice/speed、Qm HUD/input 回放、Ghost、LiveDirector 和 MultiView 状态重写入口。</td></tr>
+          <tr><td><a href="demo-director-target-recommendation-spec.html">demo-director-target-recommendation-spec.html</a></td><td><span class="badge warn">draft spec</span></td><td>Demo/观战导演目标推荐</td><td>基于 LiveDirector / MultiView / live observer overlay 定义可解释推荐和手动确认切换；不做画中画、demo 格式改动或全自动高光评分。</td></tr>
+          <tr><td><a href="../archive/superseded-planning/demo-player-enhancement-plan.md">demo-player-enhancement-plan.md</a></td><td><span class="badge warn">superseded</span></td><td>Demo 旧案</td><td>旧案中的书签 JSON、自动高光和 Ghost 对比 UI 未经当前源码证实；先读 HTML 状态页。</td></tr>
+          <tr><td><a href="hook-progress-status.html">hook-progress-status.html</a></td><td><span class="badge warn">active planning</span></td><td>钩子进度条</td><td>已按当前 hook tick、endless hook、0.7 裁剪、HUD 图标和名字板强弱钩布局重写入口。</td></tr>
+          <tr><td><a href="../archive/superseded-planning/hook-progress-plan.md">hook-progress-plan.md</a></td><td><span class="badge warn">superseded</span></td><td>钩子进度条旧案</td><td>旧案仍可作为想法来源，但配置路径、名字板插入点、Unicode 符号和默认显示范围已由 HTML 状态页修正。</td></tr>
+          <tr><td><a href="../archive/superseded-planning/hud-editor-plan.md">hud-editor-plan.md</a></td><td><span class="badge warn">superseded</span></td><td>HUD 编辑器旧案</td><td>旧案中“缺少重置/吸附”的判断已过时；当前入口见 HUD/视觉辅助状态页。</td></tr>
+          <tr><td><a href="favorites-browser-status.html">favorites-browser-status.html</a></td><td><span class="badge warn">active planning</span></td><td>收藏/资源浏览</td><td>已按当前 Favorite Maps 页、地图备注、分类缓存、本地存档联动和 DDNet 服务器收藏模型重写入口。</td></tr>
+          <tr><td><a href="../archive/superseded-planning/map-favorites-plan.md">map-favorites-plan.md</a></td><td><span class="badge warn">superseded</span></td><td>地图收藏旧案</td><td>旧案中“无独立 Tab、无备注、只在设置页”的判断已过时；先读 HTML 状态页。</td></tr>
+          <tr><td><a href="server-favorites-status.html">server-favorites-status.html</a></td><td><span class="badge warn">active planning</span></td><td>服务器收藏增强</td><td>已按当前多地址 favorite group、<code>allow_ping</code>、favorite community 和 sidecar 元数据边界重写入口。</td></tr>
+          <tr><td><a href="split-timer-checkpoint-spec.html">split-timer-checkpoint-spec.html</a></td><td><span class="badge warn">draft spec</span></td><td>Split Timer 检查点分段计时</td><td>把 BC 未落地 Split Timer 收敛为本地只读分段计时；不做 Finish Prediction、协议/demo 格式或跨局排行榜。</td></tr>
+          <tr><td><a href="persistent-stats-status.html">persistent-stats-status.html</a></td><td><span class="badge warn">active planning</span></td><td>统计/持久化</td><td>已拆清 statboard、自动 CSV、PlayerStats HUD、中心服在线时长和本地历史战绩缺口。</td></tr>
+          <tr><td><a href="local-match-history-spec.html">local-match-history-spec.html</a></td><td><span class="badge warn">draft spec</span></td><td>本地跨局战绩历史</td><td>只记录本地玩家每局摘要，和 statboard CSV、PlayerStats HUD、中心服 playtime 分层；不做账号、云同步、成就或图表库。</td></tr>
+          <tr><td><a href="../archive/superseded-planning/persistent-stats-plan.md">persistent-stats-plan.md</a></td><td><span class="badge warn">superseded</span></td><td>持久化统计旧案</td><td>旧案漏掉 Qm/TClient 当前会话统计和 playtime，且 <code>cl_stats_*</code> 命名不适合 QmClient。</td></tr>
+          <tr><td><a href="plugin-scripting-status.html">plugin-scripting-status.html</a></td><td><span class="badge bad">high-risk planning</span></td><td>脚本/插件系统</td><td>已按当前 ChaiScript <code>chai</code> 命令、有限 API、bindchat/bindwheel 路径和插件平台缺口重写入口。</td></tr>
+          <tr><td><a href="../archive/superseded-planning/plugin-script-system-plan.md">plugin-script-system-plan.md</a></td><td><span class="badge bad">superseded</span></td><td>插件/脚本系统旧案</td><td>旧案推荐 Lua、规划 <code>plugins/</code> 和 <code>cl_plugins_*</code>，已不符合当前代码与命名口径。</td></tr>
+          <tr><td><a href="screenshot-manager-status.html">screenshot-manager-status.html</a></td><td><span class="badge warn">active planning</span></td><td>截图管理/水印</td><td>已按当前截图保存、自动截图、截图动画和 Demo 浏览器 Screenshots 模式重写入口。</td></tr>
+          <tr><td><a href="screenshot-watermark-naming-spec.html">screenshot-watermark-naming-spec.html</a></td><td><span class="badge warn">draft spec</span></td><td>截图水印与地图名命名</td><td>基于已有截图保存和 Screenshots 模式，只定义本地水印、时间戳、地图名命名；不做自动上传和社交分享。</td></tr>
+          <tr><td><a href="../archive/superseded-planning/screenshot-manager-plan.md">screenshot-manager-plan.md</a></td><td><span class="badge warn">superseded</span></td><td>截图管理旧案</td><td>旧案中“缺少管理界面”和 <code>F12</code> 判断已过时；水印/分享仍可作为后续规划来源。</td></tr>
+          <tr><td><a href="../archive/superseded-planning/server-favorites-plan.md">server-favorites-plan.md</a></td><td><span class="badge warn">superseded</span></td><td>服务器收藏旧案</td><td>旧案低估了当前多地址 favorite group、<code>allow_ping</code> 和 favorite community 边界；已由 HTML 状态页接管。</td></tr>
+          <tr><td><a href="skin-mixer-status.html">skin-mixer-status.html</a></td><td><span class="badge warn">active planning</span></td><td>皮肤混搭/资源编辑</td><td>已按当前 Skin 资产编辑器 Frankenstein 部件拖拽、染色、预览和标准 skin/skins7 导出重写入口。</td></tr>
+          <tr><td><a href="skin-frankenstein-recipe-spec.html">skin-frankenstein-recipe-spec.html</a></td><td><span class="badge warn">draft spec</span></td><td>Skin Frankenstein 可编辑配方</td><td>定义可再次打开继续编辑的 recipe sidecar；标准 skin/skins7 导出仍保持运行时真相源，分享码和 Workshop 上传后置。</td></tr>
+          <tr><td><a href="../archive/superseded-planning/skin-mixer-plan.md">skin-mixer-plan.md</a></td><td><span class="badge warn">superseded</span></td><td>皮肤混搭旧案</td><td>旧案中“无法混搭/缺少预览/缺少保存”的判断已落后；分享码和 <code>.qmixin</code> 仍只是规划。</td></tr>
+          <tr><td><a href="../archive/superseded-planning/spectator-director-plan.md">spectator-director-plan.md</a></td><td><span class="badge warn">superseded</span></td><td>观战导演旧案</td><td>画中画方向已由新版 TODO 否决；当前只保留观战目标路由和 Demo 制作辅助方向。</td></tr>
+          <tr><td><a href="../archive/superseded-planning/weapon-switch-animation-plan.md">weapon-switch-animation-plan.md</a></td><td><span class="badge warn">superseded</span></td><td>武器切换动画旧案</td><td>当前已有 <code>qm_weapon_switch_anim</code> 和范围配置；旧远程 HTTP 同步方案不作为当前 P0。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>需要优先重写的旧计划</h2>
+      <p>优先级最高的是和新版 TODO 明确标注 DYL 或高优先级、且已有代码进展的文档：聊天/F1 导出、Demo/观战导演、HUD/视觉辅助、收藏/资源浏览、资源页、页面切换性能、配置导入导出、自动更新、BC 功能移植。创新功能汇总见 <a href="innovation-roadmap.html">创新功能候选路由</a>，具体优先级路由见 <a href="todo-priority-status.html">新版 TODO 优先级路由</a>。配置导入/导出已经补了 <a href="qmconfig-minimal-package-spec.html">.qmconfig 最小包规格</a>，聊天/F1 导出已经补了 <a href="chat-f1-export-status.html">当前状态页</a>，聊天框 UI 增强已经补了 <a href="chat-ui-status.html">当前状态页</a> 和 <a href="chat-input-feedback-spec.html">输入反馈小规格</a>，BindWheel 产品化已经补了 <a href="bindwheel-quick-settings-spec.html">快捷设置小规格</a>，BC Split Timer 已经补了 <a href="split-timer-checkpoint-spec.html">检查点分段计时小规格</a>，跨服务器全局聊天已经补了 <a href="global-chat-boundary-spec.html">边界调研</a>，自适应 AntiPing 已经补了 <a href="adaptive-antiping-status.html">当前状态页</a>，Demo/观战导演已经补了 <a href="demo-spectator-status.html">当前状态页</a>，HUD/视觉辅助已经补了 <a href="hud-visual-assist-status.html">当前状态页</a>，钩子进度条已经补了 <a href="hook-progress-status.html">当前状态页</a>，无障碍/可读性已经补了 <a href="accessibility-status.html">当前状态页</a>，收藏/资源浏览已经补了 <a href="favorites-browser-status.html">当前状态页</a>，服务器收藏增强已经补了 <a href="server-favorites-status.html">当前状态页</a>，脚本/插件系统已经补了 <a href="plugin-scripting-status.html">当前状态页</a>，截图管理/水印已经补了 <a href="screenshot-manager-status.html">当前状态页</a>，皮肤混搭/资源编辑已经补了 <a href="skin-mixer-status.html">当前状态页</a>，统计/持久化已经补了 <a href="persistent-stats-status.html">当前状态页</a>；后续应从 HTML 开始，而不是从旧 Markdown 开始。</p>
+      <p class="note warn">配置命名相关旧计划里仍有 <code>config_variables_qimeng.h</code>、<code>QIMENG</code>、<code>RiVoice</code>、<code>qmc_</code> 等过时说法。任何配置命名改动前，先读 <a href="../research/config-naming-status.html">配置变量命名现状</a>。</p>
+    </section>
+    <p class="footer">Markdown README 保留为 <a href="README.md">README.md</a>，本 HTML 索引用于日常导航。</p>
+  </div>
+</body>
+</html>
+
+
+
+

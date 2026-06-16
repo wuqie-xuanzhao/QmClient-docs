@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>QmClient 调研资料索引</title>
+  <style>
+    :root{--bg:#f4f1ea;--paper:#fffdfa;--ink:#2d2924;--muted:#6f675f;--line:#ded4c6;--accent:#4f6f73;--accent-2:#b8795b;--ok:#5f7f55;--warn:#a57536;--bad:#a94d45;--shadow:0 18px 45px rgba(62,50,39,.12);--code-bg:#ede6dc}*{box-sizing:border-box}body{margin:0;color:var(--ink);background:radial-gradient(circle at 12% 0%,rgba(184,121,91,.16),transparent 30rem),radial-gradient(circle at 88% 8%,rgba(79,111,115,.14),transparent 28rem),linear-gradient(180deg,#f7f3ec 0%,var(--bg) 100%);font-family:"Noto Sans SC","Segoe UI","Microsoft YaHei",sans-serif;line-height:1.72}.page{max-width:1180px;margin:0 auto;padding:28px 20px 56px}.hero,.card{background:var(--paper);border:1px solid rgba(222,212,198,.95);box-shadow:var(--shadow);border-radius:22px}.hero{padding:28px 28px 24px;margin-bottom:18px}.card{padding:22px 24px;margin-top:18px}h1,h2{margin:0 0 12px;line-height:1.2}h1{font-size:28px}h2{font-size:22px}p{margin:0 0 12px}code{padding:.12em .36em;border-radius:6px;background:var(--code-bg);color:#613c2e;font-size:.94em}table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px;display:block;overflow-x:auto}th,td{border-top:1px solid var(--line);padding:10px 12px;vertical-align:top;text-align:left}th{background:#faf5ed;color:#4f463d;font-weight:700;white-space:nowrap}a{color:#355f66;text-decoration-thickness:1px;text-underline-offset:3px}.meta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(79,111,115,.10);color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.02em}.pill.secondary{background:rgba(184,121,91,.10);color:var(--accent-2)}.pill.ok{background:rgba(95,127,85,.12);color:var(--ok)}.pill.warn{background:rgba(165,117,54,.12);color:var(--warn)}.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}.badge.ok{background:rgba(95,127,85,.12);color:var(--ok)}.badge.warn{background:rgba(165,117,54,.12);color:var(--warn)}.muted{color:var(--muted)}.note{border-left:4px solid var(--accent);padding:10px 12px;background:rgba(79,111,115,.06);border-radius:0 10px 10px 0;color:#4c4238}.note.warn{border-left-color:var(--warn);background:rgba(165,117,54,.08)}.footer{margin-top:18px;color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill ok">active</span><span class="pill secondary">2026-06-16</span><span class="pill warn">research</span></div>
+      <h1>QmClient 调研资料索引</h1>
+      <p class="muted">这里保留的是“曾经读过什么、当时观察到什么”。它们不是当前实现依据；进入开发前必须按当前源码、脚本入口和治理文档重新复核。</p>
+    </header>
+
+    <section class="card">
+      <h2>使用规则</h2>
+      <p class="note warn">调研文档可以帮助快速定位问题背景，但其中的文件路径、结论和风险判断可能已经随代码变化而过时。引用前必须确认对应源码仍存在，并优先使用当前 HTML 现状页。</p>
+    </section>
+
+    <section class="card">
+      <h2>调研清单</h2>
+      <table>
+        <thead><tr><th>文档</th><th>状态</th><th>当前使用口径</th><th>复核入口</th></tr></thead>
+        <tbody>
+          <tr><td><a href="harmonyos-port-feasibility.html">harmonyos-port-feasibility.html</a></td><td><span class="badge ok">HTML research</span></td><td>HarmonyOS 移植可行性调研，仍是平台方向参考，不代表当前移植计划已启动。</td><td>平台构建、CMake、SDL/图形后端和移动端约束。</td></tr>
+          <tr><td><a href="script-tools-status.html">script-tools-status.html</a></td><td><span class="badge ok">active</span></td><td>已按 <code>qmclient_scripts/scripts_overview.md</code>、gate、perf 和 active i18n 主链重写脚本入口口径。</td><td><code>qmclient_scripts/scripts_overview.md</code>、<code>qmclient_scripts/</code>、<code>scripts/</code>。</td></tr>
+          <tr><td><a href="../archive/superseded-research/script-tools-research.md">script-tools-research.md</a></td><td><span class="badge warn">superseded</span></td><td>旧调研保留为历史材料；其中 QIMENG 配置域、QmClient 翻译脚本废弃等结论已过时。</td><td>使用前先读 <code>script-tools-status.html</code>。</td></tr>
+          <tr><td><a href="page-switch-stutter-status.html">page-switch-stutter-status.html</a></td><td><span class="badge ok">active</span></td><td>已按当前 GPU upload limiter、资源页异步 job、皮肤/背景同步路径重新核对，作为旧页面切换卡顿调研的当前入口。</td><td><code>current/resources-page.html</code>、<code>current/network-stutter-visualization.html</code>、设置页性能总纲。</td></tr>
+          <tr><td><a href="media-background-boundary.html">media-background-boundary.html</a></td><td><span class="badge ok">active</span></td><td>已修正 BC Media Background 口径：底层菜单/实体视频背景能力存在，但缺媒体库、导入/删除、播放控制和产品化管理闭环。</td><td><code>current/bc-port-status.html</code>、<code>current/resources-page.html</code>、背景组件源码。</td></tr>
+          <tr><td><a href="finish-prediction-boundary.html">finish-prediction-boundary.html</a></td><td><span class="badge warn">research</span></td><td>已确认 Finish Prediction 当前未实现，并和 Race Time、Speedrun Timer、Split Timer、Gores 进度、AntiPing 预测拆开。</td><td><code>current/bc-port-status.html</code>、<code>planning/split-timer-checkpoint-spec.html</code>、race time / status bar / Gores 相关源码。</td></tr>
+          <tr><td><a href="workshop-upload-boundary.html">workshop-upload-boundary.html</a></td><td><span class="badge warn">research</span></td><td>已拆清资源页 Workshop 状态收口和上传市场：当前有 catalog 浏览/下载/作者缓存，未见账号、审核、上传或远端发布闭环。</td><td><code>current/resources-page.html</code>、<code>planning/resources-workshop-status-spec.html</code>、资源页源码。</td></tr>
+          <tr><td><a href="../archive/superseded-research/page-switch-stutter-research.md">page-switch-stutter-research.md</a></td><td><span class="badge warn">superseded</span></td><td>旧调研保留为历史材料；其中资源页本地 GPU 常量、CSkins7 default 同步路径等结论已不适合作为当前执行依据。</td><td>使用前先读 <code>page-switch-stutter-status.html</code>。</td></tr>
+          <tr><td><a href="config-naming-status.html">config-naming-status.html</a></td><td><span class="badge ok">active</span></td><td>已按当前配置域、文件名和前缀统计重写；替代旧命名调研。</td><td><code>src/engine/shared/config_variables_qmclient.h</code>、<code>config_variables_tclient.h</code>、<code>current/config-import-export.html</code>。</td></tr>
+          <tr><td><a href="../archive/superseded-research/config-naming-research.md">config-naming-research.md</a></td><td><span class="badge warn">superseded</span></td><td>旧文档仍保留为来源材料，但其中 <code>config_variables_qimeng.h</code>、<code>QIMENG</code>、<code>RiVoice</code>、<code>qmc_</code> 等结论已过时。</td><td>使用前先读 <code>config-naming-status.html</code>。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>下一步整理建议</h2>
+      <p>研究区旧 Markdown 已移入 <a href="../archive/superseded-research/index.html">archive/superseded-research/</a>。后续重点是把确认为长期有效的内容迁入 <code>current/</code>，或把平台方向调研继续维护为独立 HTML。</p>
+    </section>
+    <p class="footer">Markdown README 保留为 <a href="README.md">README.md</a>，本 HTML 索引用于日常导航。</p>
+  </div>
+</body>
+</html>
+
+
+

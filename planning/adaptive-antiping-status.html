@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>自适应 AntiPing 现状与风险</title>
+  <style>
+    :root{--bg:#f4f1ea;--paper:#fffdfa;--ink:#2d2924;--muted:#6f675f;--line:#ded4c6;--accent:#4f6f73;--accent-2:#b8795b;--ok:#5f7f55;--warn:#a57536;--bad:#a94d45;--shadow:0 18px 45px rgba(62,50,39,.12);--code-bg:#ede6dc}*{box-sizing:border-box}body{margin:0;color:var(--ink);background:radial-gradient(circle at 12% 0%,rgba(184,121,91,.16),transparent 30rem),radial-gradient(circle at 88% 8%,rgba(79,111,115,.14),transparent 28rem),linear-gradient(180deg,#f7f3ec 0%,var(--bg) 100%);font-family:"Noto Sans SC","Segoe UI","Microsoft YaHei",sans-serif;line-height:1.72}.page{max-width:1180px;margin:0 auto;padding:28px 20px 56px}.hero,.card{background:var(--paper);border:1px solid rgba(222,212,198,.95);box-shadow:var(--shadow);border-radius:22px}.hero{padding:28px 28px 24px;margin-bottom:18px}.card{padding:22px 24px;margin-top:18px}h1,h2{margin:0 0 12px;line-height:1.2}h1{font-size:28px}h2{font-size:22px}p{margin:0 0 12px}ul{margin:10px 0 0 22px;padding:0}li{margin:4px 0}code{padding:.12em .36em;border-radius:6px;background:var(--code-bg);color:#613c2e;font-size:.94em}table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px;display:block;overflow-x:auto}th,td{border-top:1px solid var(--line);padding:10px 12px;vertical-align:top;text-align:left}th{background:#faf5ed;color:#4f463d;font-weight:700;white-space:nowrap}a{color:#355f66;text-decoration-thickness:1px;text-underline-offset:3px}.meta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(79,111,115,.10);color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.02em}.pill.secondary{background:rgba(184,121,91,.10);color:var(--accent-2)}.pill.warn{background:rgba(165,117,54,.12);color:var(--warn)}.pill.bad{background:rgba(169,77,69,.12);color:var(--bad)}.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}.badge.ok{background:rgba(95,127,85,.12);color:var(--ok)}.badge.warn{background:rgba(165,117,54,.12);color:var(--warn)}.badge.bad{background:rgba(169,77,69,.12);color:var(--bad)}.muted{color:var(--muted)}.note{border-left:4px solid var(--accent);padding:10px 12px;background:rgba(79,111,115,.06);border-radius:0 10px 10px 0;color:#4c4238}.note.warn{border-left-color:var(--warn);background:rgba(165,117,54,.08)}.note.bad{border-left-color:var(--bad);background:rgba(169,77,69,.08)}details{margin-top:10px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.65);padding:10px 12px}summary{cursor:pointer;font-weight:700;color:#423b33}.footer{margin-top:18px;color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill warn">low priority</span><span class="pill secondary">2026-06-16</span><span class="pill bad">prediction risk</span></div>
+      <h1>自适应 AntiPing 现状与风险</h1>
+      <p class="muted">本页接管旧 <code>adaptive-antiping-plan.md</code>。旧案可以保留“基于网络状态给出建议”的方向，但不能直接按“自动改 <code>cl_antiping_percent</code> / <code>cl_antiping_limit</code>”实现；当前代码已有 AntiPing、TClient 平滑、预测 margin 自动补偿和网络监控显示，预测行为属于高风险范围。</p>
+    </header>
+
+    <section class="card">
+      <h2>当前事实</h2>
+      <table>
+        <thead><tr><th>能力</th><th>状态</th><th>当前实现口径</th></tr></thead>
+        <tbody>
+          <tr><td>DDNet AntiPing 基础配置</td><td><span class="badge ok">implemented</span></td><td><code>cl_antiping</code>、<code>cl_antiping_percent</code>、<code>cl_antiping_limit</code>、players/grenade/weapons/smooth/gunfire/preinput 已存在。</td></tr>
+          <tr><td>AntiPing 使用入口</td><td><span class="badge ok">implemented</span></td><td>设置页已有 AntiPing 开关和玩家/武器/手雷预测子项；游戏逻辑通过 <code>AntiPingPlayers()</code>、<code>AntiPingGrenade()</code>、<code>AntiPingWeapons()</code> 判断。</td></tr>
+          <tr><td>TClient 平滑/冻结相关扩展</td><td><span class="badge ok">implemented</span></td><td>当前源码有 <code>TcAntiPingImproved</code>、stable direction、negative buffer、uncertainty scale、remove anti in freeze、fast input 等运行时路径。</td></tr>
+          <tr><td>预测 margin 自动补偿</td><td><span class="badge ok">implemented</span></td><td><code>PredictionMargin()</code> 会采样 live prediction、jitter、测得 ping 和 connection problems，计算动态 margin。</td></tr>
+          <tr><td>网络状态显示</td><td><span class="badge ok">implemented</span></td><td>TClient status bar 支持 ping、prediction、snapshot latency、prediction latency、jitter、packet loss、connection grade；QmMonitoring HUD 也显示 latency / prediction / margin / jitter。</td></tr>
+          <tr><td>自适应修改 AntiPing 参数</td><td><span class="badge warn">not verified</span></td><td>本轮未看到自动定期改写 <code>cl_antiping_percent</code> 或 <code>cl_antiping_limit</code> 的实现；旧案中的自动调参仍是规划。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>旧计划修正</h2>
+      <table>
+        <thead><tr><th>旧判断</th><th>当前修正</th></tr></thead>
+        <tbody>
+          <tr><td>缺少网络状态显示，需要新增 Network HUD。</td><td>已过时。状态栏和 QmMonitoring 已经能显示 latency、prediction、jitter、packet loss、connection grade；后续应复用现有显示，而不是新建平行 HUD。</td></tr>
+          <tr><td>直接根据 ping 自动调整 <code>cl_antiping_percent</code> / <code>cl_antiping_limit</code>。</td><td>风险过高。AntiPing 影响预测、其他玩家位置、武器/投射物表现和冻结场景；自动改写配置会影响用户预期和回归定位。</td></tr>
+          <tr><td>新增 <code>cl_antiping_adaptive</code> 等配置。</td><td>不适合 QmClient 新功能命名。若未来确实新增 QmClient 配置，应使用 <code>qm_</code> / <code>Qm</code> 前缀，并明确不改变上游语义。</td></tr>
+          <tr><td>AntiPing 相关配置在 <code>config_variables_qmclient.h</code>。</td><td>基础 AntiPing 配置实际在 <code>src/engine/shared/config_variables.h</code>。QmClient/TClient 扩展运行时存在，但本轮未把所有 TClient 配置定义位置完整展开。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>建议后的最小规划</h2>
+      <table>
+        <thead><tr><th>阶段</th><th>范围</th><th>验收点</th></tr></thead>
+        <tbody>
+          <tr><td>P0 只读建议</td><td>基于 QmMonitoring / status bar 指标给出“建议检查 AntiPing 设置”的只读提示。</td><td>不自动改配置；只显示当前 latency、jitter、packet loss 与可能原因。</td></tr>
+          <tr><td>P1 预设推荐</td><td>提供手动应用的配置预设，用户明确点击后才写入。</td><td>写入前展示将变更的配置项，并保留恢复路径。</td></tr>
+          <tr><td>P2 弱网验证</td><td>用 fake latency / jitter / packet loss 或可复现实验脚本记录行为。</td><td>有低 ping、高 ping、高 jitter、packet loss、冻结场景和 demo 回放边界证据。</td></tr>
+          <tr><td>P3 自动模式调研</td><td>如果仍要做自动模式，先写独立规格并审查预测兼容性。</td><td>默认关闭；有频率限制、用户可见状态、日志和回退开关。</td></tr>
+        </tbody>
+      </table>
+      <p class="note bad">不建议把“自动调参”作为第一步。更稳妥的落点是“诊断和建议”，因为当前项目已经有足够的网络指标可用，而预测参数本身直接影响玩法体验。</p>
+    </section>
+
+    <section class="card">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>源码位置</summary>
+        <ul>
+          <li><code>src/engine/shared/config_variables.h:18</code> 到 <code>:26</code> 定义 <code>cl_antiping_limit</code>、<code>cl_antiping_percent</code>、<code>cl_antiping</code>、players/grenade/weapons/smooth/gunfire/preinput。</li>
+          <li><code>src/game/client/components/menus_settings.cpp:6369</code> 到 <code>:6392</code> 渲染 DDNet AntiPing 设置 UI。</li>
+          <li><code>src/game/client/gameclient.h:944</code> 到 <code>:947</code> 定义 AntiPing players/grenade/weapons/gunfire 的运行时判断。</li>
+          <li><code>src/engine/client/client.cpp:6122</code> 到 <code>:6148</code> 中 <code>GetPredictionTick()</code> 根据 <code>cl_antiping_limit</code> 和 <code>cl_antiping_percent</code> 计算预测 tick。</li>
+          <li><code>src/engine/client/client.cpp:6206</code> 到 <code>:6241</code> 中 <code>PredictionMargin()</code> 采样 live prediction、jitter、测得 ping 和 connection problems 计算动态 margin。</li>
+          <li><code>src/game/client/gameclient.cpp:4767</code> 到 <code>:4825</code> 是 <code>cl_antiping_smooth</code> 的其他玩家平滑路径；<code>:4830</code> 到 <code>:5044</code> 是 TClient improved AntiPing smoothing 路径。</li>
+          <li><code>src/game/client/gameclient.cpp:6325</code> 到 <code>:6375</code> 在渲染位置选择中应用预测、remove anti、fast input 和 improved AntiPing smoothing。</li>
+          <li><code>src/game/client/components/qmclient/monitoring/monitoring.h:38</code> 到 <code>:60</code> 定义网络指标；<code>:408</code> 到 <code>:416</code> 用 latency / jitter / packet loss 判定连接等级。</li>
+          <li><code>src/game/client/components/qmclient/monitoring/monitoring.cpp:619</code> 到 <code>:643</code> 更新网络指标；<code>:845</code> 到 <code>:848</code> 在监控 HUD 中显示 latency、prediction、prediction margin 和 jitter。</li>
+          <li><code>src/game/client/components/tclient/statusbar.cpp:110</code>、<code>:123</code>、<code>:259</code>、<code>:271</code>、<code>:283</code>、<code>:295</code> 分别渲染 ping、prediction、snapshot latency、prediction latency、jitter 和 packet loss。</li>
+        </ul>
+      </details>
+    </section>
+
+    <p class="footer">旧方案保留为 <a href="../archive/superseded-planning/adaptive-antiping-plan.md">adaptive-antiping-plan.md</a>，仅用于追溯，不再作为可直接执行的开发计划。</p>
+  </div>
+</body>
+</html>
+

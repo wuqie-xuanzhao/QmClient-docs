@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="draft" />
+  <title>本地跨局战绩历史最小版规格</title>
+  <style>
+    :root{--bg:#f4f1ea;--paper:#fffdfa;--ink:#2d2924;--muted:#6f675f;--line:#ded4c6;--accent:#4f6f73;--accent-2:#b8795b;--ok:#5f7f55;--warn:#a57536;--bad:#a94d45;--shadow:0 18px 45px rgba(62,50,39,.12);--code-bg:#ede6dc}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:radial-gradient(circle at 12% 0%,rgba(184,121,91,.16),transparent 30rem),radial-gradient(circle at 88% 8%,rgba(79,111,115,.14),transparent 28rem),linear-gradient(180deg,#f7f3ec 0%,var(--bg) 100%);font-family:"Noto Sans SC","Segoe UI","Microsoft YaHei",sans-serif;line-height:1.72}.page{max-width:1180px;margin:0 auto;padding:28px 20px 56px}.hero,.card{background:var(--paper);border:1px solid rgba(222,212,198,.95);box-shadow:var(--shadow);border-radius:22px}.hero{padding:28px 28px 24px;margin-bottom:18px}.card{padding:22px 24px;margin-top:18px}h1,h2,h3{margin:0 0 12px;line-height:1.2}h1{font-size:28px}h2{font-size:22px}h3{font-size:17px;margin-top:18px}p{margin:0 0 12px}ul{margin:10px 0 0 22px;padding:0}li{margin:4px 0}code{padding:.12em .36em;border-radius:6px;background:var(--code-bg);color:#613c2e;font-size:.94em}pre{margin:12px 0 0;padding:14px 16px;border-radius:12px;background:#2d2924;color:#fffdfa;overflow:auto;font-size:13px;line-height:1.55}table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px;display:block;overflow-x:auto}th,td{border-top:1px solid var(--line);padding:10px 12px;vertical-align:top;text-align:left}th{background:#faf5ed;color:#4f463d;font-weight:700;white-space:nowrap}tr:hover td{background:rgba(184,121,91,.03)}a{color:#355f66;text-decoration-thickness:1px;text-underline-offset:3px}.meta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(79,111,115,.10);color:var(--accent);font-size:12px;font-weight:700;letter-spacing:.02em}.pill.secondary{background:rgba(184,121,91,.10);color:var(--accent-2)}.pill.warn{background:rgba(165,117,54,.12);color:var(--warn)}.pill.bad{background:rgba(169,77,69,.12);color:var(--bad)}.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}.badge.ok{background:rgba(95,127,85,.12);color:var(--ok)}.badge.warn{background:rgba(165,117,54,.12);color:var(--warn)}.badge.bad{background:rgba(169,77,69,.12);color:var(--bad)}.muted{color:var(--muted)}.note{border-left:4px solid var(--accent);padding:10px 12px;background:rgba(79,111,115,.06);border-radius:0 10px 10px 0;color:#4c4238}.note.warn{border-left-color:var(--warn);background:rgba(165,117,54,.08)}.toc{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:14px}.toc a{display:block;padding:10px 12px;border:1px solid var(--line);border-radius:12px;color:var(--ink);text-decoration:none;background:rgba(255,255,255,.72)}.footer{margin-top:18px;color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill warn">draft spec</span><span class="pill secondary">2026-06-16</span><span class="pill bad">未实现规格</span></div>
+      <h1>本地跨局战绩历史最小版规格</h1>
+      <p class="muted">本页把旧持久化统计计划和新版 TODO 的复盘方向收敛为一个本地 sidecar 小规格。当前代码已有 statboard、自动 CSV、PlayerStats HUD、中心服 playtime；本规格只补“本地玩家每局摘要历史”，不做账号、云同步、成就或图表库。</p>
+      <nav class="toc" aria-label="文档目录">
+        <a href="#goal">① 目标与非目标</a>
+        <a href="#sources">② 数据来源</a>
+        <a href="#schema">③ Schema 草案</a>
+        <a href="#privacy">④ 隐私与存储</a>
+        <a href="#verification">⑤ 验收</a>
+        <a href="#evidence">⑥ 当前证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="goal">
+      <h2>① 目标与非目标</h2>
+      <table>
+        <thead><tr><th>类型</th><th>范围</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge ok">目标</span></td><td>记录本地玩家每次会话/每局结束时的摘要。</td><td>补足“CSV 是快照、PlayerStats 是当前会话 HUD、playtime 是在线时长”的空白。</td></tr>
+          <tr><td><span class="badge ok">目标</span></td><td>使用 QmClient 本地 sidecar 文件，不改 statboard CSV 和中心服 playtime。</td><td>避免把不同统计线混成一个大系统。</td></tr>
+          <tr><td><span class="badge ok">目标</span></td><td>保留 JSON 导出能力，后续 UI 可以读取同一份本地历史。</td><td>先有稳定数据，再考虑列表、筛选或图表。</td></tr>
+          <tr><td><span class="badge warn">暂不做</span></td><td>账号系统、云同步、KoG 组队榜、成就、排行榜。</td><td>新版 TODO 已排除成就；远端同步和排行需要服务端、隐私和公平性设计。</td></tr>
+          <tr><td><span class="badge bad">禁止</span></td><td>把中心服 playtime 当作战绩历史，或把 statboard CSV 路径顺手重构。</td><td>playtime 与战绩语义不同；CSV 路径 mismatch 应另开 bug 修复任务。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="sources">
+      <h2>② 数据来源</h2>
+      <table>
+        <thead><tr><th>来源</th><th>可记录</th><th>P1 使用方式</th></tr></thead>
+        <tbody>
+          <tr><td>Statboard</td><td>frags、deaths、suicides、spree、weapon F/D、flag、ingame ticks。</td><td>只记录本地玩家或 dummy 的摘要，不复制全服所有玩家历史。</td></tr>
+          <tr><td>PlayerStats HUD</td><td>alive time、rescue/freeze、hook left/right、map progress。</td><td>记录本地玩家当前会话指标，用于复盘自己行为。</td></tr>
+          <tr><td>连接上下文</td><td>server、map、game type、start/end time。</td><td>用户可选择是否保存 server/name 这类敏感字段。</td></tr>
+          <tr><td>Playtime</td><td>中心服累计在线秒数。</td><td>不写入每局战绩；最多作为页面旁路展示。</td></tr>
+          <tr><td>自动 CSV</td><td>当前局 CSV 快照。</td><td>不作为历史数据库来源；路径 mismatch 需单独复核。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="schema">
+      <h2>③ Schema 草案</h2>
+      <p>建议路径：<code>qmclient/stats/local_match_history.jsonl</code>，一行一个 JSON object，便于追加和截断。</p>
+      <pre><code>{
+  "schema": "qmclient.local_match_history.v1",
+  "started_at_local": "2026-06-16T22:10:00+08:00",
+  "ended_at_local": "2026-06-16T22:35:00+08:00",
+  "source": {
+    "trigger": "gameover",
+    "server_saved": false,
+    "map_saved": true
+  },
+  "context": {
+    "map": "Kobra 4",
+    "game_type": "DDraceNetwork"
+  },
+  "local_player": {
+    "dummy": 0,
+    "frags": 0,
+    "deaths": 0,
+    "suicides": 0,
+    "ingame_ticks": 12345,
+    "alive_seconds_total": 220,
+    "alive_seconds_max": 80,
+    "freeze_count": 3,
+    "rescue_count": 2,
+    "hook_left_count": 15,
+    "hook_right_count": 18,
+    "map_progress": 0.72
+  }
+}</code></pre>
+      <ul>
+        <li>JSONL 比单个大 JSON 数组更适合追加；损坏时也更容易保留已有行。</li>
+        <li>字段只保存摘要，不保存完整聊天、输入历史、IP 地址或服务器密码。</li>
+        <li>如果同一会话有 main/dummy 两组数据，可写两条记录或在 <code>players</code> 数组中保存；P1 先任选一种并固定。</li>
+      </ul>
+    </section>
+
+    <section class="card" id="privacy">
+      <h2>④ 隐私与存储</h2>
+      <table>
+        <thead><tr><th>项目</th><th>要求</th></tr></thead>
+        <tbody>
+          <tr><td>默认开关</td><td>建议默认关闭，或首次进入功能页时明确提示本地保存内容。</td></tr>
+          <tr><td>配置命名</td><td>新增配置使用 <code>qm_stats_history_*</code>，不新增 <code>cl_stats_*</code>。</td></tr>
+          <tr><td>存储上限</td><td>至少支持最大记录数或最大文件大小，防止长期增长。</td></tr>
+          <tr><td>删除</td><td>用户必须能一键清空本地历史文件。</td></tr>
+          <tr><td>敏感字段</td><td>服务器地址、玩家名、clan 默认不保存或可单独关闭；地图名可保存但应可关闭。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="verification">
+      <h2>⑤ 验收</h2>
+      <table>
+        <thead><tr><th>检查项</th><th>验收标准</th></tr></thead>
+        <tbody>
+          <tr><td>默认兼容</td><td>关闭历史记录时，statboard、CSV、PlayerStats HUD、playtime 行为不变。</td></tr>
+          <tr><td>记录生成</td><td>启用后，一局结束或离服时追加一条合法 JSONL 记录。</td></tr>
+          <tr><td>数据分层</td><td>不会把中心服 playtime 写成战绩，也不会依赖自动 CSV 文件解析。</td></tr>
+          <tr><td>存储限制</td><td>达到最大记录数/文件大小后按明确策略裁剪。</td></tr>
+          <tr><td>隐私</td><td>禁用 server/map/name 字段后，新增记录不再包含对应信息。</td></tr>
+          <tr><td>验证记录</td><td>实现后回填 <a href="persistent-stats-status.html">persistent-stats-status.html</a> 和 <a href="innovation-roadmap.html">innovation-roadmap.html</a>。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>⑥ 当前证据</h2>
+      <ul>
+        <li><a href="persistent-stats-status.html">persistent-stats-status.html</a> 已确认当前统计线分为 statboard、自动 CSV、PlayerStats HUD 和中心服 playtime，本地历史战绩数据库未实现。</li>
+        <li><code>src/game/client/gameclient.h:791-828</code> 定义 <code>CClientStats</code> 和局内统计字段。</li>
+        <li><code>src/game/client/components/statboard.cpp:128-146</code> 游戏结束后触发自动统计板截图和自动 CSV。</li>
+        <li><code>src/game/client/components/statboard.cpp:417-435</code> 自动 CSV 写入 <code>screenshots/auto/stats_*.csv</code>。</li>
+        <li><code>src/game/client/components/statboard.cpp:460-547</code> <code>FormatStats</code> 输出 server stats 和 player stats CSV。</li>
+        <li><code>src/game/client/components/tclient/tclient.h:28-49</code> 定义 <code>SPlayerStats</code> 当前会话字段。</li>
+        <li><code>src/game/client/components/tclient/tclient.cpp:3229-3344</code> 更新 alive、freeze、rescue 和 hook direction 统计。</li>
+        <li><code>src/game/client/components/hud.cpp:4980-5045</code> HUD 展示 PlayerStats 和 map progress。</li>
+        <li><code>src/game/client/components/qmclient/qmclient.cpp:96-106</code> 定义 playtime 端点和本地文件路径。</li>
+      </ul>
+      <p class="note warn">本页是规格草案，不表示历史记录已实现。CSV 写入路径和清理路径疑似不一致的问题只记录为后续源码 bug 复核，不在本规格内修复。</p>
+    </section>
+
+    <p class="footer">相关入口：<a href="persistent-stats-status.html">统计与持久化现状</a>、<a href="innovation-roadmap.html">创新功能候选路由</a>、<a href="todo-priority-status.html">新版 TODO 优先级路由</a>。</p>
+  </div>
+</body>
+</html>

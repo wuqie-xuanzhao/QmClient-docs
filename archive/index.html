@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>QmClient 归档文档索引</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --paper: #fffdfa;
+      --ink: #2d2924;
+      --muted: #6f675f;
+      --line: #ded4c6;
+      --accent: #4f6f73;
+      --accent-2: #b8795b;
+      --ok: #5f7f55;
+      --warn: #a57536;
+      --bad: #a94d45;
+      --shadow: 0 18px 45px rgba(62, 50, 39, 0.12);
+      --code-bg: #ede6dc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(184, 121, 91, 0.16), transparent 30rem),
+        radial-gradient(circle at 88% 8%, rgba(79, 111, 115, 0.14), transparent 28rem),
+        linear-gradient(180deg, #f7f3ec 0%, var(--bg) 100%);
+      font-family: "Noto Sans SC", "Segoe UI", "Microsoft YaHei", sans-serif;
+      line-height: 1.72;
+    }
+    .page { max-width: 1180px; margin: 0 auto; padding: 28px 20px 56px; }
+    .hero, .card {
+      background: var(--paper);
+      border: 1px solid rgba(222, 212, 198, 0.95);
+      box-shadow: var(--shadow);
+      border-radius: 22px;
+    }
+    .hero { padding: 28px 28px 24px; margin-bottom: 18px; }
+    .card { padding: 22px 24px; margin-top: 18px; }
+    h1, h2 { margin: 0 0 12px; line-height: 1.2; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 22px; }
+    p { margin: 0 0 12px; }
+    code {
+      padding: 0.12em 0.36em;
+      border-radius: 6px;
+      background: var(--code-bg);
+      color: #613c2e;
+      font-size: 0.94em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+      display: block;
+      overflow-x: auto;
+    }
+    th, td {
+      border-top: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th { background: #faf5ed; color: #4f463d; font-weight: 700; white-space: nowrap; }
+    a { color: #355f66; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 999px;
+      background: rgba(169, 77, 69, 0.12); color: var(--bad);
+      font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+    }
+    .muted { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <span class="pill">archived</span>
+      <h1>QmClient 归档文档索引</h1>
+      <p class="muted">这些文档已知过时、错误或不再适合作为当前依据。保留它们只是为了追溯历史思路。</p>
+    </header>
+    <section class="card">
+      <h2>归档清单</h2>
+      <table>
+        <thead><tr><th>文档</th><th>归档原因</th><th>后续使用口径</th></tr></thead>
+        <tbody>
+          <tr><td><a href="superseded-current/index.html">superseded-current/</a></td><td>从 <code>current/</code> 移出的同名 Markdown 来源材料，已由对应 HTML 现状页接管。</td><td>只用于追溯旧判断；当前事实以 <code>../current/*.html</code> 为准。</td></tr>
+          <tr><td><a href="superseded-planning/index.html">superseded-planning/</a></td><td>从 <code>planning/</code> 移出的旧 Markdown 方案稿，已由对应 HTML 状态页接管。</td><td>只用于追溯旧想法；进入开发前必须重读 <code>../planning/index.html</code> 和当前源码。</td></tr>
+          <tr><td><a href="superseded-research/index.html">superseded-research/</a></td><td>从 <code>research/</code> 移出的旧 Markdown 调研原文，已由对应 HTML 状态页接管。</td><td>只用于追溯旧观察；引用前必须核对 <code>../research/index.html</code> 和当前源码。</td></tr>
+          <tr><td><a href="ui-reference-standard-obsolete.md">ui-reference-standard-obsolete.md</a></td><td>旧版“经典 UI / 现代 UI 双轨”方案没有按当前 QmUi 和设置页性能工作流复核。</td><td>不要作为当前 UI 架构依据；后续以 QmUi 当前代码和设置页性能总纲为准。</td></tr>
+          <tr><td><a href="ui-reference-adaptation-obsolete.md">ui-reference-adaptation-obsolete.md</a></td><td>把 Rust/egui 作为最终 UI 方向的判断未被当前代码状态证明，容易误导后续实现。</td><td>只作为历史设想参考。</td></tr>
+          <tr><td><a href="network-protocol-rust-report-obsolete.md">network-protocol-rust-report-obsolete.md</a></td><td>大范围网络协议和 Rust 改造方案超出当前默认边界，且涉及协议兼容高风险。</td><td>不能作为实施计划；若重启必须重新规格、审查协议兼容性。</td></tr>
+          <tr><td><a href="code-quality-vulnerability-report-obsolete.md">code-quality-vulnerability-report-obsolete.md</a></td><td>旧漏洞总表未逐条按当前代码复核，部分语音/路径结论已随代码移动和修复失真。</td><td>不能作为当前漏洞清单；需要重新 code review 后生成新报告。</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+</body>
+</html>

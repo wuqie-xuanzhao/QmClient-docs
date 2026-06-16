@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>QmClient Bind 系统现状</title>
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --paper: #fffdfa;
+      --paper-2: #f7f2ea;
+      --ink: #2d2924;
+      --muted: #6f675f;
+      --line: #ded4c6;
+      --accent: #4f6f73;
+      --accent-2: #b8795b;
+      --ok: #5f7f55;
+      --warn: #a57536;
+      --bad: #a94d45;
+      --shadow: 0 18px 45px rgba(62, 50, 39, 0.12);
+      --code-bg: #ede6dc;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 0%, rgba(184, 121, 91, 0.16), transparent 30rem),
+        radial-gradient(circle at 88% 8%, rgba(79, 111, 115, 0.14), transparent 28rem),
+        linear-gradient(180deg, #f7f3ec 0%, var(--bg) 100%);
+      font-family: "Noto Sans SC", "Segoe UI", "Microsoft YaHei", sans-serif;
+      line-height: 1.72;
+    }
+    .page { max-width: 1180px; margin: 0 auto; padding: 28px 20px 56px; }
+    .hero, .card {
+      background: var(--paper);
+      border: 1px solid rgba(222, 212, 198, 0.95);
+      box-shadow: var(--shadow);
+      border-radius: 22px;
+    }
+    .hero { padding: 28px 28px 24px; margin-bottom: 18px; }
+    .card { padding: 22px 24px; margin-top: 18px; }
+    h1, h2, h3 { margin: 0 0 12px; line-height: 1.2; }
+    h1 { font-size: 28px; }
+    h2 { font-size: 22px; }
+    h3 { font-size: 17px; margin-top: 18px; }
+    p { margin: 0 0 12px; }
+    ul { margin: 10px 0 0 22px; padding: 0; }
+    li { margin: 4px 0; }
+    code {
+      padding: 0.12em 0.36em;
+      border-radius: 6px;
+      background: var(--code-bg);
+      color: #613c2e;
+      font-size: 0.94em;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 14px;
+      display: block;
+      overflow-x: auto;
+    }
+    th, td {
+      border-top: 1px solid var(--line);
+      padding: 10px 12px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th { background: #faf5ed; color: #4f463d; font-weight: 700; white-space: nowrap; }
+    tr:hover td { background: rgba(184, 121, 91, 0.03); }
+    a { color: #355f66; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 999px;
+      background: rgba(79, 111, 115, 0.10); color: var(--accent);
+      font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+    }
+    .pill.secondary { background: rgba(184, 121, 91, 0.10); color: var(--accent-2); }
+    .pill.warn { background: rgba(165, 117, 54, 0.12); color: var(--warn); }
+    .pill.bad { background: rgba(169, 77, 69, 0.12); color: var(--bad); }
+    .pill.ok { background: rgba(95, 127, 85, 0.12); color: var(--ok); }
+    .badge {
+      display: inline-block; padding: 2px 8px;
+      border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap;
+    }
+    .badge.ok { background: rgba(95, 127, 85, 0.12); color: var(--ok); }
+    .badge.warn { background: rgba(165, 117, 54, 0.12); color: var(--warn); }
+    .badge.bad { background: rgba(169, 77, 69, 0.12); color: var(--bad); }
+    .muted { color: var(--muted); }
+    .note {
+      border-left: 4px solid var(--accent);
+      padding: 10px 12px;
+      background: rgba(79, 111, 115, 0.06);
+      border-radius: 0 10px 10px 0;
+      color: #4c4238;
+    }
+    .note.warn { border-left-color: var(--warn); background: rgba(165, 117, 54, 0.08); }
+    .toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin-top: 14px; }
+    .toc a {
+      display: block; padding: 10px 12px;
+      border: 1px solid var(--line); border-radius: 12px;
+      color: var(--ink); text-decoration: none;
+      background: rgba(255,255,255,0.72);
+    }
+    .toc a:hover { border-color: rgba(184, 121, 91, 0.45); }
+    details {
+      margin-top: 10px; border: 1px solid var(--line);
+      border-radius: 12px; background: rgba(255,255,255,0.65); padding: 10px 12px;
+    }
+    summary { cursor: pointer; font-weight: 700; color: #423b33; }
+    .footer { margin-top: 18px; color: var(--muted); font-size: 13px; }
+    @media (max-width: 920px) {
+      .hero, .card { padding-left: 18px; padding-right: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta">
+        <span class="pill ok">active</span>
+        <span class="pill secondary">2026-06-16</span>
+        <span class="pill warn">native + tclient extensions</span>
+      </div>
+      <h1>QmClient Bind 系统现状</h1>
+      <p class="muted">本文接管旧 Bind 指令系统报告。当前 Bind 能力分三层：DDNet 原生键盘绑定、TClient/QmClient 维护的 Chat Binds、以及 Bind Wheel。它们共享“执行控制台命令”的目标，但数据结构、UI、配置域和风险边界不同。</p>
+      <nav class="toc" aria-label="文档目录">
+        <a href="#summary">当前结论</a>
+        <a href="#native">原生键盘绑定</a>
+        <a href="#chatbinds">Chat Binds</a>
+        <a href="#bindwheel">Bind Wheel</a>
+        <a href="#planning">仍是规划</a>
+        <a href="#evidence">复核证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="summary">
+      <h2>当前结论</h2>
+      <table>
+        <thead><tr><th>模块</th><th>状态</th><th>当前口径</th></tr></thead>
+        <tbody>
+          <tr><td>DDNet 原生 binds</td><td><span class="badge ok">已实现</span></td><td><code>CBinds</code> 负责键盘/鼠标/修饰键组合到控制台命令的映射，是基础能力。</td></tr>
+          <tr><td>Chat Binds</td><td><span class="badge ok">已实现</span></td><td><code>CBindChat</code> 支持 <code>bindchat</code> 等控制台命令、默认绑定、聊天输入触发和独立配置保存。</td></tr>
+          <tr><td>Chat Binds UI</td><td><span class="badge warn">部分实现</span></td><td>设置页只管理默认绑定组的触发名称；自定义绑定管理和命令编辑不是完整 UI 能力。</td></tr>
+          <tr><td>Chat Binds Tab 补全</td><td><span class="badge warn">函数存在 / 未接入</span></td><td><code>ChatDoAutocomplete()</code> 已实现，但聊天框 Tab 处理没有调用它。</td></tr>
+          <tr><td>Bind Wheel</td><td><span class="badge ok">已实现</span></td><td>支持轮盘打开、hover 执行、添加/删除/清空、设置页编辑、圆形预览和快捷键绑定。</td></tr>
+          <tr><td>配置导入/导出</td><td><span class="badge warn">规划</span></td><td>Chat Binds 和 Bind Wheel 已各自保存，但统一导入/导出绑定配置仍应归到配置导入/导出规划。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="native">
+      <h2>原生键盘绑定</h2>
+      <p><code>CBinds</code> 是 DDNet 原生路径，QmClient 继续在此基础上运行。它用 <code>m_aapKeyBindings[KeyModifier::COMBINATION_COUNT][KEY_LAST]</code> 保存修饰键组合和键码对应的控制台命令，并用 <code>m_vActiveBinds</code> 追踪按住式绑定。</p>
+      <table>
+        <thead><tr><th>能力</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>修饰键组合</td><td>支持 Ctrl、Alt、Shift、GUI 的组合 mask；部分组合会禁止无修饰键 fallback。</td></tr>
+          <tr><td>按住式命令</td><td>按下执行 <code>+command 1</code> 语义，释放时执行对应释放逻辑；聊天、控制台和菜单打开时避免错误释放 active bind。</td></tr>
+          <tr><td>控制台命令</td><td><code>bind</code>、<code>binds</code>、<code>unbind</code>、<code>unbindall</code> 属于原生键盘绑定入口。</td></tr>
+          <tr><td>UI 绑定读取器</td><td>TClient 设置页可通过 <code>DoLine_KeyReader</code> 为部分功能绑定命令，例如 <code>+bindwheel</code>。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="chatbinds">
+      <h2>Chat Binds</h2>
+      <p><code>CBindChat</code> 是聊天输入触发的命令替换层。用户在聊天框按回车时，聊天组件先调用 <code>ChatDoBinds()</code>，匹配成功则执行绑定命令并写入聊天历史，不再发送普通聊天消息。</p>
+      <table>
+        <thead><tr><th>项目</th><th>当前实现</th><th>边界</th></tr></thead>
+        <tbody>
+          <tr><td>数据结构</td><td><code>std::vector&lt;CBind&gt; m_vBinds</code>，上限 256，名称 64 字节，命令 1024 字节。</td><td>代码仍有 <code>TODO use map</code>，查找和保存排序仍基于 vector。</td></tr>
+          <tr><td>默认绑定</td><td>Kaomoji、Warlist、Other 三组，包含 <code>!shrug</code>、<code>!war</code>、<code>!translate</code>、<code>!mute</code> 等。</td><td>默认项多以 <code>!</code> 开头，但代码没有强制所有自定义项必须用 <code>!</code> 前缀。</td></tr>
+          <tr><td>匹配规则</td><td>按输入文本第一个空格前的 token 与绑定名进行大小写不敏感匹配。</td><td>用户若创建普通词作为绑定名，会拦截普通聊天。</td></tr>
+          <tr><td>持久化</td><td>保存到 <code>ConfigDomain::TCLIENTCHATBINDS</code>；默认绑定未改时不写出，被删除的默认绑定写 <code>unbindchat</code>。</td><td>这不是普通 DDNet bind 配置域，也不是统一 Qm 配置导出包。</td></tr>
+          <tr><td>设置页</td><td>当前只渲染默认绑定组，每项可编辑触发名称。</td><td>没有完整自定义绑定列表、命令编辑、删除按钮和搜索过滤 UI。</td></tr>
+          <tr><td>Tab 补全</td><td><code>ChatDoAutocomplete()</code> 能基于 <code>m_aCompletionBuffer</code> 查找绑定并替换输入。</td><td><code>chat.cpp</code> 的 Tab 处理当前只构建玩家/命令补全流程，未看到调用 <code>m_BindChat.ChatDoAutocomplete()</code>。</td></tr>
+        </tbody>
+      </table>
+      <p class="note warn">“Chat Binds 已实现”和“Chat Binds UI 已完整”不是一回事。当前可执行和持久化能力已经存在，但管理 UI 仍偏向默认绑定重命名。</p>
+    </section>
+
+    <section class="card" id="bindwheel">
+      <h2>Bind Wheel</h2>
+      <p><code>CBindWheel</code> 是轮盘式快捷命令组件，最多 64 项。它复用 emoticon selector 的鼠标/触控状态，按住 <code>+bindwheel</code> 打开，松开时可执行选中项。</p>
+      <table>
+        <thead><tr><th>能力</th><th>当前实现</th></tr></thead>
+        <tbody>
+          <tr><td>控制台入口</td><td><code>+bindwheel</code>、<code>+bindwheel_execute_hover</code>、<code>add_bindwheel</code>、<code>remove_bindwheel</code>、<code>delete_all_bindwheel_binds</code>；旧 <code>bindwheel i[index]</code> 入口标为 legacy。</td></tr>
+          <tr><td>运行时交互</td><td>圆形菜单根据鼠标角度/距离选择项，支持开闭动画、hover 执行和释放时执行。</td></tr>
+          <tr><td>设置页编辑</td><td>左侧编辑名称/命令并添加、覆盖、删除；右侧圆形预览支持左键选择、右键交换、中键只选不复制。</td></tr>
+          <tr><td>快捷键</td><td>设置页用 <code>DoLine_KeyReader</code> 绑定 <code>+bindwheel</code>；默认能力落在原生 <code>CBinds</code> 上。</td></tr>
+          <tr><td>配置</td><td>Bind Wheel 在 <code>ConfigDomain::QMCLIENT</code> 保存；<code>tc_reset_bindwheel_mouse</code> 和 <code>tc_animate_wheel_time</code> 控制鼠标重置与动画时长。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="planning">
+      <h2>仍是规划</h2>
+      <ul>
+        <li>把 <code>m_vBinds</code> 从 vector 改为 map 或其它查找结构。</li>
+        <li>为 Chat Binds 强制或引导 <code>!</code> 前缀，降低普通聊天误触发风险。</li>
+        <li>把 <code>ChatDoAutocomplete()</code> 正式接入聊天框 Tab 补全，并处理和玩家名/服务器命令补全的优先级。</li>
+        <li>补完整 Chat Binds 管理 UI：自定义绑定列表、命令编辑、删除、搜索、导入导出。</li>
+        <li>将 Bind Wheel 扩展成“快捷设置面板/控制中心”仍是 planning，不是当前已实现；最小规格见 <a href="../planning/bindwheel-quick-settings-spec.html">bindwheel-quick-settings-spec.html</a>。</li>
+        <li>多套按键配置文件和统一配置分享应走 <a href="config-import-export.html">配置导入/导出现状</a> 的规划边界。</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>旧文档修正</h2>
+      <table>
+        <thead><tr><th>旧口径</th><th>修正后口径</th></tr></thead>
+        <tbody>
+          <tr><td>Chat Binds / Bind Wheel 是 QmClient 特有。</td><td>更准确说是 TClient/QmClient 继承维护的扩展；文件路径在 <code>components/tclient/</code>。</td></tr>
+          <tr><td>所有 Bind 能力可以统一看作一个系统。</td><td>应拆成原生键盘绑定、Chat Binds、Bind Wheel 三层；配置域和 UI 不同。</td></tr>
+          <tr><td>Chat Binds 自动补全已可用。</td><td>函数存在，但当前聊天 Tab 处理未接入；应标为 planning。</td></tr>
+          <tr><td>Bind Wheel 只是执行预设命令。</td><td>当前已有设置页编辑器和轮盘预览；“控制中心”扩展仍是规划。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>原生键盘绑定</summary>
+        <ul>
+          <li><code>src/game/client/components/binds.h:15</code> 定义修饰键常量和组合数量。</li>
+          <li><code>src/game/client/components/binds.h:44</code> 定义 <code>CBinds</code>；<code>:76</code> 到 <code>:104</code> 提供绑定、查询、修饰键和 active bind 刷新接口。</li>
+          <li><code>src/game/client/components/binds.h:114</code> 保存 <code>m_aapKeyBindings</code> 和 <code>m_vActiveBinds</code>。</li>
+          <li><code>src/game/client/components/binds.cpp:328</code> 开始处理键盘输入、修饰键和 active bind 执行/释放。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>Chat Binds</summary>
+        <ul>
+          <li><code>src/game/client/components/tclient/bindchat.h:11</code> 定义名称、命令和绑定数量上限。</li>
+          <li><code>src/game/client/components/tclient/bindchat.h:51</code> 使用 <code>std::vector&lt;CBind&gt; m_vBinds</code>，并保留 <code>TODO use map</code>。</li>
+          <li><code>src/game/client/components/tclient/bindchat.cpp:27</code> 定义 Kaomoji、Warlist、Other 默认绑定组。</li>
+          <li><code>src/game/client/components/tclient/bindchat.cpp:193</code> 实现聊天输入触发绑定。</li>
+          <li><code>src/game/client/components/tclient/bindchat.cpp:218</code> 实现但未被聊天 Tab 流程接入的补全函数。</li>
+          <li><code>src/game/client/components/tclient/bindchat.cpp:296</code> 保存配置到 <code>ConfigDomain::TCLIENTCHATBINDS</code>。</li>
+          <li><code>src/game/client/components/chat.cpp:1135</code> 发送聊天前先调用 <code>m_BindChat.ChatDoBinds()</code>。</li>
+          <li><code>src/game/client/components/chat.cpp:1148</code> 开始处理 Tab 补全流程，当前片段未见 <code>ChatDoAutocomplete()</code> 调用。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>Bind Wheel 和设置页</summary>
+        <ul>
+          <li><code>src/game/client/components/tclient/bindwheel.h:14</code> 定义 Bind Wheel 上限；<code>:53</code> 保存 <code>m_vBinds</code>。</li>
+          <li><code>src/game/client/components/tclient/bindwheel.cpp:109</code> 注册控制台命令并保存到 <code>ConfigDomain::QMCLIENT</code>。</li>
+          <li><code>src/game/client/components/tclient/bindwheel.cpp:170</code> 开始渲染/交互逻辑，复用 emoticon selector 鼠标状态。</li>
+          <li><code>src/game/client/components/tclient/menus_tclient.cpp:3441</code> 渲染 Bind Wheel 设置页预览与编辑器。</li>
+          <li><code>src/game/client/components/tclient/menus_tclient.cpp:3607</code> 渲染 Chat Binds 设置页默认绑定组。</li>
+        </ul>
+      </details>
+    </section>
+
+    <p class="footer">原始 Markdown 保留为 <a href="../archive/superseded-current/bind-system.md">bind-system.md</a>；新增状态修正应写入本 HTML。</p>
+  </div>
+</body>
+</html>
+
