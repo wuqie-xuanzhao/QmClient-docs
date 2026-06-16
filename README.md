@@ -1,18 +1,22 @@
-# QmClient Docs 资料库
+# QmClient Wiki
 
-本目录是历史调研、现状说明和后续规划的整理区。当前入口优先使用 `index.html`。
+本目录是 QmClient 的 HTML-first 文档 wiki。日常入口使用 `index.html`。
 
 ## 分区
 
-- `current/`：仍适合维护为当前代码现状说明的 HTML 文档。同名 Markdown 原文已移入归档区，只作为来源材料。
-- `planning/`：需求草案、方案稿、候选 backlog。优先使用 `planning/index.html`，这里的内容不能直接视为已实现功能。
-- `research/`：调研材料。优先使用 `research/index.html`，可作为背景资料，但应优先核对当前代码和 `docs/ai-workflow/`、`qmclient_scripts/` 下的权威说明。
-- `archive/`：已明显过时、错误或不再适用的历史报告。只保留追溯价值。
+- `当前状态/`：仍适合维护为当前代码现状说明的 HTML 文档。
+- `规划/`：需求草案、方案稿、候选 backlog。不能直接视为已实现功能。
+- `调研/`：调研材料和风险边界。使用前应核对当前代码和脚本。
+- `工作流参考/`：索引 `docs/superpowers/` 中可能仍有参考价值的探索、计划、报告、审查和规格。
+- `归档/`：已明显过时、错误或不再适用的历史报告，只保留追溯价值。
+- `assets/wiki.css`：共享 wiki 样式。新增页面不要复制内联 CSS。
 
 ## 维护规则
 
-1. 当前事实优先放进 `current/`，并在文首标注审查日期、代码范围和可信度。
-2. 未实现或未复核内容放进 `planning/` 或 `research/`，不要混进当前说明。
-3. 已知错误结论移入 `archive/`，不要继续作为实现依据。
-4. 新的 HTML 文档复用 `../../qmclient-html-template.html` 的视觉语言。
-5. 维护规则、归档边界和验证口径见 `maintenance-status.html`。
+1. 目录和人读的页面文件名使用中文；技术名如 QmUi、BindWheel、HarmonyOS 可保留原文。
+2. 页面状态写入文首元信息，不再通过 `*-status.html` 或 `*-spec.html` 表达。
+3. 当前事实优先放进 `当前状态/`，并标注复核日期、代码范围和可信度。
+4. 未实现或未复核内容放进 `规划/` 或 `调研/`，不要混进当前说明。
+5. `docs/superpowers/` 只能作为工作流参考，不能直接作为当前事实。
+6. 已知错误结论移入 `归档/`，不要继续作为实现依据。
+7. 维护规则、归档边界和验证口径见 `维护说明.html`。

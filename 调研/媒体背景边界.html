@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>Media Background 边界复核</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta">
+        <span class="pill ok">active research</span>
+        <span class="pill secondary">2026-06-16</span>
+        <span class="pill warn">BC backlog correction</span>
+      </div>
+      <h1>Media Background 边界复核</h1>
+      <p class="muted">本文修正 BC 移植状态页里“Media Background 未见实现”的粗口径：当前 QmClient 已有实体层视频背景和菜单 theme 视频背景基础，但还没有面向用户的“媒体背景管理/选择/产品化”闭环。</p>
+      <nav class="toc" aria-label="文档目录">
+        <a href="#answer">快速结论</a>
+        <a href="#current">当前已有能力</a>
+        <a href="#gap">仍缺的产品化能力</a>
+        <a href="#scope">后续规格边界</a>
+        <a href="#evidence">复核证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="answer">
+      <h2>快速结论</h2>
+      <p class="note warn">不能再把 Media Background 简单写成“源码未见实现”。更准确的口径是：底层图片/视频背景加载已存在，菜单背景也能从 theme 文件加载图片或视频；但没有独立的 Media Background UI、媒体库、导入/删除、音频策略、播放控制或资源页联动规格。</p>
+      <table>
+        <thead><tr><th>问题</th><th>结论</th><th>可信度</th></tr></thead>
+        <tbody>
+          <tr><td>实体层背景是否支持视频？</td><td>支持。<code>cl_background_entities</code> 可指向 <code>.mp4/.webm/.mov/.mkv</code>，由 <code>CBackground::LoadVideoBackground()</code> 加载。</td><td><span class="badge ok">高</span></td></tr>
+          <tr><td>菜单背景是否支持视频 theme？</td><td>支持。<code>CMenuBackground::LoadMenuBackground()</code> 会在 <code>themes/</code> 下尝试 map、图片和视频扩展名。</td><td><span class="badge ok">高</span></td></tr>
+          <tr><td>是否已有 BC 式 Media Background 产品功能？</td><td>未见完整闭环。没有独立媒体库、选择器、导入/删除、播放控制或资源页媒体管理文档化入口。</td><td><span class="badge warn">中高</span></td></tr>
+          <tr><td>是否应该和 3D Background 合并？</td><td>不应合并。3D Background 是粒子背景，Media Background 是图片/视频/主题媒体来源与管理问题。</td><td><span class="badge ok">高</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="current">
+      <h2>当前已有能力</h2>
+      <h3>实体层背景图片/视频</h3>
+      <ul>
+        <li><code>BACKGROUND_VIDEO_EXTENSIONS</code> 覆盖 <code>.mp4</code>、<code>.webm</code>、<code>.mov</code>、<code>.mkv</code>。</li>
+        <li><code>cl_background_entities</code> 是实体层背景配置，<code>cl_background_video_fps</code> 控制实体层视频背景最大帧率。</li>
+        <li><code>CBackground::LoadBackground()</code> 会区分当前地图、图片、视频和 map 背景；视频路径进入 <code>LoadVideoBackground()</code>。</li>
+        <li>视频背景渲染走 <code>RenderBackgroundTexture()</code>，在 <code>cl_overlay_entities == 100</code> 的实体背景覆盖模式下渲染。</li>
+      </ul>
+
+      <h3>菜单 theme 图片/视频背景</h3>
+      <ul>
+        <li><code>cl_menu_map</code> 仍是菜单背景选择入口，支持 <code>auto</code>、<code>rand</code> 和显式 theme 名称。</li>
+        <li><code>CMenuBackground::LoadMenuBackground()</code> 会优先尝试 <code>.map</code>，然后尝试背景图片扩展名，再尝试视频扩展名。</li>
+        <li>如果配置显式带视频扩展名，菜单背景会直接尝试 <code>LoadVideoBackground()</code>。</li>
+        <li>菜单渲染中，如果 <code>RenderBackgroundTexture()</code> 成功，会直接渲染图片/视频纹理，不再走 map camera 动画。</li>
+      </ul>
+
+      <h3>资源页实体背景入口</h3>
+      <ul>
+        <li>资源页已有 <code>Entity Background Image</code> tab，能通过 <code>ApplyEntityBgSelection()</code> 写入 <code>cl_background_entities</code> 并调用 <code>m_Background.LoadBackground()</code>。</li>
+        <li>资源卡片对视频实体背景有 <code>Video Background</code> fallback 展示，说明 UI 已区分视频背景资源。</li>
+      </ul>
+    </section>
+
+    <section class="card" id="gap">
+      <h2>仍缺的产品化能力</h2>
+      <table>
+        <thead><tr><th>缺口</th><th>为什么重要</th><th>当前边界</th></tr></thead>
+        <tbody>
+          <tr><td>媒体库/导入 UI</td><td>用户无法在 QmClient 文档层面找到“导入本地视频作为菜单背景”的稳定流程。</td><td>底层路径可加载，不等于有完整资源管理体验。</td></tr>
+          <tr><td>菜单背景与资源页联动</td><td>资源页 entity background 面向实体层，菜单 theme 面向 <code>themes/</code>；两者不是同一管理域。</td><td>不能把 entity background 规格直接当菜单媒体背景。</td></tr>
+          <tr><td>播放控制与音频策略</td><td>视频背景是否静音、暂停、循环、后台降载，都影响体验和性能。</td><td>当前文档只确认视频帧渲染，不声明音频或播放控制。</td></tr>
+          <tr><td>性能预算</td><td>菜单视频背景、实体视频背景、3D 粒子和资源预览可能同时消耗解码/GPU 上传预算。</td><td>后续规格需要和页面切换卡顿、资源页 preview scheduler 一起审查。</td></tr>
+          <tr><td>跨平台解码边界</td><td>视频背景依赖 <code>CONF_VIDEORECORDER</code>，Windows 还有 Media Foundation 路径。</td><td>不能默认所有平台都稳定支持任意视频格式。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="scope">
+      <h2>后续规格边界</h2>
+      <table>
+        <thead><tr><th>阶段</th><th>建议目标</th><th>非目标</th></tr></thead>
+        <tbody>
+          <tr><td>P0 文档修正</td><td>把 BC 状态页修正为“已有底层视频背景，缺产品化 Media Background”。</td><td>不改源码。</td></tr>
+          <tr><td>P1 菜单背景媒体说明</td><td>补一个用户可读的 theme 图片/视频放置、命名、配置说明。</td><td>不做资源市场、不做在线播放。</td></tr>
+          <tr><td>P2 本地导入/管理规格</td><td>如果要开发，先定义导入目录、删除确认、缩略图、格式提示、错误状态和禁用开关。</td><td>不引入远端服务、不播放网络 URL、不做版权/审核系统。</td></tr>
+          <tr><td>P3 性能与平台验收</td><td>补 Windows/Linux/macOS 的格式支持和菜单切换性能验收。</td><td>不把视频背景作为默认开启功能。</td></tr>
+        </tbody>
+      </table>
+      <p class="note bad">Media Background 不应通过“顺手接资源页上传/分享市场”实现。它首先是本地媒体来源、菜单 theme 和实体背景的边界整理问题。</p>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>背景格式和配置</summary>
+        <ul>
+          <li><code>src/game/client/components/background.h:43-68</code> - 背景图片和视频扩展名列表，视频包含 <code>.mp4/.webm/.mov/.mkv</code>。</li>
+          <li><code>src/engine/shared/config_variables.h:693-696</code> - 实体背景颜色、实体背景路径和实体层视频背景最大帧率配置。</li>
+          <li><code>src/engine/shared/config_variables.h:699-703</code> - 菜单背景 map/theme 和菜单相机旋转配置。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>实体层视频背景</summary>
+        <ul>
+          <li><code>src/game/client/components/background.cpp:856-940</code> - <code>LoadVideoBackground()</code> 通过 Media Foundation/FFmpeg 路径打开并读取视频背景。</li>
+          <li><code>src/game/client/components/background.cpp:1525-1547</code> - <code>RenderBackgroundTexture()</code> 渲染图片或视频背景纹理。</li>
+          <li><code>src/game/client/components/background.cpp:1566-1609</code> - <code>LoadBackground()</code> 根据 <code>cl_background_entities</code> 选择当前地图、图片、视频或 map 背景。</li>
+          <li><code>src/game/client/components/background.cpp:1642-1674</code> - 实体背景只在线上或 demo playback 且 <code>cl_overlay_entities == 100</code> 时渲染。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>菜单视频背景</summary>
+        <ul>
+          <li><code>src/game/client/components/menu_background.cpp:381-454</code> - 菜单背景读取 <code>cl_menu_map</code>，识别 map、图片和视频扩展名。</li>
+          <li><code>src/game/client/components/menu_background.cpp:485-523</code> - theme 自动查找会尝试 map、图片和视频扩展名。</li>
+          <li><code>src/game/client/components/menu_background.cpp:558-571</code> - 显式视频 theme 会通过 <code>LoadVideoBackground()</code> 加载。</li>
+          <li><code>src/game/client/components/menu_background.cpp:659-665</code> - 菜单渲染优先使用 <code>RenderBackgroundTexture()</code>。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>资源页实体背景联动</summary>
+        <ul>
+          <li><code>src/game/client/components/menus_settings_assets.cpp:1202-1206</code> - 选择 entity background 后写入 <code>cl_background_entities</code> 并重新加载背景。</li>
+          <li><code>src/game/client/components/menus_settings_assets.cpp:5256-5268</code> - 资源卡片存在 <code>Video Background</code> fallback 展示。</li>
+          <li><a href="../当前状态/资源页.html">资源页.html</a> - 当前资源页状态页已说明 Entity Background Image 是独立 tab，和普通 PNG 资源不同。</li>
+        </ul>
+      </details>
+    </section>
+
+    <p class="footer">相关入口：<a href="../当前状态/BC移植状态.html">BC 功能移植现状</a>、<a href="../当前状态/资源页.html">资源页面现状</a>、<a href="../规划/创新路线图.html">创新功能候选路由</a>。</p>
+  </div>
+</body>
+</html>
+
+
+
+

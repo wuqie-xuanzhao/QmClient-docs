@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>HUD 与视觉辅助现状</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill ok">active</span><span class="pill secondary">2026-06-16</span><span class="pill warn">planning + current status</span></div>
+      <h1>HUD 与视觉辅助现状</h1>
+      <p class="muted">本页接管旧 <code>hud-editor-plan.md</code> 和 <code>weapon-switch-animation-plan.md</code> 的 HUD/视觉辅助入口。钩子进度条已拆到 <a href="钩子进度状态.html">钩子进度状态.html</a>，无障碍已拆到 <a href="无障碍状态.html">无障碍状态.html</a>；继续开发前应先读对应 HTML 状态页。</p>
+    </header>
+
+    <section class="card">
+      <h2>当前已存在的能力</h2>
+      <table>
+        <thead><tr><th>领域</th><th>状态</th><th>当前实现</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>HUD 编辑器</td><td><span class="badge ok">implemented</span></td><td><code>CHudEditor</code> 已接入 <code>CGameClient</code>，支持可见模块收集、拖拽、滚轮缩放、边缘/中心/其它模块吸附、默认重置和配置保存。</td><td>旧文档中“缺少重置”“缺少对齐辅助”的结论已过时。</td></tr>
+          <tr><td>HUD 布局持久化</td><td><span class="badge ok">implemented</span></td><td><code>qm_hud_editor_layout</code> 保存元素 token、位置 permille 和缩放百分比。</td><td>当前不是 JSON 文件导入/导出，而是配置字符串；若要分享布局，需要另写小规格。</td></tr>
+          <tr><td>武器切换动画</td><td><span class="badge ok">implemented</span></td><td><code>qm_weapon_switch_anim</code> 和 <code>qm_weapon_switch_anim_scope</code> 已存在，<code>CPlayers</code> 在武器变化时添加 0.3s 位移和旋转过渡。</td><td>旧文档把甩枪动画写成待实现项，已不符合当前代码。</td></tr>
+          <tr><td>武器辅助线</td><td><span class="badge ok">implemented</span></td><td><code>CQmWeaponTrajectory</code> 和 <code>qm_weapon_trajectory*</code> 配置已存在。</td><td>视觉辅助规划时应和现有弹道辅助线统一考虑，而不是重新建一套武器辅助系统。</td></tr>
+          <tr><td>名字板强弱钩</td><td><span class="badge ok">implemented</span></td><td><code>CNamePlatePartHookStrongWeak</code> 和 <code>CNamePlatePartHookStrongWeakId</code> 已渲染强弱状态；<code>qm_nameplate_hook_offset_x/y</code> 控制偏移。</td><td>钩子进度条布局口径见 <a href="钩子进度状态.html">钩子进度状态.html</a>。</td></tr>
+          <tr><td>无限钩 HUD 图标</td><td><span class="badge ok">implemented</span></td><td><code>CHud::RenderPlayerState</code> 会在玩家状态栏渲染 <code>m_SpriteHudEndlessHook</code>。</td><td>“无限钩完全不可见”不准确；更准确的问题是名字板/tee 附近没有剩余时间或醒目提示。</td></tr>
+          <tr><td>专门无障碍模式</td><td><span class="badge warn">split out</span></td><td>专门色盲/高对比/焦点导航缺口已拆到 <a href="无障碍状态.html">无障碍与可读性现状</a>。</td><td>本页只保留 HUD、钩子进度条、武器动画等视觉辅助口径。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>旧计划修正</h2>
+      <table>
+        <thead><tr><th>旧计划点</th><th>当前判断</th><th>处理方式</th></tr></thead>
+        <tbody>
+          <tr><td>HUD 编辑器需要新增网格吸附、对齐辅助、重置默认布局。</td><td><span class="badge ok">已部分实现</span></td><td>当前已有边缘/中心/其它模块吸附和重置默认；后续只保留“预设布局、导入/导出、分享布局”方向。</td></tr>
+          <tr><td>HUD 布局导出为 JSON。</td><td><span class="badge warn">仍是规划</span></td><td>不要绕过当前 <code>qm_hud_editor_layout</code>。如要做分享，应先定义从配置字符串到外部文件的迁移/兼容策略。</td></tr>
+          <tr><td>钩子剩余时间进度条。</td><td><span class="badge warn">已拆独立页</span></td><td>当前入口见 <a href="钩子进度状态.html">钩子进度状态.html</a>；实现前需复核预测、调谐、0.7 负 tick 裁剪和名字板布局。</td></tr>
+          <tr><td>甩枪动画需要新增本地/远程同步方案。</td><td><span class="badge ok">已实现本地范围配置</span></td><td>当前范围是 self/local/all，不是旧文档的 HTTP 远程开关同步；不要再把它当作未实现 P0。</td></tr>
+          <tr><td>无障碍从零开始。</td><td><span class="badge warn">已拆独立页</span></td><td>专门模式缺失但已有分散可读性控制；当前入口见 <a href="无障碍状态.html">无障碍状态.html</a>。</td></tr>
+          <tr><td>配置新增到 <code>config_variables_qimeng.h</code> 或使用 <code>qmc_</code> 前缀。</td><td><span class="badge bad">过时</span></td><td>当前 QmClient 配置主文件是 <code>config_variables_qmclient.h</code>，新配置应使用 <code>qm_</code> / <code>Qm</code> 前缀。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>建议下一版最小计划</h2>
+      <table>
+        <thead><tr><th>优先级</th><th>主题</th><th>范围</th><th>验收点</th></tr></thead>
+        <tbody>
+          <tr><td>P0</td><td>HUD 编辑器状态固定</td><td>把当前拖拽、缩放、吸附、重置、布局存储能力补入用户文档或设置帮助。</td><td>不再出现“HUD editor 没有对齐/重置”的旧结论。</td></tr>
+          <tr><td>P1</td><td>HUD 布局导入/导出</td><td>只围绕 <code>qm_hud_editor_layout</code> 做文件包装，不新增第二套布局格式。</td><td>导出的文件能恢复当前布局，并能处理未知元素 token。</td></tr>
+          <tr><td>P1</td><td>钩子进度条最小版</td><td>从 <a href="钩子进度状态.html">钩子进度条现状</a> 继续，先做只读公式和仅自己/观战目标显示。</td><td>HOOK_GRABBED 且非 endless 时能显示剩余比例；endless 时不误显示倒计时。</td></tr>
+          <tr><td>P2</td><td>视觉辅助颜色入口</td><td>如涉及 ping/状态红绿依赖，先跳转到 <a href="无障碍状态.html">无障碍与可读性现状</a> 复核当前口径。</td><td>至少一条当前红绿依赖路径可以切换到非红绿方案，并有设置入口。</td></tr>
+          <tr><td>P3</td><td>武器切换动画增强</td><td>只在现有 <code>qm_weapon_switch_anim</code> 基础上调参或增加风格，不再重建同步系统。</td><td>不改变武器语义、预测和网络协议。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>源码位置</summary>
+        <ul>
+          <li><code>src/game/client/components/hud_editor.h:91</code> 定义 <code>EHudEditorElement</code>；<code>:166</code> 定义 <code>CHudEditor</code>。</li>
+          <li><code>src/game/client/components/hud_editor.h:17</code> 到 <code>:88</code> 提供 screen edge、center 和其它模块 guide 吸附逻辑。</li>
+          <li><code>src/game/client/components/hud_editor.cpp:218</code>、<code>:276</code>、<code>:286</code>、<code>:313</code> 解析、同步、保存和重置 <code>qm_hud_editor_layout</code>。</li>
+          <li><code>src/game/client/components/hud_editor.cpp:537</code> 构建其它 HUD 模块对齐参考；<code>:894</code> 的帮助文案明确拖拽时会吸附到屏幕边缘、中心线和其它 HUD 模块。</li>
+          <li><code>src/game/client/components/menus_ingame.cpp:682</code> 从游戏内菜单进入 HUD editor。</li>
+          <li><code>src/engine/shared/config_variables_qmclient.h:133</code>、<code>:134</code> 定义 <code>qm_weapon_switch_anim</code> 和 <code>qm_weapon_switch_anim_scope</code>。</li>
+          <li><code>src/game/client/components/players.cpp:893</code> 到 <code>:915</code> 在武器变化时计算切换动画 offset/angle；<code>:1681</code> 根据 scope 判断渲染范围。</li>
+          <li><code>src/game/client/components/nameplates.cpp:679</code> 和 <code>:716</code> 定义强弱钩图标/编号部件；<code>:1628</code> 到 <code>:1730</code> 写入强弱钩显示状态。</li>
+          <li><code>src/game/gamecore.cpp:447</code> 钩住玩家时递增 <code>m_HookTick</code> 并在约 1.2 秒后断开；<code>:656</code> 从 DDNet character flags 读取 endless hook。</li>
+          <li><code>src/game/client/components/hud.cpp:4027</code> 在玩家状态栏渲染 endless hook HUD 图标。</li>
+          <li><code>src/engine/shared/config_variables.h:61</code> 已有 <code>cl_enable_ping_color</code>；<code>src/engine/shared/config_variables_tclient.h:26</code> 已有名字板 ping 圆环开关。</li>
+        </ul>
+      </details>
+    </section>
+
+    <p class="footer">旧方案保留为 <a href="../归档/已替代-规划/hud-editor-plan.md">hud-editor-plan.md</a> 和 <a href="../归档/已替代-规划/weapon-switch-animation-plan.md">weapon-switch-animation-plan.md</a>，仅用于追溯；钩子进度条旧案见 <a href="../归档/已替代-规划/hook-progress-plan.md">hook-progress-plan.md</a>，当前入口见 <a href="钩子进度状态.html">钩子进度状态.html</a>；无障碍旧案见 <a href="../归档/已替代-规划/accessibility-plan.md">accessibility-plan.md</a>，当前入口见 <a href="无障碍状态.html">无障碍状态.html</a>。</p>
+  </div>
+</body>
+</html>
+
+
+
+
+

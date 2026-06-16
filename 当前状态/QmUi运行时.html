@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>QmUi 运行时现状</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta">
+        <span class="pill ok">active</span>
+        <span class="pill secondary">2026-06-16</span>
+        <span class="pill">C++ / CUI runtime</span>
+        <span class="pill warn">Rust UI 方案已归档</span>
+      </div>
+      <h1>QmUi 运行时现状</h1>
+      <p class="muted">QmUi 是当前 C++ 客户端内的渐进式 UI 运行时和组件原语集合。它提供动画、布局、token/theme、旧 UI 桥接和 dogfood 组件库入口，但不是 Rust/egui 双轨 UI，也不是全局替换 DDNet 旧 <code>CUIRect</code> UI 的完成态。</p>
+      <nav class="toc" aria-label="目录">
+        <a href="#summary">当前结论</a>
+        <a href="#runtime">运行时边界</a>
+        <a href="#modules">目录与模块</a>
+        <a href="#integration">实际接入</a>
+        <a href="#tokens">Token / Theme</a>
+        <a href="#coverage">测试覆盖</a>
+        <a href="#obsolete">旧文档修正</a>
+        <a href="#evidence">复核证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="summary">
+      <h2>当前结论</h2>
+      <table>
+        <thead><tr><th>能力</th><th>状态</th><th>维护口径</th></tr></thead>
+        <tbody>
+          <tr><td>QmUi runtime</td><td><span class="badge ok">已接入</span></td><td><code>CGameClient</code> 持有 <code>CUiRuntimeV2</code>，每帧推进 tree、animation runtime 和 render bridge，并写入 perf 日志。</td></tr>
+          <tr><td>动画运行时</td><td><span class="badge ok">已接入</span></td><td>支持 tween/spring、delay、priority、replace/queue/keep higher/merge target、完成事件和用户 motion level。</td></tr>
+          <tr><td>布局引擎</td><td><span class="badge ok">已实现</span></td><td>支持 row/column、auto/px/percent/flex、padding、gap、align、justify、min/max 约束。</td></tr>
+          <tr><td>渲染桥</td><td><span class="badge warn">统计桥</span></td><td><code>CUiV2RenderBridge</code> 当前只记录 draw calls 和 clip pushes，不是独立渲染器。</td></tr>
+          <tr><td>共享 widget 原语</td><td><span class="badge ok">已有 dogfood</span></td><td>按钮、表单、导航、容器、tooltip/modal/toast 等原语存在，并可通过 <code>dbg_qm_ui_dogfood</code> 覆盖 QmClient 设置页验证。</td></tr>
+          <tr><td>全局 UI 迁移</td><td><span class="badge warn">渐进中</span></td><td>菜单、HUD、计分板、名字板等多处读取 runtime 或 <code>qm_new_ui</code>，但不能推导为所有 UI 已迁移到 QmUi。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="runtime">
+      <h2>运行时边界</h2>
+      <p><code>CUiRuntimeV2::OnRender()</code> 是当前运行时总入口。每帧会 clamp <code>RenderFrameTime()</code> 到最多 <code>1/15s</code>，随后按顺序执行 <code>m_Tree.BeginFrame()</code>、<code>m_AnimRuntime.Advance(Dt)</code>、<code>m_RenderBridge.BeginFrame()</code>、<code>m_Tree.EndFrame()</code>，并记录节点数、动画数和耗时。</p>
+      <table>
+        <thead><tr><th>对象</th><th>当前职责</th><th>边界</th></tr></thead>
+        <tbody>
+          <tr><td><code>CUiRuntimeV2</code></td><td>聚合 tree/layout/anim/render bridge，并暴露 <code>AnimRuntime()</code> 给页面使用。</td><td>运行时本身不绘制完整 UI，只推进状态和 telemetry。</td></tr>
+          <tr><td><code>CUiV2Tree</code></td><td>记录帧内节点统计。</td><td>当前文档只把它作为 runtime 内部统计能力，不写成可视化树编辑器。</td></tr>
+          <tr><td><code>CUiV2LayoutEngine</code></td><td>计算布局盒子和子项分配。</td><td>输出仍经常回到旧 <code>CUIRect</code> 绘制体系。</td></tr>
+          <tr><td><code>CUiV2AnimationRuntime</code></td><td>管理属性值缓存、活动 track、队列和完成事件。</td><td>受 <code>qm_ui_motion_level</code> 控制，motion level 0 会关闭/压缩动效。</td></tr>
+          <tr><td><code>CUiV2RenderBridge</code></td><td>重置并累计渲染统计。</td><td>不拥有 renderer，不替代 <code>IGraphics</code> / <code>CUi</code>。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="modules">
+      <h2>目录与模块</h2>
+      <p>旧文档说 QmUi 只有 6 个模块已经过时。当前目录包含 runtime、动画、布局、树、渲染统计、legacy adapter、context、设计 token、theme、按钮/表单/导航/容器/覆盖层和 dogfood 页面。</p>
+      <table>
+        <thead><tr><th>类别</th><th>代表文件</th><th>当前职责</th></tr></thead>
+        <tbody>
+          <tr><td>运行时核心</td><td><code>QmRt.*</code>、<code>QmTree.*</code>、<code>QmRender.*</code></td><td>帧级 runtime、tree 统计、render bridge 统计。</td></tr>
+          <tr><td>布局与动画</td><td><code>QmLayout.*</code>、<code>QmAnim.*</code>、<code>QmAnimResolve.*</code>、<code>QmMotion.h</code>、<code>QmAnimCurves.h</code></td><td>Flex 风格布局、动画请求、属性解析、motion level 和曲线/弹簧 preset。</td></tr>
+          <tr><td>旧 UI 桥接</td><td><code>QmLegacy.*</code>、<code>UiContext.h</code></td><td><code>SUiLayoutBox</code> 与 <code>CUIRect</code> 互转，以及向 widget 注入 UI/menus/tooltips/text/icon/anim 依赖。</td></tr>
+          <tr><td>组件原语</td><td><code>UiButtons.*</code>、<code>UiForms.*</code>、<code>UiNavigation.*</code>、<code>UiContainers.h</code>、<code>UiOverlays.h</code></td><td>Primary/secondary/icon button、text field、toggle、slider、tab bar、list item、card、tooltip、modal、toast。</td></tr>
+          <tr><td>设计系统</td><td><code>UiTokens.h</code>、<code>QmTheme.h</code></td><td>颜色、spacing、radius、elevation、font、IME token、motion token 和 icon/IME theme。</td></tr>
+          <tr><td>验证入口</td><td><code>UiDogfood.*</code></td><td>通过 dogfood 页面集中展示并验证共享 widget 原语和缩放行为。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="integration">
+      <h2>实际接入</h2>
+      <ul>
+        <li><code>CGameClient</code> 在初始化时调用 <code>m_UiRuntimeV2.Init(this)</code>，重置时调用 <code>Reset()</code>，渲染阶段调用 <code>OnRender()</code>。</li>
+        <li>HUD、菜单、计分板、名字板、触控编辑等页面多处直接取 <code>GameClient()-&gt;UiRuntimeV2()-&gt;AnimRuntime()</code>。</li>
+        <li><code>qm_new_ui</code> 默认开启，用于选择新版菜单/设置页样式；<code>qm_ui_color</code> 和 <code>qm_ui_opacity</code> 参与菜单颜色/透明度。</li>
+        <li><code>dbg_qm_ui_dogfood</code> 开启时，QmClient 设置页会被 widget gallery 接管，用于验证 tokens、按钮、输入、toggle、slider、tab、list、modal、tooltip 和 toast。</li>
+        <li>QmUi runtime 的 perf context 会跟随当前 QmClient 设置页/操作上下文写入 <code>perf/ui_runtime</code> 和 <code>perf/qmclient</code> 日志。</li>
+      </ul>
+      <p class="note warn">这里的接入是“页面渐进使用 runtime 与 widget 原语”，不是“所有菜单都改成 QmUi declarative tree”。后续文档不能从目录存在推导功能完成。</p>
+    </section>
+
+    <section class="card" id="tokens">
+      <h2>Token / Theme</h2>
+      <p>旧文档“没有统一 UI 主题/样式系统”的判断需要改写：当前已有 <code>UiTokens.h</code> 和 <code>QmTheme.h</code>，但它们更像共享常量和轻量 theme，而不是完整设计系统或 CSS-like style cascade。</p>
+      <table>
+        <thead><tr><th>层级</th><th>当前内容</th><th>边界</th></tr></thead>
+        <tbody>
+          <tr><td>颜色</td><td>surface、accent、text、success/warning/danger、IME light/dark token。</td><td>仍有大量旧配置变量和页面局部颜色逻辑并存。</td></tr>
+          <tr><td>尺寸</td><td>spacing、radius、elevation、font、IME 尺寸。</td><td>值是未缩放 token，调用方仍需按 UiScale/LG 体系处理响应式。</td></tr>
+          <tr><td>动效</td><td>motion token 绑定 <code>ui_curve</code> 和 <code>ui_spring</code> preset。</td><td>最终动效强度受 <code>qm_ui_motion_level</code> 运行时配置裁剪。</td></tr>
+          <tr><td>Theme</td><td><code>qm_theme::ICON</code>、<code>IME_LIGHT</code>、<code>IME_DARK</code>、<code>ImeTheme(bool)</code>。</td><td>不是全局换肤系统，不负责所有菜单颜色。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="coverage">
+      <h2>测试覆盖</h2>
+      <ul>
+        <li><code>QmAnimTest.cpp</code> 覆盖 replace、queue、keep higher priority、merge target、delay、zero delta、zero duration、spring 收敛、spring merge、Bezier/easing preset、motion curve 暴露。</li>
+        <li><code>QmLayoutTest.cpp</code> 覆盖 row/column、padding/gap、flex 分配、justify center、align stretch、min/max/percent、计分板列布局和竖向按钮布局。</li>
+        <li><code>QmUiTokensTest.cpp</code> 覆盖 token 不变量、Qm accent、glass alpha、theme mirror、IME overlay selection、motion token 和 motion level。</li>
+        <li><code>qmclient_monitoring_test.cpp</code> 检查 QmUi runtime telemetry、perf context 和 QmClient 设置页 perf 记录。</li>
+        <li><code>qm_new_ui_menu_branch_test.cpp</code> 检查 <code>qm_new_ui</code> 分支、UI color/opacity 配置和新 UI 菜单分支。</li>
+      </ul>
+    </section>
+
+    <section class="card" id="obsolete">
+      <h2>旧文档修正</h2>
+      <table>
+        <thead><tr><th>旧口径</th><th>当前修正</th></tr></thead>
+        <tbody>
+          <tr><td>QmUi 目录只有 6 个模块。</td><td><span class="badge ok">修正</span> 当前还包括 tokens/theme、widget primitives、context、overlays 和 dogfood。</td></tr>
+          <tr><td>QmRender 是渲染桥接。</td><td><span class="badge warn">精确化</span> 当前实现只是 draw call / clip push 统计桥，不是新 renderer。</td></tr>
+          <tr><td>没有统一主题/样式系统。</td><td><span class="badge warn">部分过时</span> 已有 token/theme 层，但不是完整全局主题系统。</td></tr>
+          <tr><td>QmUi 是 Rust UI 最终架构过渡品。</td><td><span class="badge bad">归档</span> 当前事实是 C++/CUI 体系内渐进式 runtime 与组件库。</td></tr>
+          <tr><td>测试只有 6 个动画用例。</td><td><span class="badge ok">修正</span> 当前测试覆盖动画、布局、token/theme、motion level 和 telemetry。</td></tr>
+          <tr><td>Qimeng/QIMENG 残留清单。</td><td><span class="badge warn">迁出本文</span> 配置域和命名现状已归入配置命名/配置导入导出相关文档，不再作为 QmUi runtime 事实主线。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>源码证据</summary>
+        <ul>
+          <li><code>src/game/client/gameclient.h:342</code>、<code>:446</code> 到 <code>:447</code>：<code>CGameClient</code> 持有并暴露 <code>CUiRuntimeV2</code>。</li>
+          <li><code>src/game/client/gameclient.cpp:511</code>、<code>:1194</code>、<code>:2057</code> 到 <code>:2060</code>：初始化、重置、设置 perf context 并每帧调用 runtime。</li>
+          <li><code>src/game/client/QmUi/QmRt.h:8-40</code>：runtime 聚合 layout、animation、render bridge、tree 和 perf stats。</li>
+          <li><code>src/game/client/QmUi/QmRt.cpp:42-119</code>：每帧推进 tree/animation/render bridge 并写 perf payload。</li>
+          <li><code>src/game/client/QmUi/QmAnim.h:9-127</code>、<code>QmAnim.cpp:188-367</code>：动画属性、interrupt policy、tween/spring、motion level、队列和完成事件。</li>
+          <li><code>src/game/client/QmUi/QmLayout.h:7-99</code>、<code>QmLayout.cpp:84-205</code>：布局模型和子项计算。</li>
+          <li><code>src/game/client/QmUi/QmRender.h:6-24</code>、<code>QmRender.cpp:5-23</code>：render bridge 当前只统计 draw calls/clip pushes。</li>
+          <li><code>src/game/client/QmUi/UiTokens.h:12-192</code>、<code>QmTheme.h:10-133</code>：共享 token、motion token 和 icon/IME theme。</li>
+          <li><code>src/game/client/QmUi/UiButtons.h:10-28</code>、<code>UiForms.h:10-25</code>、<code>UiNavigation.h:9-30</code>、<code>UiOverlays.h:17-183</code>：当前 widget 原语范围。</li>
+          <li><code>src/game/client/components/qmclient/menus_qmclient.cpp:608-623</code>：<code>dbg_qm_ui_dogfood</code> 接管 QmClient 设置页并传入 animation runtime。</li>
+          <li><code>src/engine/shared/config_variables_qmclient.h:19-26</code>：QmUi debug、motion level、dogfood、新 UI、UI color 和 opacity 配置。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>测试证据</summary>
+        <ul>
+          <li><code>src/test/QmAnimTest.cpp:31-352</code>：动画策略、spring、Bezier、curve preset 和 motion 相关测试。</li>
+          <li><code>src/test/QmLayoutTest.cpp:9-184</code>：布局引擎 row/column/flex/constraint/scoreboard 场景测试。</li>
+          <li><code>src/test/QmUiTokensTest.cpp:11-129</code>：token/theme/motion level/IME overlay 测试。</li>
+          <li><code>src/test/qmclient_monitoring_test.cpp:575-622</code>：QmUi runtime telemetry 和 perf context 结构检查。</li>
+          <li><code>src/test/qm_new_ui_menu_branch_test.cpp:425-469</code>：新 UI color/opacity 配置和菜单分支检查。</li>
+        </ul>
+      </details>
+      <p class="footer">原始 Markdown 保留为 <a href="../归档/已替代-当前状态/qm-ui-runtime.md">qm-ui-runtime.md</a>，仅作为来源材料；新增状态修正应写入本 HTML 页面。</p>
+    </section>
+  </div>
+</body>
+</html>
+
+
+
+
+

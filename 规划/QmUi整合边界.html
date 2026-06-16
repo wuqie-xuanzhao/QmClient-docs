@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="draft spec" />
+  <title>QmUi 组件 / 动画 / Theme 收口边界规格</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta">
+        <span class="pill warn">draft spec</span>
+        <span class="pill secondary">2026-06-16</span>
+        <span class="pill">QmUi boundary</span>
+      </div>
+      <h1>QmUi 组件 / 动画 / Theme 收口边界规格</h1>
+      <p class="muted">本文只收口“怎么继续做 QmUi”，不把它写成全局 UI 重构计划。当前 QmUi 已有 runtime、动画、布局、tokens、theme、widget 原语和 dogfood，但仍与旧 CUI、局部动画 helper 并存，因此后续只能按单个组件族或单个 helper 迁移。</p>
+      <nav class="toc" aria-label="目录">
+        <a href="#summary">当前结论</a>
+        <a href="#boundary">边界与非目标</a>
+        <a href="#next">建议推进方式</a>
+        <a href="#touchpoints">高频接触点</a>
+        <a href="#evidence">复核证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="summary">
+      <h2>当前结论</h2>
+      <table>
+        <thead><tr><th>项目</th><th>状态</th><th>口径</th></tr></thead>
+        <tbody>
+          <tr><td>QmUi runtime</td><td><span class="badge ok">已存在</span></td><td><code>CGameClient</code> 已持有 <code>CUiRuntimeV2</code>，并在重置/渲染阶段接入。</td></tr>
+          <tr><td>动画统一</td><td><span class="badge warn">局部可统一</span></td><td><code>QmAnim</code> 和 <code>QmAnimResolve</code> 已提供统一动画 runtime，但局部 helper 仍在各组件中保留。</td></tr>
+          <tr><td>Theme / tokens</td><td><span class="badge warn">半成品设计系统</span></td><td>已有共享 token 和 light/dark IME theme，但不是完整 CSS-like 样式层。</td></tr>
+          <tr><td>全局 UI 替换</td><td><span class="badge bad">不作为目标</span></td><td>不能把 QmUi 直接写成全菜单、HUD、计分板的全局替换计划。</td></tr>
+          <tr><td>产品化路径</td><td><span class="badge ok">明确</span></td><td>优先选一个组件族或一个 helper 家族，先收口调用面，再扩散到下一块。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="boundary">
+      <h2>边界与非目标</h2>
+      <div class="note warn">本文的边界是“整理现有 QmUi 资产的使用规则”，不是“重新设计整个客户端 UI 架构”。如果未来要做系统级迁移，必须另开规格。</div>
+      <table>
+        <thead><tr><th>允许做</th><th>不允许做</th></tr></thead>
+        <tbody>
+          <tr><td>把新 QmClient UI 默认接到 QmUi tokens、theme 和 animation runtime。</td><td>把所有旧页面一次性迁移到 retained/declarative tree。</td></tr>
+          <tr><td>在正在修改的组件里，把本地重复动画 helper 换成 <code>QmAnimResolve</code> 或 runtime 动画请求。</td><td>为了统一而扫全仓库改所有局部 easing / tween helper。</td></tr>
+          <tr><td>逐个收口 widget 原语和 dogfood 页面中的重复样式。</td><td>把 <code>QmTheme</code> 扩成完整全局换肤系统。</td></tr>
+          <tr><td>为新页面使用现有 tokens、motion level 和 icon/IME theme。</td><td>把 UI 组件合并当成重构上游 DDNet 菜单的入口。</td></tr>
+        </tbody>
+      </table>
+      <p class="note bad">如果某个 UI 需求会同时触碰聊天、HUD、菜单、名字板和性能统计，那它已经超出本规格。</p>
+    </section>
+
+    <section class="card" id="next">
+      <h2>建议推进方式</h2>
+      <ol>
+        <li>先选一个当前正在动的 QmClient 组件族，比如设置页、资源页或 dogfood 页面。</li>
+        <li>只收口这个组件族内部重复的 1 个 helper 或 1 组 token 用法，不碰其他页面。</li>
+        <li>如果这个组件族里已有局部动画 helper，再考虑替换成 QmUi 动画 runtime。</li>
+        <li>等两个以上组件族都稳定使用同一套 token / motion 习惯，再回头讨论更大的 Theme 层整理。</li>
+      </ol>
+      <p class="note">这样做的目的不是保守，而是避免把“统一”做成一次性全局迁移。QmUi 当前更适合按使用场景逐步收口。</p>
+    </section>
+
+    <section class="card" id="touchpoints">
+      <h2>高频接触点</h2>
+      <table>
+        <thead><tr><th>入口</th><th>观察到的现状</th><th>后续口径</th></tr></thead>
+        <tbody>
+          <tr><td><code>menus_qmclient.cpp</code></td><td>dogfood 模式已把 QmUi context 和 animation runtime 接进设置页。</td><td>这是最适合做组件收口的入口之一。</td></tr>
+          <tr><td><code>chat.cpp</code></td><td>聊天页仍存在局部 easing helper，不是完整 QmUi 化。</td><td>只在聊天页被修改时再谈迁移，不做横向扫面。</td></tr>
+          <tr><td><code>hud_notifications.cpp</code></td><td>HUD 通知也有局部动效实现。</td><td>可作为动画统一的第二批候选，但不合并到本次范围。</td></tr>
+          <tr><td><code>UiTokens.h</code> / <code>QmTheme.h</code></td><td>共享 token 和 theme 已存在。</td><td>优先作为新页面默认入口，而不是强制回写老页面。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>源码证据</summary>
+        <ul>
+          <li><code>src/game/client/gameclient.h:342</code>、<code>:446</code> 到 <code>:447</code>：<code>CGameClient</code> 已持有并暴露 <code>CUiRuntimeV2</code>。</li>
+          <li><code>src/game/client/gameclient.cpp:1194</code>：重置时会重置 <code>m_UiRuntimeV2</code>。</li>
+          <li><code>src/game/client/gameclient.cpp:2060</code>：渲染阶段会调用 <code>m_UiRuntimeV2.OnRender()</code>。</li>
+          <li><code>src/game/client/QmUi/QmAnim.h:95</code> 起、<code>QmAnim.cpp:188</code> 起：动画 runtime 已存在并处理 motion level、队列和完成事件。</li>
+          <li><code>src/game/client/QmUi/QmAnimResolve.h:23</code> 到 <code>:29</code>、<code>QmAnimResolve.cpp:32</code> 到 <code>:99</code>：现有动画值解析入口已能处理 float、rect、color。</li>
+          <li><code>src/game/client/QmUi/UiTokens.h</code> 与 <code>QmTheme.h</code>：共享 token 和 IME/icon theme 已存在。</li>
+          <li><code>src/engine/shared/config_variables_qmclient.h:20</code>：<code>qm_ui_motion_level</code> 已作为公开配置存在。</li>
+          <li><code>src/game/client/components/qmclient/menus_qmclient.cpp:610</code> 到 <code>:620</code>：dogfood 模式已经把 QmUi context 和 animation runtime 接入设置页。</li>
+          <li><code>src/game/client/components/chat.cpp:439</code> 到 <code>:451</code>、<code>src/game/client/components/qmclient/hud_notifications/hud_notifications.cpp:307</code> 到 <code>:316</code>：局部动画 helper 仍与 QmUi runtime 并存。</li>
+        </ul>
+      </details>
+    </section>
+
+    <p class="footer">本文是 QmUi 的收口边界，不是实施承诺。真正开工前，仍需把目标组件族拆成更小的规格。</p>
+  </div>
+</body>
+</html>
+
+
+
+

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>收藏与资源浏览现状</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill ok">active</span><span class="pill secondary">2026-06-16</span><span class="pill warn">planning + current status</span></div>
+      <h1>收藏与资源浏览现状</h1>
+      <p class="muted">本页接管旧 <code>map-favorites-plan.md</code> 的地图收藏和资源浏览入口。服务器收藏增强已拆到 <a href="服务器收藏状态.html">服务器收藏状态.html</a>；地图收藏已经从“设置页小功能”扩展到浏览器 Favorite Maps 页、地图备注、分类缓存和本地存档联动。</p>
+    </header>
+
+    <section class="card">
+      <h2>当前已存在的能力</h2>
+      <table>
+        <thead><tr><th>领域</th><th>状态</th><th>当前实现</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>服务器收藏</td><td><span class="badge ok">split out</span></td><td>DDNet 原生服务器收藏、多地址 group、<code>allow_ping</code> 和 favorite community 见 <a href="服务器收藏状态.html">服务器收藏增强现状</a>。</td><td>本页只保留地图收藏和资源浏览口径。</td></tr>
+          <tr><td>地图收藏核心</td><td><span class="badge ok">implemented</span></td><td><code>CTClient</code> 保存 <code>std::set&lt;std::string&gt; m_FavoriteMaps</code>，注册 <code>add_favorite_map</code>、<code>remove_favorite_map</code>、<code>clear_favorite_maps</code>。</td><td>收藏本体仍是地图名集合，不是带 rating/note 的结构体。</td></tr>
+          <tr><td>浏览器地图高亮</td><td><span class="badge ok">implemented</span></td><td>服务器浏览器 map 列会把收藏地图渲染成金色，并在有地图备注时显示 tooltip。</td><td>旧文档中“浏览器只有不显眼高亮”部分已不完整：当前还带 note tooltip。</td></tr>
+          <tr><td>Favorite Maps 页</td><td><span class="badge ok">implemented</span></td><td><code>PAGE_FAVORITE_MAPS</code> 和 <code>RenderServerbrowserFavoriteMaps</code> 已存在，浏览器 tab bar 有 🔖 入口。</td><td>旧计划中的“新增收藏地图独立 Tab”已经落地，但当前页面展示收藏地图清单，不是按收藏地图过滤出的服务器列表。</td></tr>
+          <tr><td>地图备注</td><td><span class="badge ok">implemented</span></td><td><code>qmclient/map_notes.json</code> 保存 notes；游戏内 server info 可编辑当前地图备注；浏览器 tooltip 和 Favorite Maps 页展示备注。</td><td>旧文档中“地图收藏缺少备注”已过时。</td></tr>
+          <tr><td>地图分类缓存</td><td><span class="badge ok">implemented</span></td><td><code>qmclient/map_categories.json</code> 保存 map -> category；浏览器分帧扫描服务器列表并延迟保存。</td><td>保存逻辑避免在线游戏帧中同步写盘。</td></tr>
+          <tr><td>本地存档联动</td><td><span class="badge ok">implemented</span></td><td>Favorite Maps 页同时展示 <code>ddnet-saves.txt</code> local saves，并标注收藏地图是否有本地 save。</td><td>这是旧计划未覆盖的新状态。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>旧计划修正</h2>
+      <table>
+        <thead><tr><th>旧计划点</th><th>当前判断</th><th>处理方式</th></tr></thead>
+        <tbody>
+          <tr><td>地图收藏只在栖梦设置页，入口不显眼。</td><td><span class="badge ok">已过时</span></td><td>当前有浏览器 Favorite Maps tab、游戏内 server info 收藏入口、投票列表高亮和设置页管理模块。</td></tr>
+          <tr><td>添加 Favorite Maps 独立 Tab。</td><td><span class="badge ok">已实现</span></td><td>不再作为新计划；后续应改为“是否需要显示运行收藏地图的服务器列表”。</td></tr>
+          <tr><td>地图收藏缺少备注。</td><td><span class="badge ok">已过时</span></td><td>当前已有 <code>map_notes.json</code> 和 UI 编辑入口。评分、添加时间仍未看到。</td></tr>
+          <tr><td>新增 <code>br_filter_favorite_map</code> 筛选。</td><td><span class="badge warn">未证实</span></td><td>本轮未看到对应配置；如果继续做，应明确是过滤服务器列表，还是 Favorite Maps 页内显示在线服务器。</td></tr>
+          <tr><td>服务器收藏备注/标签/人数通知。</td><td><span class="badge warn">已拆独立页</span></td><td>当前入口见 <a href="服务器收藏状态.html">服务器收藏状态.html</a>；扩展前必须保持 DDNet <code>IFavorites</code> 兼容或使用 QmClient sidecar 元数据。</td></tr>
+          <tr><td>新增 <code>cl_favorite_*</code> 配置。</td><td><span class="badge bad">命名需重写</span></td><td>QmClient 新配置不应使用 <code>cl_</code> 前缀；若新增，应使用 <code>qm_</code> / <code>Qm</code> 并放在 QmClient 配置域。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>建议下一版最小计划</h2>
+      <table>
+        <thead><tr><th>优先级</th><th>主题</th><th>范围</th><th>验收点</th></tr></thead>
+        <tbody>
+          <tr><td>P0</td><td>状态固定</td><td>把 Favorite Maps 页、地图 note、分类缓存、本地 saves 联动写入用户文档和旧计划标记。</td><td>旧“只在设置页、无备注、无独立 Tab”的结论不再出现。</td></tr>
+          <tr><td>P1</td><td>收藏地图服务器视图</td><td>在现有 Favorite Maps 页中显示当前运行该地图的服务器，或新增明确过滤入口，二选一。</td><td>用户能从收藏地图跳到当前有人的服务器，不需要手动搜索地图名。</td></tr>
+          <tr><td>P1</td><td>地图评分/添加时间</td><td>扩展地图元数据时保留现有 <code>add_favorite_map</code> 兼容，不破坏旧配置。</td><td>没有元数据的旧收藏仍可正常加载。</td></tr>
+          <tr><td>P2</td><td>服务器收藏元数据</td><td>从 <a href="服务器收藏状态.html">服务器收藏增强现状</a> 继续，不在本页展开。</td><td>DDNet 原生收藏导入/导出和分组仍可用。</td></tr>
+          <tr><td>P3</td><td>人数变化通知</td><td>只有在服务器收藏元数据和通知系统边界明确后再做。</td><td>不引入后台高频刷新，不误报未选中的服务器。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>源码位置</summary>
+        <ul>
+          <li><code>src/engine/favorites.h:14</code> 定义 <code>IFavorites</code>；<code>src/engine/client/favorites.cpp:38</code> 保存 <code>add_favorite</code> 和 favorite group。</li>
+          <li><code>src/engine/client/client.cpp:5335</code> 到 <code>:5338</code> 注册服务器收藏相关命令。</li>
+          <li><code>src/game/client/components/tclient/tclient.h:230</code> 保存 <code>m_FavoriteMaps</code>；<code>:367</code> 到 <code>:375</code> 暴露收藏、分类和 note 接口。</li>
+          <li><code>src/game/client/components/tclient/tclient.cpp:1524</code> 到 <code>:1526</code> 注册地图收藏命令；<code>:4197</code> 保存 <code>add_favorite_map</code> 配置行。</li>
+          <li><code>src/game/client/components/tclient/tclient.cpp:4210</code> 到 <code>:4334</code> 读写 <code>qmclient/map_categories.json</code>，并延迟保存。</li>
+          <li><code>src/game/client/components/tclient/tclient.cpp:4341</code> 到 <code>:4477</code> 读写 <code>qmclient/map_notes.json</code>，并提供 <code>GetMapNote</code> / <code>SetMapNote</code>。</li>
+          <li><code>src/game/client/components/menus_browser.cpp:975</code> 到 <code>:1004</code> 收藏地图在服务器浏览器 map 列金色高亮，并显示 note tooltip。</li>
+          <li><code>src/game/client/components/menus_browser.cpp:3328</code> 到 <code>:3558</code> 渲染 Favorite Maps 页、分类、难度、备注和本地 save 标记。</li>
+          <li><code>src/game/client/components/menus_ingame.cpp:1392</code> 到 <code>:1400</code> 当前服务器详情可切换 Favorite map；<code>:1486</code> 到 <code>:1504</code> 可编辑当前地图 note。</li>
+          <li><code>src/game/client/components/menus_ingame.cpp:2290</code> 到 <code>:2295</code> 浏览器 tab bar 加入 Favorite map 页入口。</li>
+        </ul>
+      </details>
+    </section>
+
+    <p class="footer">旧地图方案保留为 <a href="../归档/已替代-规划/map-favorites-plan.md">map-favorites-plan.md</a>，仅用于追溯；服务器收藏旧案见 <a href="../归档/已替代-规划/server-favorites-plan.md">server-favorites-plan.md</a>，当前入口见 <a href="服务器收藏状态.html">服务器收藏状态.html</a>。</p>
+  </div>
+</body>
+</html>
+
+
+
+
+

@@ -5,198 +5,260 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="dcterms.date" content="2026-06-16" />
   <meta name="status" content="active" />
-  <title>QmClient 文档整理入口</title>
-  <style>
-    :root {
-      --bg: #f4f1ea;
-      --paper: #fffdfa;
-      --paper-2: #f7f2ea;
-      --ink: #2d2924;
-      --muted: #6f675f;
-      --line: #ded4c6;
-      --accent: #4f6f73;
-      --accent-2: #b8795b;
-      --ok: #5f7f55;
-      --warn: #a57536;
-      --bad: #a94d45;
-      --shadow: 0 18px 45px rgba(62, 50, 39, 0.12);
-      --code-bg: #ede6dc;
-    }
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      color: var(--ink);
-      background:
-        radial-gradient(circle at 12% 0%, rgba(184, 121, 91, 0.16), transparent 30rem),
-        radial-gradient(circle at 88% 8%, rgba(79, 111, 115, 0.14), transparent 28rem),
-        linear-gradient(180deg, #f7f3ec 0%, var(--bg) 100%);
-      font-family: "Noto Sans SC", "Segoe UI", "Microsoft YaHei", sans-serif;
-      line-height: 1.72;
-    }
-    .page { max-width: 1180px; margin: 0 auto; padding: 28px 20px 56px; }
-    .hero, .card {
-      background: var(--paper);
-      border: 1px solid rgba(222, 212, 198, 0.95);
-      box-shadow: var(--shadow);
-      border-radius: 22px;
-    }
-    .hero { padding: 28px 28px 24px; margin-bottom: 18px; }
-    .card { padding: 22px 24px; margin-top: 18px; }
-    h1, h2, h3 { margin: 0 0 12px; line-height: 1.2; }
-    h1 { font-size: 28px; }
-    h2 { font-size: 22px; }
-    h3 { font-size: 17px; margin-top: 18px; }
-    p { margin: 0 0 12px; }
-    code {
-      padding: 0.12em 0.36em;
-      border-radius: 6px;
-      background: var(--code-bg);
-      color: #613c2e;
-      font-size: 0.94em;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-      font-size: 14px;
-      display: block;
-      overflow-x: auto;
-    }
-    th, td {
-      border-top: 1px solid var(--line);
-      padding: 10px 12px;
-      vertical-align: top;
-      text-align: left;
-    }
-    th { background: #faf5ed; color: #4f463d; font-weight: 700; white-space: nowrap; }
-    tr:hover td { background: rgba(184, 121, 91, 0.03); }
-    a { color: #355f66; text-decoration-thickness: 1px; text-underline-offset: 3px; }
-    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
-    .pill {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 4px 10px; border-radius: 999px;
-      background: rgba(79, 111, 115, 0.10); color: var(--accent);
-      font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
-    }
-    .pill.secondary { background: rgba(184, 121, 91, 0.10); color: var(--accent-2); }
-    .pill.warn { background: rgba(165, 117, 54, 0.12); color: var(--warn); }
-    .pill.bad { background: rgba(169, 77, 69, 0.12); color: var(--bad); }
-    .pill.ok { background: rgba(95, 127, 85, 0.12); color: var(--ok); }
-    .badge {
-      display: inline-block; padding: 2px 8px;
-      border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap;
-    }
-    .badge.ok { background: rgba(95, 127, 85, 0.12); color: var(--ok); }
-    .badge.warn { background: rgba(165, 117, 54, 0.12); color: var(--warn); }
-    .badge.bad { background: rgba(169, 77, 69, 0.12); color: var(--bad); }
-    .muted { color: var(--muted); }
-    .note {
-      border-left: 4px solid var(--accent);
-      padding: 10px 12px;
-      background: rgba(79, 111, 115, 0.06);
-      border-radius: 0 10px 10px 0;
-      color: #4c4238;
-    }
-    .toc { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin-top: 14px; }
-    .toc a {
-      display: block; padding: 10px 12px;
-      border: 1px solid var(--line); border-radius: 12px;
-      color: var(--ink); text-decoration: none;
-      background: rgba(255,255,255,0.72);
-    }
-    .toc a:hover { border-color: rgba(184, 121, 91, 0.45); }
-    .footer { margin-top: 18px; color: var(--muted); font-size: 13px; }
-    @media (max-width: 920px) {
-      .hero, .card { padding-left: 18px; padding-right: 18px; }
-    }
-  </style>
+  <title>QmClient Wiki</title>
+  <link rel="stylesheet" href="assets/wiki.css" />
 </head>
 <body>
-  <div class="page">
-    <header class="hero">
-      <div class="meta">
-        <span class="pill ok">active</span>
-        <span class="pill secondary">2026-06-16</span>
-        <span class="pill warn">整理中</span>
-      </div>
-      <h1>QmClient 文档整理入口</h1>
-      <p class="muted">本页把旧调研资料拆成当前现状、规划草案、调研资料和历史归档。当前事实以源码、脚本和各 HTML 状态页标注的复核证据为准；归档 Markdown 只用于追溯来源。</p>
-      <div class="toc">
-        <a href="#current">① 当前可维护文档</a>
-        <a href="#planning">② 规划与候选 backlog</a>
-        <a href="#research">③ 调研资料</a>
-        <a href="#archive">④ 已归档旧文档</a>
-        <a href="#maintenance">⑤ 维护状态</a>
-      </div>
+  <div class="wiki-shell">
+    <header class="wiki-topbar">
+      <a class="wiki-brand" href="index.html">QmClient Wiki</a>
+      <nav class="wiki-nav" aria-label="主导航">
+        <a href="当前状态/index.html">当前状态</a>
+        <a href="规划/index.html">规划</a>
+        <a href="调研/index.html">调研</a>
+        <a href="工作流参考/index.html">工作流参考</a>
+        <a href="归档/index.html">归档</a>
+        <a href="维护说明.html">维护说明</a>
+      </nav>
     </header>
 
-    <section class="card">
-      <h2>整理原则</h2>
-      <p class="note">本目录已经收敛为 HTML 状态页 + 归档来源材料的结构。后续维护重点是继续核对 HTML 页面中的源码证据、配置名、实现边界和规划状态。</p>
-      <table>
-        <thead><tr><th>状态</th><th>含义</th><th>使用方式</th></tr></thead>
-        <tbody>
-          <tr><td><span class="badge ok">current</span></td><td>仍值得维护为当前代码说明</td><td>可读，但进入实现前仍要按当前源码复核关键路径</td></tr>
-          <tr><td><span class="badge warn">superseded</span></td><td>已由 HTML 状态页接管的旧 Markdown 来源材料</td><td>只用于追溯，不能直接作为实现依据</td></tr>
-          <tr><td><span class="badge warn">planning</span></td><td>方案、愿望清单或候选 backlog</td><td>不能当作已实现功能</td></tr>
-          <tr><td><span class="badge bad">archived</span></td><td>已知过时、错误或不再适用</td><td>只用于追溯历史，不作为依据</td></tr>
-        </tbody>
-      </table>
-    </section>
+    <main class="wiki-layout">
+      <aside class="wiki-sidebar" aria-label="分区导航">
+        <h2>Wiki 分区</h2>
+        <a href="当前状态/index.html">当前状态</a>
+        <a href="规划/index.html">规划</a>
+        <a href="调研/index.html">调研</a>
+        <a href="工作流参考/index.html">工作流参考</a>
+        <a href="归档/index.html">归档</a>
+      </aside>
 
-    <section class="card">
-      <h2 id="current">① 当前可维护文档</h2>
-      <table>
-        <thead><tr><th>文档</th><th>状态</th><th>第一轮判断</th></tr></thead>
-        <tbody>
-          <tr><td><a href="current/QmClient-current-overview.html">QmClient-current-overview.html</a></td><td><span class="badge ok">current</span></td><td>已按 2026-06 当前源码路径重写为 HTML 总览；旧 Markdown 只保留为来源材料。</td></tr>
-          <tr><td><a href="current/translation-system.html">translation-system.html</a></td><td><span class="badge ok">current</span></td><td>已按 <code>src/game/client/components/qmclient/translate/</code>、<code>qm_translate_*</code> 和 LLM provider 架构改写。</td></tr>
-          <tr><td><a href="current/voice-chat-status.html">voice-chat-status.html</a></td><td><span class="badge ok">current</span></td><td>已按 <code>src/game/client/components/qmclient/voice/</code> 和 <code>voice_capture_pipeline</code> 修正。</td></tr>
-          <tr><td><a href="current/qm-ui-runtime.html">qm-ui-runtime.html</a></td><td><span class="badge ok">current</span></td><td>已按当前 QmUi 文件集改写，并明确它不是 Rust UI 终局文档。</td></tr>
-          <tr><td><a href="current/localization-status.html">localization-status.html</a></td><td><span class="badge ok">current</span></td><td>已按 <code>qmclient_scripts/languages_qmclient/</code> TOML 维护库和生成链路改写。</td></tr>
-          <tr><td><a href="current/network-stutter-visualization.html">network-stutter-visualization.html</a></td><td><span class="badge ok">current</span></td><td>已拆清网络诊断、Qm monitoring 和设置页性能报表三条线，取消完整闭环强断言。</td></tr>
-          <tr><td><a href="current/resources-page.html">resources-page.html</a></td><td><span class="badge ok">current</span></td><td>已按当前资源页、preview scheduler 和设置页性能关系重写。</td></tr>
-          <tr><td><a href="current/bind-system.html">bind-system.html</a></td><td><span class="badge ok">current</span></td><td>已修正为 DDNet 原生 binds + TClient/QmClient 扩展 bindchat/bindwheel。</td></tr>
-          <tr><td><a href="current/chat-translation-button.html">chat-translation-button.html</a></td><td><span class="badge ok">current</span></td><td>已按输入框侧翻译按钮、出站翻译和聊天行翻译响应字段重写。</td></tr>
-          <tr><td><a href="current/friends-and-global-chat.html">friends-and-global-chat.html</a></td><td><span class="badge ok">current</span></td><td>已修正好友分类常量；明确全局聊天仍未实现。</td></tr>
-          <tr><td><a href="current/config-import-export.html">config-import-export.html</a></td><td><span class="badge ok">current</span></td><td>已修正配置域、独立目录和 legacy 迁移口径；统一归档导入导出仍标为规划。</td></tr>
-          <tr><td><a href="current/updater-status.html">updater-status.html</a></td><td><span class="badge ok">current</span></td><td>已按新版 TODO 和源码拆分中心服版本检测、Windows exe 下载替换、DDNet 更新器遗留结构。</td></tr>
-          <tr><td><a href="current/bc-port-status.html">bc-port-status.html</a></td><td><span class="badge ok">current</span></td><td>已修正 BC 移植状态，明确 3D 背景粒子、速通计时器、自动锁队等当前实现状态。</td></tr>
-          <tr><td><a href="research/page-switch-stutter-status.html">page-switch-stutter-status.html</a></td><td><span class="badge ok">current</span></td><td>已按当前 GPU upload limiter、资源页异步 job、皮肤和背景同步加载路径重写旧页面切换卡顿调研入口。</td></tr>
-          <tr><td><a href="research/script-tools-status.html">script-tools-status.html</a></td><td><span class="badge ok">current</span></td><td>已按 <code>qmclient_scripts/scripts_overview.md</code>、gate、perf 和 active i18n 主链重写旧脚本调研入口。</td></tr>
-          <tr><td><a href="research/config-naming-status.html">config-naming-status.html</a></td><td><span class="badge ok">current</span></td><td>已按当前配置域、文件名和前缀统计修正旧命名调研，避免继续引用 <code>QIMENG</code>、<code>RiVoice</code> 和 <code>qmc_</code> 旧口径。</td></tr>
-        </tbody>
-      </table>
-    </section>
+      <article class="wiki-content">
+        <header class="doc-header">
+          <h1>QmClient Wiki</h1>
+          <p class="muted">这里整理 QmClient 的当前状态、规划草案、调研结论和历史归档。HTML 是主要阅读入口；进入实现前仍以当前源码、脚本和仓库级工作流文档为准。</p>
+          <dl class="doc-meta">
+            <div><dt>状态</dt><dd>active</dd></div>
+            <div><dt>整理日期</dt><dd>2026-06-16</dd></div>
+            <div><dt>入口类型</dt><dd>静态 wiki</dd></div>
+          </dl>
+        </header>
 
-    <section class="card">
-      <h2 id="planning">② 规划与候选 backlog</h2>
-      <p>这些文档已从旧功能模块目录移出。<code>planning/</code> 现在保留 HTML 状态页；旧 Markdown 草案已归档到 <a href="archive/superseded-planning/index.html">archive/superseded-planning/</a>，只能作为想法来源。进入开发前必须重新写规格或计划。</p>
-      <p><a href="planning/index.html">打开 planning HTML 索引</a>；创新功能候选见 <a href="planning/innovation-roadmap.html">innovation-roadmap.html</a>；新版 TODO PDF 路由见 <a href="planning/todo-priority-status.html">todo-priority-status.html</a>；聊天/F1 导出当前状态见 <a href="planning/chat-f1-export-status.html">chat-f1-export-status.html</a>；聊天框 UI 增强当前状态见 <a href="planning/chat-ui-status.html">chat-ui-status.html</a>；自适应 AntiPing 当前状态见 <a href="planning/adaptive-antiping-status.html">adaptive-antiping-status.html</a>；Demo/观战导演当前状态见 <a href="planning/demo-spectator-status.html">demo-spectator-status.html</a>；HUD/视觉辅助当前状态见 <a href="planning/hud-visual-assist-status.html">hud-visual-assist-status.html</a>；钩子进度条当前状态见 <a href="planning/hook-progress-status.html">hook-progress-status.html</a>；无障碍/可读性当前状态见 <a href="planning/accessibility-status.html">accessibility-status.html</a>；收藏/资源浏览当前状态见 <a href="planning/favorites-browser-status.html">favorites-browser-status.html</a>；服务器收藏增强当前状态见 <a href="planning/server-favorites-status.html">server-favorites-status.html</a>；脚本/插件系统当前状态见 <a href="planning/plugin-scripting-status.html">plugin-scripting-status.html</a>；截图管理/水印当前状态见 <a href="planning/screenshot-manager-status.html">screenshot-manager-status.html</a>；皮肤混搭/资源编辑当前状态见 <a href="planning/skin-mixer-status.html">skin-mixer-status.html</a>；统计/持久化当前状态见 <a href="planning/persistent-stats-status.html">persistent-stats-status.html</a>。</p>
-    </section>
+        <section class="doc-section">
+          <h2>从这里开始</h2>
+          <div class="doc-grid">
+            <a class="doc-link" href="当前状态/index.html">
+              <strong>当前状态</strong>
+              <span>仍值得维护为当前代码说明的页面。实现前优先阅读这里，再核对源码。</span>
+            </a>
+            <a class="doc-link" href="规划/index.html">
+              <strong>规划</strong>
+              <span>需求草案、候选 backlog 和边界规格。不能直接视为已实现功能。</span>
+            </a>
+            <a class="doc-link" href="调研/index.html">
+              <strong>调研</strong>
+              <span>背景调研、可行性判断和风险边界。使用时要复核当前代码。</span>
+            </a>
+            <a class="doc-link" href="归档/index.html">
+              <strong>归档</strong>
+              <span>已替代、明显过时或仅有追溯价值的旧材料。</span>
+            </a>
+            <a class="doc-link" href="工作流参考/index.html">
+              <strong>工作流参考</strong>
+              <span>索引 docs/superpowers 的探索、计划、规格、审查和收口报告；使用前必须复核当前代码。</span>
+            </a>
+          </div>
+        </section>
 
-    <section class="card">
-      <h2 id="research">③ 调研资料</h2>
-      <p>调研资料保留在 <code>research/</code>，现在以 HTML 状态页为入口。旧 Markdown 调研原文已归档到 <a href="archive/superseded-research/index.html">archive/superseded-research/</a>；其中脚本工具调研需要和 <code>qmclient_scripts/scripts_overview.md</code> 对齐，HarmonyOS 可行性报告仍保留为独立 HTML。</p>
-      <p><a href="research/index.html">打开 research HTML 索引</a></p>
-    </section>
+        <section class="doc-section" id="todo">
+          <h2>功能 TODO</h2>
+          <p class="muted">按 `QmClient 功能 Todo.pdf` 的组织方式整理：首页只保留可扫读的功能清单；详细说明进入对应 wiki 页面或工作流参考继续看。PDF 和 `docs/superpowers/` 均可能与当前代码脱节。</p>
 
-    <section class="card">
-      <h2 id="archive">④ 已归档旧文档</h2>
-      <p>归档区包含明显不适合作为当前依据的旧报告，以及从 current、planning、research 移出的 superseded Markdown 来源材料。</p>
-      <p><a href="archive/index.html">打开归档索引</a></p>
-    </section>
+          <div class="todo-list">
+            <section class="todo-group">
+              <h3>UI/UX、音效、视觉</h3>
+              <ul>
+                <li>
+                  <span class="todo-check">[ ]</span>
+                  <div>
+                    <strong>界面现代化 / UI 框架重构</strong>
+                    <span><span class="badge bad">低优先级</span> 主菜单、HUD、设置页、通知、HUD 编辑器与组件拖拽器仍需重新拆规格。</span>
+                  </div>
+                </li>
+                <li>
+                  <span class="todo-check">[ ]</span>
+                  <div>
+                    <strong>名称板与钩子进度显示</strong>
+                    <span><span class="badge warn">中优先级</span> 包括钩子时间进度条、无限钩符号、强弱钩显示；入口：<a href="规划/钩子进度状态.html">钩子进度状态</a>。</span>
+                  </div>
+                </li>
+                <li>
+                  <span class="todo-check">[ ]</span>
+                  <div>
+                    <strong>武器切换和命中视觉反馈</strong>
+                    <span><span class="badge bad">低优先级</span> 甩枪、缩放、旋转、命中粒子、准星路径提示；入口：<a href="规划/皮肤拼装配方.html">相关视觉规划</a>。</span>
+                  </div>
+                </li>
+                <li>
+                  <span class="todo-check">[x]</span>
+                  <div>
+                    <strong>聊天框与消息通知基础增强</strong>
+                    <span><span class="badge ok">部分完成</span> 通知栏、可滚动聊天框已有实现或现状页；入口：<a href="规划/聊天UI状态.html">聊天 UI 状态</a>。</span>
+                  </div>
+                </li>
+                <li>
+                  <span class="todo-check">[ ]</span>
+                  <div>
+                    <strong>音效增强与无障碍功能</strong>
+                    <span><span class="badge bad">低优先级</span> 菜单音效、悬停音效、色盲模式、高对比度模式；入口：<a href="规划/无障碍状态.html">无障碍状态</a>。</span>
+                  </div>
+                </li>
+              </ul>
+            </section>
 
-    <section class="card">
-      <h2 id="maintenance">⑤ 维护状态</h2>
-      <p>维护规则、归档边界、新版 TODO PDF 使用口径和后续验证要求已收敛到 <a href="maintenance-status.html">maintenance-status.html</a>。后续改本文档库时，先按该页确认入口和归档规则。</p>
-    </section>
+            <section class="todo-group">
+              <h3>网络、性能、社交</h3>
+              <ul>
+                <li>
+                  <span class="todo-check">[x]</span>
+                  <div>
+                    <strong>网络卡顿诊断</strong>
+                    <span><span class="badge ok">高优先级 / 部分完成</span> 图表、上下行延迟、丢包、Jitter 和连接质量仍可继续细化；入口：<a href="规划/网络诊断面板.html">网络诊断面板</a>。</span>
+                  </div>
+                </li>
+                <li>
+                  <span class="todo-check">[x]</span>
+                  <div>
+                    <strong>页面切换卡顿</strong>
+                    <span><span class="badge ok">高优先级 / DYL</span> 已有资源加载与渲染路径调研，后续按具体卡顿路径拆修复；入口：<a href="调研/页面切换卡顿状态.html">页面切换卡顿状态</a>。</span>
+                  </div>
+                </li>
+                <li>
+                  <span class="todo-check">[ ]</span>
+                  <div>
+                    <strong>智能网络与客户端优化建议</strong>
+                    <span><span class="badge bad">低优先级</span> AntiPing 配置已有，但自动调节逻辑和建议 HUD 仍是规划；入口：<a href="规划/自适应AntiPing状态.html">自适应 AntiPing 状态</a>。</span>
+                  </div>
+                </li>
+                <li>
+                  <span class="todo-check">[ ]</span>
+                  <div>
+                    <strong>好友分类、全局聊天、自动跟随好友</strong>
+                    <span><span class="badge warn">中/低优先级</span> 好友分类现状已修正，全局聊天仍未实现；入口：<a href="当前状态/好友与全局聊天.html">好友与全局聊天</a>。</span>
+                  </div>
+                </li>
+                <li>
+                  <span class="todo-check">[ ]</span>
+                  <div>
+                    <strong>F1 记录导出与聊天复制</strong>
+                    <span><span class="badge warn">中优先级</span> 结构化导出、点击复制、过滤系统消息需要继续规格化；入口：<a href="规划/聊天F1导出状态.html">聊天 F1 导出状态</a>。</span>
+                  </div>
+                </li>
+              </ul>
+            </section>
 
-    <p class="footer">共享样式模板：<code>../../qmclient-html-template.html</code>。本页是整理入口，不替代逐篇代码复核。</p>
+            <section class="todo-group">
+              <h3>资源、控制、玩法辅助</h3>
+              <ul>
+                <li>
+                  <span class="todo-check">[ ]</span>
+                  <div>
+                    <strong>资源页面与资源分享</strong>
+                    <span><span class="badge warn">中优先级</span> 资源页当前状态、预览调度和资源分享需分开处理；入口：<a href="当前状态/资源页.html">资源页</a>。</span>
+                  </div>
+                </li>
+                <li>
+                  <span class="todo-check">[ ]</span>
+                  <div>
+                    <strong>资源/材质编辑器、截图水印</strong>
+                    <span><span class="badge warn">DYL</span> 资源工坊、截图管理和水印命名已有规划入口；入口：<a href="规划/资源工坊状态.html">资源工坊状态</a>、<a href="规划/截图管理状态.html">截图管理状态</a>。</span>
+                  </div>
+                </li>
+                <li>
+                  <span class="todo-check">[ ]</span>
+                  <div>
+                    <strong>Bind 指令系统化与 Bind Wheel 快捷设置</strong>
+                    <span><span class="badge warn">中优先级</span> 指令识别、Tab 补全、快捷设置面板需要边界规格；入口：<a href="规划/BindWheel快速设置.html">BindWheel 快速设置</a>。</span>
+                  </div>
+                </li>
+                <li>
+                  <span class="todo-check">[x]</span>
+                  <div>
+                    <strong>Gores 模式、Zen Mode</strong>
+                    <span><span class="badge ok">已完成标记</span> PDF 标为完成，但仍需以当前代码现状页为准。</span>
+                  </div>
+                </li>
+                <li>
+                  <span class="todo-check">[ ]</span>
+                  <div>
+                    <strong>Demo、观战导演、持久统计、浏览器增强</strong>
+                    <span><span class="badge warn">中优先级</span> 分身状态、全地图录制、Ranks、地图收藏和备注等分散在多个规划页；入口：<a href="规划/Demo观战状态.html">Demo 观战状态</a>、<a href="规划/持久统计状态.html">持久统计状态</a>。</span>
+                  </div>
+                </li>
+              </ul>
+            </section>
+
+            <section class="todo-group">
+              <h3>配置、本地化、更新与平台</h3>
+              <ul>
+                <li>
+                  <span class="todo-check">[ ]</span>
+                  <div>
+                    <strong>配置导入/导出系统</strong>
+                    <span><span class="badge warn">中优先级</span> `.qmconfig`、统一配置域和 legacy 迁移仍需收敛；入口：<a href="当前状态/配置导入导出.html">配置导入导出</a>。</span>
+                  </div>
+                </li>
+                <li>
+                  <span class="todo-check">[ ]</span>
+                  <div>
+                    <strong>汉化 / 国际化完善</strong>
+                    <span><span class="badge warn">持续维护</span> TOML 维护库和生成链路已有当前说明；入口：<a href="当前状态/本地化系统.html">本地化系统</a>。</span>
+                  </div>
+                </li>
+                <li>
+                  <span class="todo-check">[ ]</span>
+                  <div>
+                    <strong>自动更新系统</strong>
+                    <span><span class="badge warn">规划中</span> 中心服版本检测、Windows exe 下载替换和 DDNet 遗留结构需继续拆分；入口：<a href="当前状态/更新器.html">更新器</a>。</span>
+                  </div>
+                </li>
+                <li>
+                  <span class="todo-check">[ ]</span>
+                  <div>
+                    <strong>HarmonyOS / Workshop / 其他平台边界</strong>
+                    <span><span class="badge bad">调研</span> 目前只作为可行性和边界材料；入口：<a href="调研/HarmonyOS移植可行性.html">HarmonyOS 移植可行性</a>。</span>
+                  </div>
+                </li>
+              </ul>
+            </section>
+          </div>
+        </section>
+
+        <section class="doc-section">
+          <h2>使用规则</h2>
+          <p class="callout">本文档库是知识入口，不是实现依据的最终来源。当前事实进入开发前必须复核源码、脚本和 `docs/ai-workflow/`。</p>
+          <table>
+            <thead><tr><th>区域</th><th>用途</th><th>使用方式</th></tr></thead>
+            <tbody>
+              <tr><td>当前状态</td><td>维护当前事实</td><td>可作为阅读入口，但关键路径必须按源码复核。</td></tr>
+              <tr><td>规划</td><td>记录后续可做事项</td><td>进入实现前重新拆成小规格或计划。</td></tr>
+              <tr><td>调研</td><td>记录背景和风险</td><td>只提供上下文，不替代当前代码阅读。</td></tr>
+              <tr><td>归档</td><td>保留历史来源</td><td>不能直接作为实现依据。</td></tr>
+              <tr><td>工作流参考</td><td>索引历史探索、计划、规格和审查</td><td>可用于理解背景；进入实现前必须复核当前代码。</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <p class="doc-footer-nav">共享样式：<code>assets/wiki.css</code>。维护边界见 <a href="维护说明.html">维护说明</a>。</p>
+      </article>
+
+      <aside class="wiki-toc" aria-label="页内目录">
+        <h2>本页</h2>
+        <a href="#top">顶部</a>
+        <a href="#todo">功能 TODO</a>
+      </aside>
+    </main>
   </div>
 </body>
 </html>
-
 
 

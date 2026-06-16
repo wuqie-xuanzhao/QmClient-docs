@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>QmClient 当前版本功能总览</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta">
+        <span class="pill ok">active</span>
+        <span class="pill secondary">2026-06-16</span>
+        <span class="pill warn">HTML 入口总览</span>
+      </div>
+      <h1>QmClient 当前版本功能总览</h1>
+      <p class="muted">本文档替代旧版 Markdown 总览作为当前入口。当前 current、planning、research 已收敛为 HTML 状态页；归档 Markdown 只保留来源材料。本文只记录高层事实和阅读路由，具体实现判断以各专题 HTML 页和当前源码为准。</p>
+      <div class="toc">
+        <a href="#scope">① 范围与可信度</a>
+        <a href="#architecture">② 当前结构</a>
+        <a href="#confirmed">③ 已确认事实</a>
+        <a href="#next">④ 后续维护重点</a>
+      </div>
+    </header>
+
+    <section class="card">
+      <h2 id="scope">① 范围与可信度</h2>
+      <p>本页基于 2026-06-16 当前工作区的文件结构做第一轮复核。它不声称覆盖所有功能细节，只修正旧文档中最容易误导后续维护的结构性问题。</p>
+      <table>
+        <thead><tr><th>范围</th><th>当前判断</th></tr></thead>
+        <tbody>
+          <tr><td><code>src/game/client/components/qmclient/translate/</code></td><td>翻译系统已经是独立子目录，不再是旧文档中平铺的 <code>translate.cpp/.h</code> 口径。</td></tr>
+          <tr><td><code>src/game/client/components/qmclient/voice/</code></td><td>语音模块已经是独立子目录，包含 <code>voice_core</code>、<code>voice_utils</code>、<code>voice_component</code> 和 <code>voice_capture_pipeline</code>。</td></tr>
+          <tr><td><code>src/game/client/QmUi/</code></td><td>QmUi 仍是当前 UI 基础设施的一部分，包含 layout、animation、render bridge 等模块。</td></tr>
+          <tr><td><code>src/engine/shared/config_variables_qmclient.h</code></td><td>QmClient 配置项集中在 <code>qm_</code> 前缀体系，且包含性能、UI、IME、聊天日志、hitbox、中心服标识等较新的配置。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2 id="architecture">② 当前结构</h2>
+      <p>QmClient 当前不应再被描述成一组散落功能点。更准确的结构是：DDNet/TClient 基础能力之上，叠加 QmClient 配置域、QmClient 设置页、QmUi 运行时、翻译/语音/社交/可视化等模块。</p>
+      <table>
+        <thead><tr><th>层</th><th>代表路径</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>配置域</td><td><code>src/engine/shared/config_variables_qmclient.h</code></td><td>当前 QmClient 自有配置的主要入口，新增功能默认应继续使用 <code>Qm</code>/<code>qm_</code> 口径。</td></tr>
+          <tr><td>设置页入口</td><td><code>src/game/client/components/qmclient/menus_qmclient.cpp</code></td><td>QmClient 设置页和功能入口集中区域，后续 UI 文档应以这里的真实结构为准。</td></tr>
+          <tr><td>翻译系统</td><td><code>src/game/client/components/qmclient/translate/</code></td><td>包含后端、解析、UI 设置和出站翻译逻辑。</td></tr>
+          <tr><td>语音系统</td><td><code>src/game/client/components/qmclient/voice/</code></td><td>纯 C++ 语音链路仍是当前维护对象，后续文档要更新旧路径。</td></tr>
+          <tr><td>QmUi</td><td><code>src/game/client/QmUi/</code></td><td>当前是 CUI 周边的布局、动画和 render bridge 基础设施，不应直接写成 Rust UI 已落地方向。</td></tr>
+          <tr><td>脚本与 gate</td><td><code>qmclient_scripts/</code></td><td>构建、文档检查、语言维护和性能报告入口在这里；旧脚本调研需要重新降级为背景资料。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2 id="confirmed">③ 已确认事实</h2>
+      <ul>
+        <li>翻译组件公开了 <code>CTranslate</code>，支持入站翻译、出站翻译、自动出站检测和并发 job 管理。</li>
+        <li>语音核心配置快照已经使用 <code>QmVoice*</code> 命名，旧的 <code>RiVoice*</code> 或 Rust 双路径口径不应继续作为当前事实。</li>
+        <li>QmUi 的 <code>CUiV2RenderBridge</code> 当前记录 draw call 和 clip push 统计；文档应避免夸大为完整 retained render tree。</li>
+        <li>配置项中已经出现 <code>qm_perf_*</code>、<code>qm_ui_*</code>、<code>qm_chat_log_*</code>、<code>qm_hitbox_*</code> 等新能力，旧总览的功能清单需要继续补齐。</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2 id="next">④ 后续维护重点</h2>
+      <table>
+        <thead><tr><th>优先级</th><th>目标</th><th>原因</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>继续复核 current HTML 专题页</td><td>入口已 HTML 化，后续重点是逐页确认源码行号、配置名和未实现项仍准确。</td></tr>
+          <tr><td>2</td><td>把 planning 高风险条目拆成小规格</td><td>旧草案已归档；真正进入开发前需要按当前代码重新写小范围计划。</td></tr>
+          <tr><td>3</td><td>维护 research 状态页</td><td>旧调研原文已归档；长期有效的调研应转入 current 或保持独立 HTML 状态页。</td></tr>
+          <tr><td>4</td><td>继续使用 wiki 共享样式</td><td>新增页面应复用 <code>../assets/wiki.css</code> 和当前 wiki 页面结构。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <p class="footer">原始 Markdown 已保留：<a href="../归档/已替代-当前状态/QmClient-current-overview.md">QmClient-current-overview.md</a>。本页后续应继续被更细的 HTML 现状页取代或补充。</p>
+  </div>
+</body>
+</html>
+
+
+
+
+
+
+

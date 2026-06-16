@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>统计与持久化现状</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill ok">active</span><span class="pill secondary">2026-06-16</span><span class="pill warn">planning + current status</span></div>
+      <h1>统计与持久化现状</h1>
+      <p class="muted">本页接管旧 <code>persistent-stats-plan.md</code>。当前统计能力分成四条线：DDNet 局内 statboard、自动 CSV、Qm/TClient 当前会话 PlayerStats HUD、QmClient 中心服在线时长。旧案中的本地跨局战绩 JSON、历史趋势图和成就系统仍未实现。</p>
+    </header>
+
+    <section class="card">
+      <h2>当前已存在的能力</h2>
+      <table>
+        <thead><tr><th>领域</th><th>状态</th><th>当前实现</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>局内 statboard</td><td><span class="badge ok">implemented</span></td><td><code>CClientStats m_aStats[MAX_CLIENTS]</code> 记录 frags、deaths、suicides、spree、weapon F/D、flag grabs/captures 和 ingame ticks。</td><td>这是按当前局/当前玩家在线状态维护的数据，不是长期数据库。</td></tr>
+          <tr><td>局内重置</td><td><span class="badge ok">implemented</span></td><td>game reset、round start 和玩家离开时会重置 <code>m_aStats</code>；进入/离开 spectator 会累加本局 ingame ticks。</td><td>旧文档“每局重置”仍成立，但不是完整现状。</td></tr>
+          <tr><td>Statboard CSV</td><td><span class="badge ok">implemented</span></td><td><code>FormatStats</code> 输出服务器名、game type、map 和玩家统计；<code>cl_auto_csv</code> 游戏结束后写 CSV。</td><td>这是导出快照，不是可查询历史记录。</td></tr>
+          <tr><td>自动 CSV 清理</td><td><span class="badge warn">implemented with mismatch</span></td><td>CSV 写入路径是 <code>screenshots/auto/stats_*.csv</code>，但清理逻辑使用 <code>record/csv</code>、<code>autorecord</code>、<code>.csv</code>。</td><td>这是值得后续源码复核的 gap；本轮只记录，不改源码。</td></tr>
+          <tr><td>Qm PlayerStats HUD</td><td><span class="badge ok">implemented</span></td><td><code>SPlayerStats</code> 跟踪当前会话存活时间、救醒/冻结次数、左右出钩次数；HUD 显示 alive、rescue/freeze、hooking L/R。</td><td>可配置进服重置；默认不是跨局历史战绩。</td></tr>
+          <tr><td>Gores 地图进度</td><td><span class="badge ok">implemented</span></td><td><code>qm_player_stats_map_progress*</code> 控制地图进度条，可嵌入 HUD 或独立底部横条。</td><td>这是当前地图进度可视化，不是统计趋势图。</td></tr>
+          <tr><td>中心服在线时长</td><td><span class="badge ok">implemented</span></td><td><code>CQmClient</code> 使用 <code>playtime/start</code>、<code>stop</code>、<code>query</code> 同步总在线秒数，并本地保存 <code>playtime_client_id.txt</code>。</td><td>它统计客户端在线时长，不统计每局 frags/deaths。</td></tr>
+          <tr><td>崩溃恢复 marker</td><td><span class="badge ok">implemented</span></td><td><code>qmclient/lifecycle_pending.marker</code> 记录 session、started_at、last_seen_at 和 client_id，用于异常退出恢复 stop 上报。</td><td>这是 lifecycle/playtime 恢复机制，不是本地历史战绩。</td></tr>
+          <tr><td>历史战绩数据库</td><td><span class="badge bad">not implemented</span></td><td>本轮未看到 <code>qmclient_stats.json</code>、session stats vector、历史趋势图、按地图累计 frags/deaths 或成就系统。</td><td>旧案这部分仍是规划。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>旧计划修正</h2>
+      <table>
+        <thead><tr><th>旧计划点</th><th>当前判断</th><th>处理方式</th></tr></thead>
+        <tbody>
+          <tr><td>现有功能只有局内统计和 CSV。</td><td><span class="badge warn">不完整</span></td><td>还需要纳入 Qm PlayerStats HUD、Gores map progress、中心服 playtime 和 lifecycle marker。</td></tr>
+          <tr><td>无持久化。</td><td><span class="badge warn">需拆分</span></td><td>局内战绩没有本地历史库；但 playtime client id 和 lifecycle marker 有本地文件，在线总时长由中心服保存。</td></tr>
+          <tr><td>新增 <code>cl_stats_*</code> 配置。</td><td><span class="badge bad">命名错误</span></td><td>QmClient 新配置应使用 <code>qm_</code> / <code>Qm</code>；现有玩家统计配置已在 <code>config_variables_qmclient.h</code>。</td></tr>
+          <tr><td>把持久化逻辑塞进 <code>statboard.cpp</code>。</td><td><span class="badge warn">需重写</span></td><td>如果做长期统计，应和 statboard 快照、TClient PlayerStats、QmClient lifecycle 分层，避免一个组件承担所有存储。</td></tr>
+          <tr><td>成就系统可选。</td><td><span class="badge bad">默认不做</span></td><td>新版 TODO 已排除成就系统；不应从旧计划继承为统计功能一部分。</td></tr>
+          <tr><td>趋势图表。</td><td><span class="badge warn">仍是规划</span></td><td>没有历史数据结构前不做图表；先明确最小记录格式和隐私边界。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>建议下一版最小计划</h2>
+      <table>
+        <thead><tr><th>优先级</th><th>主题</th><th>范围</th><th>验收点</th></tr></thead>
+        <tbody>
+          <tr><td>P0</td><td>状态固定</td><td>把四条统计线写清楚：statboard、CSV、PlayerStats HUD、playtime。</td><td>后续不再把“在线时长持久化”误认为“战绩持久化已完成”。</td></tr>
+          <tr><td>P0</td><td>自动 CSV 路径复核</td><td>单独检查 <code>screenshots/auto/stats_*.csv</code> 写入路径与 <code>record/csv/autorecord*.csv</code> 清理路径是否不一致。</td><td>确认是否是 bug；若是，另开源码修复任务。</td></tr>
+          <tr><td>P1</td><td>本地历史最小版</td><td>只记录本地玩家每次会话的 map、server、start/end、PlayerStats HUD 指标和 statboard 快照摘要。</td><td>使用 QmClient sidecar 文件，不修改 demo/协议/服务端语义。</td></tr>
+          <tr><td>P1</td><td>隐私和开关</td><td>历史记录默认关闭或明确提示；player name、server name、map name 是否写入必须可控。</td><td>用户能删除/禁用本地历史记录。</td></tr>
+          <tr><td>P2</td><td>查询/导出</td><td>先提供 CSV/JSON 导出和简单列表，不做图表库。</td><td>不会引入复杂 UI 或长期性能负担。</td></tr>
+          <tr><td>P3</td><td>趋势图</td><td>有稳定历史数据后再做折线/柱状图。</td><td>图表使用已有 UI 绘制能力，不引入大依赖。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>源码位置</summary>
+        <ul>
+          <li><code>src/game/client/gameclient.h:791</code> 到 <code>:828</code>：<code>CClientStats</code> 和 <code>m_aStats</code> 定义局内统计字段。</li>
+          <li><code>src/game/client/gameclient.cpp:1109</code> 到 <code>:1110</code>、<code>:2880</code> 到 <code>:2885</code>、<code>:3730</code> 到 <code>:3736</code>：reset/round start/玩家离开会重置统计。</li>
+          <li><code>src/game/client/components/statboard.cpp:23</code> 到 <code>:29</code>：statboard reset 会重置所有 <code>m_aStats</code>。</li>
+          <li><code>src/game/client/components/statboard.cpp:128</code> 到 <code>:146</code>：游戏结束后触发自动统计板截图和自动 CSV。</li>
+          <li><code>src/game/client/components/statboard.cpp:417</code> 到 <code>:435</code>：自动 CSV 写入 <code>screenshots/auto/stats_*.csv</code> 并调用 <code>Client()-&gt;AutoCSV_Start()</code>。</li>
+          <li><code>src/engine/client/client.cpp:4266</code> 到 <code>:4283</code>：CSV 清理目前初始化 <code>record/csv</code>、<code>autorecord</code>、<code>.csv</code>。</li>
+          <li><code>src/game/client/components/statboard.cpp:460</code> 到 <code>:547</code>：<code>FormatStats</code> 输出 server stats 和 player stats CSV。</li>
+          <li><code>src/game/client/components/tclient/tclient.h:28</code> 到 <code>:49</code>：<code>SPlayerStats</code> 字段包括 alive、rescue/freeze 和 hook direction。</li>
+          <li><code>src/game/client/components/tclient/tclient.cpp:3229</code> 到 <code>:3344</code>：PlayerStats reset/update/track hook direction 逻辑。</li>
+          <li><code>src/game/client/components/hud.cpp:4980</code> 到 <code>:5045</code>：HUD 显示 alive、rescue/freeze、hooking L/R 和嵌入地图进度。</li>
+          <li><code>src/engine/shared/config_variables_qmclient.h:301</code> 到 <code>:310</code>：Qm PlayerStats 和 map progress 配置使用 <code>qm_player_stats_*</code>。</li>
+          <li><code>src/game/client/components/qmclient/menus_qmclient.cpp:5496</code> 到 <code>:5567</code>：设置页 Player data 模块暴露 PlayerStats HUD、map progress 和 reset on join。</li>
+          <li><code>src/game/client/components/qmclient/qmclient.cpp:96</code> 到 <code>:106</code>：playtime 与 lifecycle 端点和本地文件路径。</li>
+          <li><code>src/game/client/components/qmclient/qmclient.cpp:834</code> 到 <code>:886</code>：lifecycle marker 写入和异步刷新。</li>
+          <li><code>src/game/client/components/qmclient/qmclient.cpp:926</code> 到 <code>:974</code>：读取/生成并保存 <code>playtime_client_id.txt</code>。</li>
+          <li><code>src/game/client/components/qmclient/qmclient.cpp:979</code> 到 <code>:1032</code>、<code>:1077</code> 到 <code>:1148</code>：向中心服发送 playtime start/stop/query 并读取 <code>total_seconds</code>。</li>
+        </ul>
+      </details>
+    </section>
+
+    <p class="footer">旧方案保留为 <a href="../归档/已替代-规划/persistent-stats-plan.md">persistent-stats-plan.md</a>，仅用于追溯。后续统计规划必须先区分“战绩历史”和“在线时长”。</p>
+  </div>
+</body>
+</html>
+
+
+
+
+

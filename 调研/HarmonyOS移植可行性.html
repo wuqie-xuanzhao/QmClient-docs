@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-15" />
+  <meta name="status" content="active" />
+  <title>DDNet / QmClient 鸿蒙（HarmonyOS NEXT）移植可行性报告</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta">
+        <span class="pill ok">active</span>
+        <span class="pill secondary">2026-06-15</span>
+        <span class="pill warn">调研报告</span>
+      </div>
+      <h1>DDNet / QmClient 鸿蒙（HarmonyOS NEXT）移植可行性报告</h1>
+      <p class="muted">评估将 DDNet/QmClient 游戏客户端移植到华为鸿蒙系统（手机 + PC）的技术可行性、工作量、风险与推荐路线。同时对比 <strong>C++ 原版移植</strong>与<strong>基于 ddnet-rs 用 Rust 重写</strong>两条路径，给出诚实判断。</p>
+      <div class="toc">
+        <a href="#verdict">结论总判</a>
+        <a href="#cpp-status">C++ QmClient 技术现状</a>
+        <a href="#ddnet-rs-status">ddnet-rs 技术现状</a>
+        <a href="#versus">两条路径对比</a>
+        <a href="#harmonyos-apis">鸿蒙平台能力评估</a>
+        <a href="#cpp-plan">方案 A：C++ 移植路线图</a>
+        <a href="#rust-plan">方案 B：ddnet-rs 重写路线图</a>
+        <a href="#recommendation">推荐决策</a>
+      </div>
+    </header>
+
+    <!-- ============= 结论总判 ============= -->
+    <section class="card">
+      <h2 id="verdict">结论总判</h2>
+      <div class="verdict-box">
+        <h3>中等偏高难度，但完全可行</h3>
+        <p>两条路径均无不可逾越的技术障碍，但核心阻塞点不同：<br>
+        <strong>C++ 路径</strong>阻塞在 SDL2 无鸿蒙后端；<strong>Rust 路径</strong>阻塞在 ddnet-rs 功能远不完整。</p>
+      </div>
+      <p>项目已有 Android 移植经验（JNI 桥接、触摸控制、GLES 渲染），鸿蒙 NEXT 支持 OpenGL ES 3.x / Vulkan / POSIX socket，很多基础设施可直接复用。</p>
+      <div class="note warn">
+        <strong>核心判断</strong>：如果目标是<strong>尽快在鸿蒙上玩到 DDNet</strong>，C++ 移植是唯一现实选择（2-3 个月出可玩版本）。如果目标是<strong>做一个长期独立维护的原生客户端</strong>，ddnet-rs 架构更适合鸿蒙，但需要 6-12 个月才能达到可用状态。
+      </div>
+    </section>
+
+    <!-- ============= C++ QmClient 技术现状 ============= -->
+    <section class="card">
+      <h2 id="cpp-status">C++ QmClient 技术现状</h2>
+      <p class="muted">基于 2026-06-15 代码库的实际分析，非设计意图。</p>
+
+      <h3>项目规模</h3>
+      <table>
+        <thead><tr><th>指标</th><th>数值</th></tr></thead>
+        <tbody>
+          <tr><td>C/C++ 源文件</td><td>~926 个（<code>.cpp</code> + <code>.h</code>）</td></tr>
+          <tr><td>C/C++ 代码行</td><td>~380,000+ 行</td></tr>
+          <tr><td>Rust 代码行（client/engine）</td><td>~1,800 行（占比 &lt;1%）</td></tr>
+          <tr><td>Rust 独立服务（mastersrv 等）</td><td>~2,039 行</td></tr>
+          <tr><td>第三方依赖（ddnet-libs/）</td><td>~15 个主要库</td></tr>
+        </tbody>
+      </table>
+
+      <h3>当前支持平台与抽象方式</h3>
+      <table>
+        <thead><tr><th>平台</th><th>宏定义</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>Windows</td><td><code>CONF_PLATFORM_WIN32/WIN64</code></td><td><span class="badge ok">主力</span></td></tr>
+          <tr><td>Linux</td><td><code>CONF_PLATFORM_LINUX</code></td><td><span class="badge ok">主力</span></td></tr>
+          <tr><td>macOS</td><td><code>CONF_PLATFORM_MACOS</code></td><td><span class="badge ok">主力</span></td></tr>
+          <tr><td>Android</td><td><code>CONF_PLATFORM_ANDROID</code></td><td><span class="badge ok">可用</span></td></tr>
+          <tr><td>Emscripten (Web)</td><td><code>CONF_PLATFORM_EMSCRIPTEN</code></td><td><span class="badge ok">可用</span></td></tr>
+          <tr><td>FreeBSD 等</td><td><code>CONF_FAMILY_UNIX</code> 兜底</td><td><span class="badge warn">社区</span></td></tr>
+        </tbody>
+      </table>
+      <div class="note">
+        <strong>平台抽象方式</strong>：无 OS 抽象层接口（无 virtual Platform 类），全部通过编译期 <code>#ifdef</code> 宏 + CMake 条件分支处理。平台特定代码集中在 <code>src/android/android_main.cpp</code>、<code>src/macos/client.mm</code>、<code>src/base/system.cpp</code>。
+      </div>
+
+      <h3>渲染后端</h3>
+      <table>
+        <thead><tr><th>后端</th><th>源码位置</th><th>图形 API</th><th>适用平台</th></tr></thead>
+        <tbody>
+          <tr><td>OpenGL</td><td><code>src/engine/client/backend/opengl/</code></td><td>OpenGL 2.x/3.x + GLEW</td><td>Windows / Linux / macOS</td></tr>
+          <tr><td>OpenGL ES</td><td><code>src/engine/client/backend/opengles/</code></td><td>OpenGL ES 2.0/3.0</td><td>Android / Emscripten</td></tr>
+          <tr><td>Vulkan</td><td><code>src/engine/client/backend/vulkan/</code></td><td>Vulkan 1.x</td><td>Windows / Linux</td></tr>
+          <tr><td>Null</td><td><code>src/engine/client/backend/null/</code></td><td>无操作</td><td>无头构建</td></tr>
+        </tbody>
+      </table>
+      <p class="muted">所有后端实现 <code>IGraphicsBackend</code> 接口（<code>backend_base.h</code>），<code>CGraphicsBackend_Threaded</code> 在独立渲染线程上运行命令处理器。窗口/表面创建通过 SDL2。OpenGL ES 后端是 OpenGL 后端的薄封装（通过 <code>gles_class_defines.h</code> 宏别名映射）。</p>
+
+      <h3>窗口 / 输入 / 音频 —— SDL2 深度耦合</h3>
+      <div class="note bad">
+        <strong>SDL2 是整个项目的单一阻塞点</strong>。它负责：
+        <ul>
+          <li>窗口创建 &amp; OpenGL/Vulkan 上下文管理</li>
+          <li>全部输入（键盘、鼠标、触摸 <code>SDL_TouchFingerEvent</code>、手柄 <code>SDL_Joystick</code>）</li>
+          <li>音频输出（<code>SDL_OpenAudioDevice</code>）</li>
+          <li>剪贴板、URL 打开、系统对话框</li>
+          <li>Android JNI 桥接（<code>SDL_AndroidGetJNIEnv</code>、<code>SDL_AndroidGetActivity</code>）</li>
+        </ul>
+        <strong>SDL2 目前没有 OpenHarmony / HarmonyOS 后端</strong>。这是 C++ 移植路径的最大工作量来源。
+      </div>
+
+      <h3>已有移动端支持（Android）</h3>
+      <table>
+        <thead><tr><th>能力</th><th>实现</th><th>代码锚点</th></tr></thead>
+        <tbody>
+          <tr><td>JNI 桥接</td><td><code>src/android/android_main.cpp</code>（325 行）：APK 资源解包、完整性校验、前台服务</td><td><code>android_main.cpp</code></td></tr>
+          <tr><td>虚拟摇杆</td><td><code>CTouchControls</code>（711 行）：可配置虚拟摇杆 + 操作按钮</td><td><code>touch_controls.h</code></td></tr>
+          <tr><td>触摸编辑器</td><td><code>CMenusIngameTouchControls</code>：完整触摸布局编辑 UI</td><td><code>menus_ingame_touch_controls.cpp</code></td></tr>
+          <tr><td>构建方式</td><td>构建为共享库（<code>add_library(game-client SHARED)</code>），非可执行文件</td><td><code>CMakeLists.txt</code></td></tr>
+          <tr><td>渲染</td><td>自动走 GLES 路径，排除 GLEW</td><td><code>detect.h</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3>UI 系统</h3>
+      <p>完全自绘，无框架依赖：</p>
+      <ul>
+        <li><code>src/game/client/ui.h</code> —— 核心 <code>CUI</code> 类（按钮、标签、滚动条、编辑框、列表框）</li>
+        <li><code>src/game/client/QmUi/</code> —— QmClient 增强系统（29 文件）：动画、布局、主题、表单、导航</li>
+        <li>渲染直接走 <code>IGraphics</code>（quad + FreeType 文字），<strong>无平台 UI 工具包依赖</strong></li>
+      </ul>
+      <div class="note ok">
+        <strong>UI 系统是移植的优势点</strong>：自绘 UI 意味着不需要适配任何平台 UI 框架，触摸控制也已现成。手机端只需要调整布局和 DPI。
+      </div>
+
+      <h3>网络层</h3>
+      <table>
+        <thead><tr><th>组件</th><th>实现</th><th>技术</th></tr></thead>
+        <tbody>
+          <tr><td>核心 UDP</td><td><code>src/engine/shared/network.cpp</code></td><td>原始 BSD socket（<code>socket()/sendto()/recvfrom()</code>），Winsock/POSIX 分支</td></tr>
+          <tr><td>KCP 传输</td><td><code>src/engine/shared/network_kcp.cpp</code></td><td>ARQ 协议 over UDP</td></tr>
+          <tr><td>WebSocket</td><td><code>src/engine/shared/websockets.cpp</code></td><td>浏览器/Emscripten 连接</td></tr>
+          <tr><td>STUN</td><td><code>src/engine/shared/network_stun.cpp</code></td><td>NAT 穿透</td></tr>
+          <tr><td>HTTP</td><td><code>src/engine/shared/http.cpp</code></td><td>libcurl</td></tr>
+        </tbody>
+      </table>
+
+      <h3>关键第三方依赖</h3>
+      <table>
+        <thead><tr><th>库</th><th>用途</th><th>鸿蒙移植难度</th></tr></thead>
+        <tbody>
+          <tr><td><strong>SDL2</strong></td><td>窗口/输入/音频</td><td><span class="badge bad">致命</span> 需写新后端或替换</td></tr>
+          <tr><td>curl</td><td>HTTP 客户端</td><td><span class="badge warn">中</span> 需鸿蒙 NDK 编译</td></tr>
+          <tr><td>openssl</td><td>TLS</td><td><span class="badge warn">中</span> 同上</td></tr>
+          <tr><td>freetype</td><td>字体渲染</td><td><span class="badge ok">低</span> 纯 C，可移植</td></tr>
+          <tr><td>opus / opusfile</td><td>音频解码</td><td><span class="badge ok">低</span> 纯 C</td></tr>
+          <tr><td>libpng / libwebp</td><td>图像解码</td><td><span class="badge ok">低</span> 纯 C</td></tr>
+          <tr><td>sqlite3</td><td>本地数据库</td><td><span class="badge ok">低</span> 纯 C</td></tr>
+          <tr><td>zlib</td><td>压缩</td><td><span class="badge ok">低</span> 纯 C</td></tr>
+          <tr><td>ffmpeg</td><td>视频录制</td><td><span class="badge warn">中</span> 大型库，需 NDK 编译</td></tr>
+          <tr><td>vulkan-loader</td><td>Vulkan 运行时</td><td><span class="badge warn">中</span> 鸿蒙支持 Vulkan，需适配 surface 创建</td></tr>
+          <tr><td>discord-rpc</td><td>Discord 富状态</td><td><span class="badge ok">低</span> 可禁用</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Rust 集成现状</h3>
+      <p>QmClient 已有 Rust 基础设施，但覆盖面极窄：</p>
+      <table>
+        <thead><tr><th>项</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>互操作方式</td><td><code>cxx</code> crate（v1.0.71），无裸 FFI</td></tr>
+          <tr><td>已桥接接口</td><td><code>IConsole</code>、<code>CUuidManager</code>、<code>CSnapshot</code> 三者</td></tr>
+          <tr><td>Rust 实现逻辑</td><td>Snapshot builder + delta codec（使用 libtw2）</td></tr>
+          <tr><td>占代码库比例</td><td>~1,800 行 / ~380,000 行 = <strong>0.47%</strong></td></tr>
+          <tr><td>QmClient 特有 Rust 代码</td><td>无（全部为上游 DDNet 代码）</td></tr>
+          <tr><td>构建集成</td><td>已集成（CMake 调 cargo，产出静态库），交叉编译支持 Android NDK</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ============= ddnet-rs 技术现状 ============= -->
+    <section class="card">
+      <h2 id="ddnet-rs-status">ddnet-rs 技术现状</h2>
+      <p class="muted">基于 <a href="https://github.com/ddnet/ddnet-rs">github.com/ddnet/ddnet-rs</a> 2026-06-15 仓库快照分析。</p>
+
+      <h3>项目概况</h3>
+      <table>
+        <thead><tr><th>指标</th><th>数值</th></tr></thead>
+        <tbody>
+          <tr><td>语言</td><td>Rust 100%</td></tr>
+          <tr><td>Commits</td><td>579</td></tr>
+          <tr><td>Stars</td><td>44</td></tr>
+          <tr><td>Forks</td><td>17</td></tr>
+          <tr><td>Rust Edition</td><td>2024</td></tr>
+          <tr><td>Workspace crates</td><td><strong>90+</strong>（高度模块化）</td></tr>
+          <tr><td>Android 支持</td><td>有（<code>android_main</code>，<code>rust-mobile/xbuild</code>）</td></tr>
+          <tr><td>许可证</td><td>Apache-2.0 + MIT</td></tr>
+        </tbody>
+      </table>
+
+      <h3>核心技术栈</h3>
+      <table>
+        <thead><tr><th>组件</th><th>ddnet-rs 选型</th><th>C++ QmClient 选型</th><th>对比</th></tr></thead>
+        <tbody>
+          <tr><td>窗口/输入</td><td><strong>winit 0.30</strong></td><td><strong>SDL2</strong></td><td>均无鸿蒙后端，但 winit 更现代</td></tr>
+          <tr><td>渲染</td><td><strong>Vulkan only</strong>（ash 0.38 + naga shader）</td><td>OpenGL / GLES / Vulkan 四后端</td><td>ddnet-rs <strong>无 GLES 后端</strong>，手机 Vulkan 支持参差</td></tr>
+          <tr><td>UI</td><td><strong>egui 0.34</strong>（即时模式）</td><td>自绘 CUI + QmUI</td><td>egui 成熟但风格与 DDNet 原版不同</td></tr>
+          <tr><td>音频</td><td><strong>kira 0.9</strong>（纯 Rust）</td><td>SDL2 audio + Opus/WavPack</td><td>kira 无外部依赖，理论上更易移植</td></tr>
+          <tr><td>网络</td><td><strong>quinn</strong>（QUIC/TLS）+ tokio</td><td>原始 BSD socket + KCP + libcurl</td><td><span class="badge bad">协议不兼容</span> ddnet-rs 用 QUIC，连不上现有 DDNet 服务器</td></tr>
+          <tr><td>脚本/扩展</td><td>WASM 模块（20+ example）</td><td>ChaiScript</td><td>ddnet-rs 架构更灵活</td></tr>
+        </tbody>
+      </table>
+
+      <h3>架构亮点</h3>
+      <ul>
+        <li><strong>90+ crate workspace</strong>：高度解耦，每个子系统独立 crate，替换/适配成本低</li>
+        <li><strong>graphics-backend-traits</strong>：渲染后端抽象 trait，理论上可添加 GLES 后端</li>
+        <li><strong>WASM 扩展系统</strong>：UI 模块、编辑器、游戏逻辑可动态加载</li>
+        <li><strong>native-display</strong> 抽象：窗口管理已与渲染分离</li>
+      </ul>
+
+      <h3>关键缺陷</h3>
+      <div class="note bad">
+        <strong>以下问题使 ddnet-rs 当前无法作为鸿蒙移植的可行起点</strong>：
+        <ol>
+          <li><strong>功能远不完整</strong>：物理、碰撞、地图编辑器、服务器浏览、demo 回放、皮肤系统等大量核心功能仅有骨架或缺失</li>
+          <li><strong>网络协议不兼容</strong>：QUIC vs 原始 UDP + 自定义快照协议，<strong>连不上现有 DDNet 服务器</strong></li>
+          <li><strong>渲染只有 Vulkan</strong>：无 OpenGL ES 后端，鸿蒙手机 Vulkan 支持参差不齐</li>
+          <li><strong>winit 同样无鸿蒙后端</strong>：与 SDL2 问题等价</li>
+        </ol>
+      </div>
+
+      <h3>成熟度评估</h3>
+      <table>
+        <thead><tr><th>维度</th><th>评分</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>架构设计</td><td><span class="badge ok">A</span></td><td>模块化、解耦、可扩展，远优于 C++ 原版</td></tr>
+          <tr><td>功能完整度</td><td><span class="badge bad">D</span></td><td>大量核心功能缺失，无法作为完整游戏使用</td></tr>
+          <tr><td>协议兼容性</td><td><span class="badge bad">F</span></td><td>QUIC 协议与现有服务器不兼容</td></tr>
+          <tr><td>渲染覆盖</td><td><span class="badge warn">C</span></td><td>Vulkan only，无 GLES，移动端风险大</td></tr>
+          <tr><td>鸿蒙适配潜力</td><td><span class="badge ok">B+</span></td><td>Rust 交叉编译理论上更顺滑，crate 替换成本低</td></tr>
+          <tr><td>可立即用于生产</td><td><span class="badge bad">否</span></td><td>至少需 6-12 个月补齐功能</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ============= 两条路径对比 ============= -->
+    <section class="card">
+      <h2 id="versus">两条路径深度对比</h2>
+
+      <div class="versus-grid">
+        <div class="versus-card">
+          <h4>方案 A：C++ QmClient 移植</h4>
+          <p><strong>思路</strong>：在现有完整游戏基础上，只替换平台层（SDL2 → 鸿蒙原生 API），其余代码几乎不变。</p>
+          <ul>
+            <li>功能完整度：100%</li>
+            <li>协议兼容：完全兼容</li>
+            <li>鸿蒙适配量：~5,000-8,000 行新代码</li>
+            <li>时间估算：2-3 个月出可玩版本</li>
+            <li>最大风险：SDL2 鸿蒙后端需自写</li>
+            <li>长期维护：与上游 DDNet 合并冲突</li>
+          </ul>
+        </div>
+        <div class="versus-card">
+          <h4>方案 B：基于 ddnet-rs 重写</h4>
+          <p><strong>思路</strong>：基于 ddnet-rs 的模块化架构，补齐功能 + 适配鸿蒙，构建原生 Rust 客户端。</p>
+          <ul>
+            <li>功能完整度：~30-40%</li>
+            <li>协议兼容：不兼容（需重写网络层）</li>
+            <li>鸿蒙适配量：~3,000-5,000 行新代码</li>
+            <li>时间估算：6-12 个月（先补功能再适配）</li>
+            <li>最大风险：ddnet-rs 不完整 + Rust 鸿蒙工具链</li>
+            <li>长期维护：独立于上游，更自主</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>逐项对比表</h3>
+      <table>
+        <thead><tr><th>维度</th><th>方案 A（C++ 移植）</th><th>方案 B（ddnet-rs 重写）</th><th>胜出</th></tr></thead>
+        <tbody>
+          <tr><td>出可玩版本速度</td><td>2-3 个月</td><td>6-12 个月</td><td><span class="badge ok">A</span></td></tr>
+          <tr><td>鸿蒙平台适配量</td><td>~5-8K 行（SDL2 后端）</td><td>~3-5K 行（winit 后端 + GLES 后端）</td><td><span class="badge ok">B</span></td></tr>
+          <tr><td>功能完整度（起点）</td><td>100%</td><td>30-40%</td><td><span class="badge ok">A</span></td></tr>
+          <tr><td>协议兼容（连现有服务器）</td><td>完全兼容</td><td>不兼容（需重写）</td><td><span class="badge ok">A</span></td></tr>
+          <tr><td>渲染后端覆盖</td><td>GL + GLES + Vulkan</td><td>Vulkan only</td><td><span class="badge ok">A</span></td></tr>
+          <tr><td>架构可维护性</td><td>宏 + CMake 条件分支</td><td>90+ crate 模块化</td><td><span class="badge ok">B</span></td></tr>
+          <tr><td>鸿蒙工具链成熟度</td><td>C++ NDK 成熟</td><td>Rust 鸿蒙 target 不成熟</td><td><span class="badge ok">A</span></td></tr>
+          <tr><td>上游代码同步</td><td>可跟 DDNet 上游</td><td>独立分支，难以同步</td><td><span class="badge ok">A</span></td></tr>
+          <tr><td>长期独立性</td><td>依赖上游 C++ 代码</td><td>完全自主</td><td><span class="badge ok">B</span></td></tr>
+          <tr><td>触摸/移动端适配</td><td>已有完整方案</td><td>需从零适配 egui 触摸</td><td><span class="badge ok">A</span></td></tr>
+        </tbody>
+      </table>
+
+      <h3>工作量分解对比</h3>
+      <table>
+        <thead><tr><th>工作项</th><th>方案 A 工作量</th><th>方案 B 工作量</th></tr></thead>
+        <tbody>
+          <tr><td>平台窗口/输入适配</td><td>SDL2 OpenHarmony 后端 ~3-5K 行</td><td>winit OpenHarmony 后端 ~2-3K 行</td></tr>
+          <tr><td>渲染适配</td><td>GLES 路径已存在，改 EGL surface ~500 行</td><td>新增 GLES 后端 ~3-5K 行</td></tr>
+          <tr><td>音频适配</td><td>SDL2 音频替换为 OH_Audio ~1K 行</td><td>kira 后端适配 ~500 行</td></tr>
+          <tr><td>网络适配</td><td>POSIX socket 基本可用 ~200 行微调</td><td>重写为 DDNet 兼容协议 ~5-8K 行</td></tr>
+          <tr><td>文件系统</td><td>沙箱路径适配 ~300 行</td><td>同左</td></tr>
+          <tr><td>游戏功能补齐</td><td>0（已完整）</td><td>物理/碰撞/编辑器/demo/皮肤 等 ~50K+ 行</td></tr>
+          <tr><td>构建系统</td><td>CMake 鸿蒙工具链 ~1K 行</td><td>Cargo 鸿蒙 target + 脚本 ~1K 行</td></tr>
+          <tr><td>触摸 UI</td><td>已有，微调布局</td><td>egui 触摸适配 + 虚拟摇杆 ~2-3K 行</td></tr>
+          <tr><td>IME 输入法</td><td>SDL text input → 鸿蒙 IME ~500 行</td><td>winit IME → 鸿蒙 IME ~500 行</td></tr>
+          <tr><td><strong>总计</strong></td><td><strong>~7-11K 行新/改代码</strong></td><td><strong>~65-80K+ 行（含补齐功能）</strong></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ============= 鸿蒙平台能力评估 ============= -->
+    <section class="card">
+      <h2 id="harmonyos-apis">鸿蒙（HarmonyOS NEXT）平台能力评估</h2>
+      <p class="muted">评估鸿蒙 NEXT 提供的 Native API 对游戏客户端移植的支持程度。</p>
+
+      <h3>图形与渲染</h3>
+      <table>
+        <thead><tr><th>能力</th><th>鸿蒙 API</th><th>评估</th></tr></thead>
+        <tbody>
+          <tr><td>OpenGL ES 3.x</td><td><code>eglCreateWindowSurface</code> + <code>OH_NativeWindow</code></td><td><span class="badge ok">原生支持</span> 需通过 NativeWindow 获取 EGLNativeWindowType</td></tr>
+          <tr><td>Vulkan</td><td>Vulkan 1.x + <code>OH_NativeWindow</code></td><td><span class="badge ok">支持</span> 需通过 NativeWindow 创建 VkSurfaceKHR</td></tr>
+          <tr><td>窗口管理</td><td><code>OH_NativeWindow</code> / NAPI UI 上下文</td><td><span class="badge warn">需适配</span> 与 SDL2/winit 的窗口创建流程不同</td></tr>
+        </tbody>
+      </table>
+
+      <h3>输入</h3>
+      <table>
+        <thead><tr><th>能力</th><th>鸿蒙 API</th><th>评估</th></tr></thead>
+        <tbody>
+          <tr><td>触摸</td><td><code>OH_TouchEvent</code> / UI 组件回调</td><td><span class="badge ok">支持</span> 映射到 SDL_TouchFingerEvent 即可</td></tr>
+          <tr><td>键鼠（PC 模式）</td><td><code>OH_KeyEvent</code> / <code>OH_MouseEvent</code></td><td><span class="badge ok">支持</span></td></tr>
+          <tr><td>手柄</td><td>需查证是否有 Game Controller API</td><td><span class="badge warn">待确认</span> 可能需通过第三方或 USB HID</td></tr>
+          <tr><td>输入法</td><td><code>OH_InputMethod</code></td><td><span class="badge warn">需适配</span> 与 SDL_StartTextInput 语义不同</td></tr>
+        </tbody>
+      </table>
+
+      <h3>音频</h3>
+      <table>
+        <thead><tr><th>能力</th><th>鸿蒙 API</th><th>评估</th></tr></thead>
+        <tbody>
+          <tr><td>音频输出</td><td><code>OH_AudioRenderer</code></td><td><span class="badge ok">支持</span> 回调模式，可替换 SDL2 audio</td></tr>
+          <tr><td>音频输入</td><td><code>OH_AudioCapturer</code></td><td><span class="badge ok">支持</span></td></tr>
+        </tbody>
+      </table>
+
+      <h3>网络</h3>
+      <table>
+        <thead><tr><th>能力</th><th>鸿蒙 API</th><th>评估</th></tr></thead>
+        <tbody>
+          <tr><td>UDP socket</td><td>POSIX <code>socket()/sendto()/recvfrom()</code></td><td><span class="badge ok">基本可用</span> Linux 内核，POSIX 兼容</td></tr>
+          <tr><td>TLS</td><td>需 openssl 编译或鸿蒙原生 TLS</td><td><span class="badge warn">待验证</span></td></tr>
+          <tr><td>HTTP</td><td>libcurl 编译 或 <code>OH_HttpRequest</code></td><td><span class="badge warn">待验证</span></td></tr>
+        </tbody>
+      </table>
+
+      <h3>文件与存储</h3>
+      <table>
+        <thead><tr><th>能力</th><th>鸿蒙 API</th><th>评估</th></tr></thead>
+        <tbody>
+          <tr><td>应用沙箱</td><td><code>ctx.filesDir</code> / <code>ctx.cacheDir</code></td><td><span class="badge ok">支持</span> 路径与 Android 类似，需硬编码前缀</td></tr>
+          <tr><td>资源打包</td><td>HAP 内 <code>resources/rawfile/</code></td><td><span class="badge ok">支持</span> 需资源解包逻辑（可参考 Android APK 解包）</td></tr>
+        </tbody>
+      </table>
+
+      <h3>工具链</h3>
+      <table>
+        <thead><tr><th>能力</th><th>状态</th><th>评估</th></tr></thead>
+        <tbody>
+          <tr><td>C++ / NDK</td><td>HarmonyOS SDK 提供 C/C++ 编译工具链</td><td><span class="badge ok">可用</span></td></tr>
+          <tr><td>CMake</td><td>支持，需鸿蒙 toolchain 文件</td><td><span class="badge ok">可用</span></td></tr>
+          <tr><td>Rust target</td><td>无官方鸿蒙 Rust target</td><td><span class="badge bad">不可用</span> 需自定义 target JSON + 编译器补丁</td></tr>
+          <tr><td>调试</td><td>hdc + DevEco Studio</td><td><span class="badge ok">可用</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ============= 方案 A：C++ 移植路线图 ============= -->
+    <section class="card">
+      <h2 id="cpp-plan">方案 A：C++ 移植路线图</h2>
+
+      <h3>阶段 1：可行性验证（2-4 周）</h3>
+      <table>
+        <thead><tr><th>#</th><th>任务</th><th>产出</th><th>验证标准</th></tr></thead>
+        <tbody>
+          <tr><td>A1</td><td>在 <code>detect.h</code> 添加 <code>CONF_PLATFORM_HARMONYOS</code></td><td>平台宏 + CMake <code>TARGET_OS=harmonyos</code></td><td>编译期宏生效</td></tr>
+          <tr><td>A2</td><td>编写最小 SDL2 鸿蒙兼容层</td><td>SDL2 video driver：<code>SDL_CreateWindow</code>、<code>SDL_GL_CreateContext</code>、事件循环</td><td>黑窗口跑通</td></tr>
+          <tr><td>A3</td><td>EGL surface 通过 <code>OH_NativeWindow</code> 创建</td><td>GLES 3.x 上下文</td><td><code>glClear</code> 清屏成功</td></tr>
+          <tr><td>A4</td><td>验证 POSIX 网络、SQLite、FreeType 编译</td><td>基础库编译通过</td><td>无链接错误</td></tr>
+        </tbody>
+      </table>
+
+      <h3>阶段 2：SDL2 替换策略（二选一）</h3>
+
+      <h4>方案 A-1：为 SDL2 写 OpenHarmony 后端（推荐）</h4>
+      <div class="note ok">
+        <strong>推荐理由</strong>：虽然工作量大（约 3-5K 行 C），但收益最高 —— 可提交 SDL2 上游，后续 SDL 升级无负担，其他项目也能复用。参考 SDL2 的 Android/RPi 后端实现。
+      </div>
+      <table>
+        <thead><tr><th>SDL2 子系统</th><th>需实现的 API</th><th>映射到鸿蒙 API</th><th>估测行数</th></tr></thead>
+        <tbody>
+          <tr><td>Video</td><td><code>SDL_CreateWindow</code>、<code>SDL_GL_CreateContext</code>、<code>SDL_Vulkan_CreateSurface</code>、SwapBuffers</td><td><code>OH_NativeWindow</code> + EGL</td><td>~1,500</td></tr>
+          <tr><td>Event</td><td><code>SDL_PollEvent</code>、触摸/键鼠事件转换</td><td><code>OH_TouchEvent</code> / <code>OH_KeyEvent</code> / <code>OH_MouseEvent</code></td><td>~800</td></tr>
+          <tr><td>Audio</td><td><code>SDL_OpenAudioDevice</code>、回调音频</td><td><code>OH_AudioRenderer</code></td><td>~400</td></tr>
+          <tr><td>Clipboard</td><td><code>SDL_SetClipboardText</code> / <code>Get</code></td><td>需 NAPI 桥接</td><td>~200</td></tr>
+          <tr><td>其他</td><td>File IO、JNI 等</td><td>应用沙箱路径</td><td>~300</td></tr>
+        </tbody>
+      </table>
+
+      <h4>方案 A-2：写 SDL2→鸿蒙 垫片层（快速但耦合）</h4>
+      <div class="note warn">
+        <strong>权衡</strong>：在 <code>src/engine/client/</code> 下新建 <code>backend_harmonyos/</code>，直接把 SDL2 调用映射到鸿蒙原生 API。改动集中在 <code>input.cpp</code>、<code>backend_sdl.cpp</code>、<code>sound.cpp</code>、<code>client.cpp</code>。速度快但与鸿蒙 API 耦合，后续维护成本高。
+      </div>
+
+      <h3>阶段 3：完整适配（4-8 周）</h3>
+      <table>
+        <thead><tr><th>#</th><th>任务</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>A5</td><td>触摸控制复用</td><td><code>CTouchControls</code> 已有虚拟摇杆，映射鸿蒙触摸事件到 <code>SDL_TouchFingerEvent</code> 即可</td></tr>
+          <tr><td>A6</td><td>音频输出对接</td><td><code>OH_AudioRenderer</code> 替换 SDL2 audio，保持 Opus/WavPack 解码不变</td></tr>
+          <tr><td>A7</td><td>输入法对接</td><td>鸿蒙 <code>OH_InputMethod</code> 替换 SDL text input</td></tr>
+          <tr><td>A8</td><td>文件系统适配</td><td>鸿蒙沙箱路径（类似 Android <code>externalDataPath</code>）</td></tr>
+          <tr><td>A9</td><td>PC 模式键鼠直通</td><td>鸿蒙桌面模式下键鼠事件直接映射</td></tr>
+          <tr><td>A10</td><td>Rust 交叉编译</td><td>需配置鸿蒙 Rust target（如已有 Rust 桥接需要）</td></tr>
+        </tbody>
+      </table>
+
+      <h3>阶段 4：优化与发布</h3>
+      <table>
+        <thead><tr><th>#</th><th>任务</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>A11</td><td>手机端适配</td><td>分辨率适配、触摸布局调优、性能优化（GLES 渲染）</td></tr>
+          <tr><td>A12</td><td>PC 端适配</td><td>Vulkan 后端 + 键鼠操控</td></tr>
+          <tr><td>A13</td><td>应用打包</td><td>HAP/APP 格式，DevEco Studio 签名</td></tr>
+          <tr><td>A14</td><td>应用商店提交</td><td>华为应用市场审核流程</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ============= 方案 B：ddnet-rs 重写路线图 ============= -->
+    <section class="card">
+      <h2 id="rust-plan">方案 B：基于 ddnet-rs 重写路线图</h2>
+
+      <div class="note warn">
+        <strong>前置提醒</strong>：此方案的前提是<strong>先让 ddnet-rs 达到可用状态</strong>，然后再适配鸿蒙。当前 ddnet-rs 功能完成度不足，网络协议不兼容，直接在它基础上做鸿蒙适配意义不大。
+      </div>
+
+      <h3>阶段 1：ddnet-rs 功能补齐（4-6 个月）</h3>
+      <table>
+        <thead><tr><th>#</th><th>任务</th><th>说明</th><th>估测工作量</th></tr></thead>
+        <tbody>
+          <tr><td>B1</td><td>网络协议重写</td><td>替换 QUIC 为 DDNet 原始 UDP 快照协议，或写协议转换代理</td><td>5-8K 行 Rust</td></tr>
+          <tr><td>B2</td><td>OpenGL ES 后端</td><td>为 <code>graphics-backend</code> 添加 GLES 实现（当前只有 Vulkan/ash）</td><td>3-5K 行 Rust</td></tr>
+          <tr><td>B3</td><td>游戏物理/碰撞</td><td>补齐 Teeworlds 物理引擎、地图碰撞检测</td><td>~10K 行</td></tr>
+          <tr><td>B4</td><td>服务器浏览</td><td>主服务器协议、服务器列表、Ping</td><td>~3K 行</td></tr>
+          <tr><td>B5</td><td>Demo 回放</td><td>录制/回放/快进</td><td>~3K 行</td></tr>
+          <tr><td>B6</td><td>皮肤/角色系统</td><td>皮肤加载、渲染、切换</td><td>~2K 行</td></tr>
+          <tr><td>B7</td><td>地图编辑器</td><td>已有编辑器 crate，需补齐功能</td><td>~5K 行</td></tr>
+          <tr><td>B8</td><td>聊天/社交</td><td>聊天系统、好友列表、团队管理</td><td>~2K 行</td></tr>
+        </tbody>
+      </table>
+
+      <h3>阶段 2：鸿蒙适配（2-4 个月）</h3>
+      <table>
+        <thead><tr><th>#</th><th>任务</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>B9</td><td>Rust 鸿蒙 target</td><td>自定义 target JSON，解决交叉编译、链接器、系统 crate 适配</td></tr>
+          <tr><td>B10</td><td>winit 鸿蒙后端</td><td>实现 <code>winit::platform::harmonyos</code>，映射 <code>OH_NativeWindow</code> + 触摸/键鼠事件</td></tr>
+          <tr><td>B11</td><td>GLES 渲染跑通</td><td>通过 B2 的 GLES 后端 + 鸿蒙 EGL surface</td></tr>
+          <tr><td>B12</td><td>音频适配</td><td>kira 的 <code>OH_AudioRenderer</code> 后端</td></tr>
+          <tr><td>B13</td><td>IME 对接</td><td>egui 文本输入 → 鸿蒙输入法</td></tr>
+          <tr><td>B14</td><td>触摸 UI 适配</td><td>egui 触摸事件映射 + 虚拟摇杆</td></tr>
+        </tbody>
+      </table>
+
+      <h3>阶段 3：发布与迭代</h3>
+      <p>同方案 A 的阶段 4，额外需要：性能调优（Rust 编译优化、LTO）、egui 自定义主题使其视觉风格接近原版 DDNet。</p>
+    </section>
+
+    <!-- ============= 推荐决策 ============= -->
+    <section class="card">
+      <h2 id="recommendation">推荐决策</h2>
+
+      <h3>核心推荐：分两步走</h3>
+      <div class="note ok">
+        <strong>短期（3 个月内）</strong>：C++ QmClient 移植鸿蒙，写 SDL2 OpenHarmony 后端，走 GLES 3.x，出可玩手机版。<br><br>
+        <strong>长期（并行）</strong>：关注 ddnet-rs 进展，等它功能补完 + winit/ash 鸿蒙支持成熟后，再考虑切换到 Rust 版本。
+      </div>
+
+      <h3>决策树</h3>
+      <pre><code>你的目标是什么？
+│
+├─ 尽快在鸿蒙上玩到 DDNet
+│  └─ 选方案 A（C++ 移植）
+│     └─ 预计 2-3 个月出可玩版本
+│        └─ 推荐写 SDL2 OpenHarmony 后端（方案 A-1）
+│
+├─ 做一个长期独立维护的原生鸿蒙客户端
+│  └─ 选方案 B（ddnet-rs），但要接受：
+│     ├─ 6-12 个月才能达到可用状态
+│     ├─ 中期无法连接现有 DDNet 服务器
+│     └─ 需要独立维护整个游戏逻辑
+│
+└─ 两者兼顾
+   └─ 先 A 后 B：
+      ├─ 短期用 C++ 版满足需求
+      ├─ 长期等 ddnet-rs 成熟后切换
+      └─ SDL2 后端可作为 Rust 版 winit 后端的参考</code></pre>
+
+      <h3>关键风险清单</h3>
+      <table>
+        <thead><tr><th>风险</th><th>影响</th><th>缓解措施</th></tr></thead>
+        <tbody>
+          <tr><td>SDL2 鸿蒙后端工作量大</td><td>推迟出包时间</td><td>先用垫片层（A-2）快速验证，再逐步替换为正式后端（A-1）</td></tr>
+          <tr><td>鸿蒙 GLES 驱动兼容性问题</td><td>渲染异常</td><td>准备 Vulkan 后端作为备选；参考鸿蒙官方游戏适配指南</td></tr>
+          <tr><td>Rust 鸿蒙交叉编译不可用</td><td>影响 Rust 桥接模块</td><td>评估是否可暂时禁用 Rust 桥接，纯 C++ 编译</td></tr>
+          <tr><td>鸿蒙手柄 API 缺失</td><td>蓝牙/USB 手柄不可用</td><td>PC 模式下通过 HID 接口自行实现；手机端暂不支持</td></tr>
+          <tr><td>应用商店审核</td><td>上架延迟</td><td>提前了解审核规则，准备合规材料</td></tr>
+        </tbody>
+      </table>
+
+      <h3>需要进一步调研的项</h3>
+      <ol>
+        <li>鸿蒙 NEXT 手柄/Game Controller 原生 API 是否存在</li>
+        <li>openssl / libcurl 在鸿蒙 NDK 下的编译可行性</li>
+        <li>鸿蒙 POSIX socket 与 Linux socket 的差异点（<code>setsockopt</code> 选项、epoll 可用性等）</li>
+        <li>Rust 编译到鸿蒙的自定义 target 可行性验证</li>
+        <li>ddnet-rs 的 QUIC 协议是否有计划支持原始 DDNet 协议</li>
+      </ol>
+    </section>
+
+    <footer class="footer">
+      <p>报告日期：2026-06-15 | 状态：active | 作者：DevEco Code Agent | 基于 QmClient 代码库 &amp; ddnet-rs 仓库快照分析</p>
+    </footer>
+  </div>
+</body>
+</html>
+
+
+
+
+

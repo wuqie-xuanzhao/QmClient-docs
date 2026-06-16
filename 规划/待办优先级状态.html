@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>新版 TODO 优先级路由</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill ok">active</span><span class="pill secondary">2026-06-16</span><span class="pill warn">PDF reference</span></div>
+      <h1>新版 TODO 优先级路由</h1>
+      <p class="muted">来源是 <code>E:/下载文件/QmClient 功能 Todo.pdf</code>。PDF 是规划参考，不是源码事实证明；标了完成的项仍需要用当前代码和现有 HTML 现状页复核。</p>
+    </header>
+
+    <section class="card">
+      <h2>阅读规则</h2>
+      <p class="note warn">旧 <code>规划/*.md</code> 只能作为草案来源。进入开发前，先按本页找方向，再读对应 HTML 现状页，最后重新写小范围规格/计划。</p>
+      <table>
+        <thead><tr><th>标记</th><th>含义</th><th>处理方式</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge ok">DYL / 已有进展</span></td><td>PDF 明确点名，或当前 docs 已有现状页支撑。</td><td>优先从 HTML 现状页继续，而不是从旧 Markdown 方案开始。</td></tr>
+          <tr><td><span class="badge warn">高优先级</span></td><td>影响面较大或用户明确关注。</td><td>拆成最小可验证任务，避免一次实现整份旧报告。</td></tr>
+          <tr><td><span class="badge warn">调研</span></td><td>可行性、成本或边界未定。</td><td>先写调研/规格，不直接改源码。</td></tr>
+          <tr><td><span class="badge bad">高风险/否决</span></td><td>协议、玩法、公平性、安全或用户已否决方向。</td><td>默认不执行；除非重新获得明确范围批准。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>优先继续维护的主题</h2>
+      <table>
+        <thead><tr><th>主题</th><th>PDF 口径</th><th>当前文档入口</th><th>下一步</th></tr></thead>
+        <tbody>
+          <tr><td>页面切换卡顿</td><td><span class="badge ok">高优先级 / DYL / 已完成部分</span></td><td><a href="../调研/页面切换卡顿状态.html">页面切换卡顿状态.html</a></td><td>继续聚焦剩余同步加载路径和 TClient 页面卡顿，不再引用旧资源页本地 limiter 结论。</td></tr>
+          <tr><td>资源页面</td><td><span class="badge ok">DYL / 高优先级</span></td><td><a href="../当前状态/资源页.html">资源页.html</a>、<a href="资源工坊状态.html">资源工坊状态.html</a></td><td>资源类型现状已收口；下一步按 Workshop 状态小规格处理已下载/未下载 tag、作者显示和 entity background 降级。</td></tr>
+          <tr><td>配置导入/导出</td><td><span class="badge warn">系统工具 / 统一打包方案</span></td><td><a href="../当前状态/配置导入导出.html">配置导入导出.html</a>、<a href="QmConfig最小配置包.html">QmConfig最小配置包.html</a></td><td><code>.qmconfig</code> 已拆成最小配置包规格：先做文件级备份/迁移、manifest 和敏感项过滤，不做智能合并大系统。</td></tr>
+          <tr><td>翻译/i18n</td><td><span class="badge ok">DYL / 持续完善</span></td><td><a href="../当前状态/翻译系统.html">翻译系统.html</a>、<a href="../当前状态/本地化系统.html">本地化系统.html</a></td><td>当前主链是英文 key + TOML 维护源，旧“硬编码中文 Localize”方案需整体重写。</td></tr>
+          <tr><td>F1/聊天记录导出</td><td><span class="badge warn">用户点名 / 卡顿风险</span></td><td><a href="聊天F1导出状态.html">聊天F1导出状态.html</a></td><td>当前已有本地 F1 玩家聊天 TXT/HTML/PNG 导出；下一步是 JSON/TOML、完整 F1 范围和大导出不卡顿。</td></tr>
+          <tr><td>聊天框 UI 增强</td><td><span class="badge warn">体验增强 / 已有进展</span></td><td><a href="聊天UI状态.html">聊天UI状态.html</a>、<a href="聊天输入反馈.html">聊天输入反馈.html</a></td><td>当前已有翻译按钮、滚轮历史、点击复制、右键行菜单和草稿保留；输入框视觉和消息行反馈已拆成小规格，不直接重写聊天核心。</td></tr>
+          <tr><td>BindWheel 快捷设置</td><td><span class="badge warn">体验工具 / 已有基础</span></td><td><a href="../当前状态/绑定系统.html">绑定系统.html</a>、<a href="BindWheel快速设置.html">BindWheel快速设置.html</a></td><td>当前已有 BindWheel 轮盘、设置页编辑器和配置保存；后续只做安全客户端设置白名单预设，不扩成宏、插件或 TAS。</td></tr>
+          <tr><td>自适应 AntiPing</td><td><span class="badge bad">低优先级 / 预测风险</span></td><td><a href="自适应AntiPing状态.html">自适应AntiPing状态.html</a></td><td>当前已有 AntiPing、TClient 平滑、预测 margin 自动补偿和网络指标显示；后续默认只做诊断建议，不自动改写预测参数。</td></tr>
+          <tr><td>Demo/观战导演</td><td><span class="badge warn">视频制作 / 中高优先级</span></td><td><a href="Demo观战状态.html">Demo观战状态.html</a>、<a href="Demo导演目标推荐.html">Demo导演目标推荐.html</a></td><td>当前已有 Demo marker/slice/speed、HUD/input 回放、Ghost 基础和 LiveDirector/MultiView；画中画 UI 已否决，导演目标推荐已拆成非画中画小规格，全地图录制范围仍需另行调研。</td></tr>
+          <tr><td>HUD/视觉辅助</td><td><span class="badge warn">体验增强 / 多旧案冲突</span></td><td><a href="HUD视觉辅助状态.html">HUD视觉辅助状态.html</a></td><td>HUD editor 和武器切换动画已有当前实现；钩子进度条已拆到独立状态页。</td></tr>
+          <tr><td>钩子进度条</td><td><span class="badge warn">视觉辅助 / 物理敏感</span></td><td><a href="钩子进度状态.html">钩子进度状态.html</a></td><td>客户端已有 hook tick/state/endless 数据，但实现前必须处理 HookDuration 调谐、0.7 负 tick 裁剪和名字板强弱钩布局。</td></tr>
+          <tr><td>无障碍/可读性</td><td><span class="badge warn">体验增强 / 需拆小步</span></td><td><a href="无障碍状态.html">无障碍状态.html</a></td><td>专门色盲/高对比/通用焦点体系仍缺，但已有分散字体、缩放、透明度、颜色和 Focus Mode 能力；后续优先做可读性设置盘点和单路径颜色替代。</td></tr>
+          <tr><td>收藏/资源浏览</td><td><span class="badge warn">浏览器体验 / 已有进展</span></td><td><a href="收藏浏览状态.html">收藏浏览状态.html</a></td><td>地图收藏已有 Favorite Maps 页、地图备注、分类缓存和本地存档联动；后续重点是收藏地图服务器视图和服务器收藏元数据边界。</td></tr>
+          <tr><td>服务器收藏增强</td><td><span class="badge warn">浏览器体验 / 兼容优先</span></td><td><a href="服务器收藏状态.html">服务器收藏状态.html</a></td><td>当前服务器收藏是多地址 favorite group、<code>allow_ping</code> 和 favorite community；备注/标签应优先 sidecar 元数据，不替换 DDNet 原生收藏格式。</td></tr>
+          <tr><td>截图管理/水印</td><td><span class="badge warn">DYL / 体验增强</span></td><td><a href="截图管理状态.html">截图管理状态.html</a>、<a href="截图水印命名.html">截图水印命名.html</a></td><td>当前已有截图保存、自动截图、截图动画和 Demo 浏览器 Screenshots 模式；后续先做水印与地图名命名小规格，分享/上传另行调研。</td></tr>
+          <tr><td>皮肤混搭/资源编辑</td><td><span class="badge warn">资源工具 / 已有进展</span></td><td><a href="皮肤混搭状态.html">皮肤混搭状态.html</a>、<a href="皮肤拼装配方.html">皮肤拼装配方.html</a></td><td>当前 Skin 资产编辑器已有 Frankenstein 部件拖拽、染色、预览和标准 skin/skins7 导出；后续先做可编辑 recipe sidecar，分享码和 Workshop 上传另行调研。</td></tr>
+          <tr><td>统计/持久化</td><td><span class="badge warn">体验工具 / 多条现状线</span></td><td><a href="持久统计状态.html">持久统计状态.html</a>、<a href="本地比赛历史.html">本地比赛历史.html</a></td><td>当前已有 statboard、自动 CSV、PlayerStats HUD 和中心服在线时长；本地跨局战绩历史已拆成 sidecar 小规格，账号/云同步/成就不纳入。</td></tr>
+          <tr><td>自动更新</td><td><span class="badge warn">系统工具</span></td><td><a href="../当前状态/更新器.html">更新器.html</a></td><td>区分中心服版本提示、GitHub Releases、Windows exe 替换和 DDNet updater。</td></tr>
+          <tr><td>BC 功能移植</td><td><span class="badge ok">已有部分完成</span></td><td><a href="../当前状态/BC移植状态.html">BC移植状态.html</a>、<a href="../调研/媒体背景边界.html">媒体背景边界.html</a>、<a href="../调研/完赛预测边界.html">完赛预测边界.html</a>、<a href="分段计时检查点.html">分段计时检查点.html</a></td><td>已实现项不要重复规划；Media Background 已修正为“底层视频背景存在、产品化管理缺口仍在”，Split Timer 已拆成检查点分段计时小规格，Finish Prediction 已拆成边界调研并默认不直接实现自动终点 ETA。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>需要降级或重写的旧计划</h2>
+      <table>
+        <thead><tr><th>旧文档</th><th>问题</th><th>当前处理</th></tr></thead>
+        <tbody>
+          <tr><td><a href="../归档/已替代-规划/chat-log-export-plan.md">chat-log-export-plan.md</a></td><td>旧方案只描述聊天内存数组导出 TXT/JSON，且声称当前无法导出；当前 F1 控制台已支持 TXT/HTML/PNG。</td><td>已由 <a href="聊天F1导出状态.html">聊天F1导出状态.html</a> 接管当前入口。</td></tr>
+          <tr><td><a href="../归档/已替代-规划/chat-ui-enhancement-plan.md">chat-ui-enhancement-plan.md</a></td><td>旧方案仍把聊天鼠标交互、复制和翻译按钮当作主要缺口，并引用了过时配置路径。</td><td>已由 <a href="聊天UI状态.html">聊天UI状态.html</a> 接管当前入口；QmUi 迁移降级为后续重构调研。</td></tr>
+          <tr><td><a href="../归档/已替代-规划/demo-player-enhancement-plan.md">demo-player-enhancement-plan.md</a>、<a href="../归档/已替代-规划/spectator-director-plan.md">spectator-director-plan.md</a></td><td>旧方案把未证实的书签 JSON、自动高光评分、Ghost 对比 UI 和画中画混在当前问题里；PDF 明确“画中画 UI”方向已否决。</td><td>已由 <a href="Demo观战状态.html">Demo观战状态.html</a> 接管当前入口；涉及画中画的内容默认降级。</td></tr>
+          <tr><td><a href="../归档/已替代-规划/hud-editor-plan.md">hud-editor-plan.md</a>、<a href="../归档/已替代-规划/weapon-switch-animation-plan.md">weapon-switch-animation-plan.md</a></td><td>旧方案仍把 HUD editor 重置/吸附和武器切换动画当作待实现；当前源码已存在对应能力。</td><td>已由 <a href="HUD视觉辅助状态.html">HUD视觉辅助状态.html</a> 接管当前入口；旧案仅追溯。</td></tr>
+          <tr><td><a href="../归档/已替代-规划/hook-progress-plan.md">hook-progress-plan.md</a></td><td>旧案没有处理 0.7 负 <code>m_HookTick</code> 裁剪、当前名字板强弱钩行和配置路径更新。</td><td>已由 <a href="钩子进度状态.html">钩子进度状态.html</a> 接管当前入口；默认应先做只读公式和仅自己/观战目标显示。</td></tr>
+          <tr><td><a href="../归档/已替代-规划/accessibility-plan.md">accessibility-plan.md</a></td><td>旧方案把专门无障碍模式缺失写成“几乎为零”，同时引用过时配置路径并低估了全局 UI 缩放风险。</td><td>已由 <a href="无障碍状态.html">无障碍状态.html</a> 接管当前入口；旧案仅追溯。</td></tr>
+          <tr><td><a href="../归档/已替代-规划/map-favorites-plan.md">map-favorites-plan.md</a>、<a href="../归档/已替代-规划/server-favorites-plan.md">server-favorites-plan.md</a></td><td>地图收藏旧案已落后于当前 Favorite Maps 页、地图备注和分类缓存；服务器收藏增强仍缺兼容边界。</td><td>已由 <a href="收藏浏览状态.html">收藏浏览状态.html</a> 接管当前入口；服务器收藏备注/标签/通知需重新规格化。</td></tr>
+          <tr><td><a href="../归档/已替代-规划/server-favorites-plan.md">server-favorites-plan.md</a></td><td>旧案把当前收藏接口写成单地址模型，并建议用 JSON 替代原收藏与新增 <code>cl_favorite_*</code> 配置。</td><td>已由 <a href="服务器收藏状态.html">服务器收藏状态.html</a> 接管当前入口；人数通知默认降级为后续高成本规划。</td></tr>
+          <tr><td><a href="../归档/已替代-规划/screenshot-manager-plan.md">screenshot-manager-plan.md</a></td><td>旧案仍说缺少截图管理界面且默认快捷键是 <code>F12</code>；当前已有 Demo 浏览器 Screenshots 模式，默认截图绑定是 <code>F10</code>。</td><td>已由 <a href="截图管理状态.html">截图管理状态.html</a> 接管当前入口；水印/分享保留为后续小规格。</td></tr>
+          <tr><td><a href="../归档/已替代-规划/skin-mixer-plan.md">skin-mixer-plan.md</a></td><td>旧案仍说无法混搭、缺少预览、缺少保存；当前资源编辑器已有 Skin Frankenstein 合成和导出。</td><td>已由 <a href="皮肤混搭状态.html">皮肤混搭状态.html</a> 接管当前入口；<code>.qmixin</code>、分享码和 Workshop 上传仍需重新规格化。</td></tr>
+          <tr><td><a href="../归档/已替代-规划/persistent-stats-plan.md">persistent-stats-plan.md</a></td><td>旧案只覆盖 statboard/CSV，漏掉 Qm PlayerStats HUD、Gores 地图进度和中心服 playtime；<code>cl_stats_*</code> 命名也不适合 QmClient。</td><td>已由 <a href="持久统计状态.html">持久统计状态.html</a> 接管当前入口；历史战绩 JSON 和图表仍是规划。</td></tr>
+          <tr><td><a href="../归档/已替代-规划/plugin-script-system-plan.md">plugin-script-system-plan.md</a></td><td>旧案推荐 Lua、插件目录和 <code>cl_plugins_*</code> 配置，但当前已有 ChaiScript <code>chai</code> 命令，且插件平台未实现。</td><td>已由 <a href="插件脚本状态.html">插件脚本状态.html</a> 接管入口；保持 high-risk planning，不直接执行。</td></tr>
+          <tr><td><a href="../归档/已替代-规划/adaptive-antiping-plan.md">adaptive-antiping-plan.md</a></td><td>PDF 标低优先级，且涉及预测体验；旧案忽略了现有 QmMonitoring/status bar 网络指标，并建议新增 <code>cl_</code> 前缀配置。</td><td>已由 <a href="自适应AntiPing状态.html">自适应AntiPing状态.html</a> 接管当前入口；只做诊断或手动建议，不默认改预测逻辑。</td></tr>
+          <tr><td><a href="../归档/已替代-规划/weapon-switch-animation-plan.md">weapon-switch-animation-plan.md</a></td><td>PDF 标低优先级，且远程同步/中心服状态传播会扩大范围。</td><td>只保留视觉候选，不触碰玩法语义。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>已排除或默认不做</h2>
+      <ul>
+        <li>成就系统：PDF 已列为不纳入开发计划。</li>
+        <li>自定义准星：PDF 认为贴图已有能力，无需额外开发。</li>
+        <li>Discord RPC 修复：PDF 标为国内玩家无需求，应由官方处理。</li>
+        <li>观战/Demo 画中画 UI：PDF 中标注否决，旧计划引用时必须降级。</li>
+        <li>大范围网络协议 Rust 改造：当前仍属于高风险历史调研，不作为默认实施方向。</li>
+      </ul>
+    </section>
+
+    <p class="footer">本页只整理新版 TODO 的规划路由。源码事实仍以当前代码、HTML 现状页和 gate 验证为准。</p>
+  </div>
+</body>
+</html>
+
+
+
+
+

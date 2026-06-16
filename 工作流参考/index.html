@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>QmClient Wiki - 工作流参考</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="wiki-shell">
+    <header class="wiki-topbar">
+      <a class="wiki-brand" href="../index.html">QmClient Wiki</a>
+      <nav class="wiki-nav" aria-label="主导航">
+        <a href="../当前状态/index.html">当前状态</a>
+        <a href="../规划/index.html">规划</a>
+        <a href="../调研/index.html">调研</a>
+        <a href="../工作流参考/index.html" aria-current="page">工作流参考</a>
+        <a href="../归档/index.html">归档</a>
+        <a href="../维护说明.html">维护说明</a>
+      </nav>
+    </header>
+
+    <main class="wiki-layout">
+      <aside class="wiki-sidebar" aria-label="参考主题">
+        <h2>参考主题</h2>
+        <a href="#rules">使用规则</a>
+        <a href="#performance">设置页性能</a>
+        <a href="#i18n">i18n 与文本</a>
+        <a href="#resources">资源与皮肤 Jobs</a>
+        <a href="#ui">UI 原型与规范</a>
+        <a href="#reviews">审查与收口报告</a>
+      </aside>
+
+      <article class="wiki-content">
+        <header class="doc-header">
+          <h1>工作流参考</h1>
+          <p class="muted">本页只索引 `docs/superpowers/` 的历史工作材料。它们可以帮助理解背景和旧决策，但极可能与当前代码脱节。</p>
+          <dl class="doc-meta">
+            <div><dt>状态</dt><dd>参考索引</dd></div>
+            <div><dt>可信度</dt><dd>低到中，需复核</dd></div>
+            <div><dt>范围</dt><dd><code>docs/superpowers/</code></dd></div>
+          </dl>
+        </header>
+
+        <section class="doc-section" id="rules">
+          <h2>使用规则</h2>
+          <p class="callout warn">不要把本页链接的文档直接当作当前事实。进入实现前必须用当前源码、脚本、gate 和对应 wiki 当前状态页重新核对。</p>
+          <table>
+            <thead><tr><th>材料类型</th><th>适合用途</th><th>限制</th></tr></thead>
+            <tbody>
+              <tr><td>explore</td><td>理解当时观察到的问题、调用点和风险</td><td>代码可能已变，结论需重验</td></tr>
+              <tr><td>plans/specs</td><td>参考拆分方式、任务边界和旧方案取舍</td><td>不能直接执行旧计划</td></tr>
+              <tr><td>reports/reviews</td><td>查看收口证据、审查发现和剩余风险</td><td>只代表当时状态</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="doc-section" id="performance">
+          <h2>设置页性能</h2>
+          <ul>
+            <li><a href="../../../superpowers/explore/2026-06-13-设置页性能优化重组版计划现状.md">设置页性能优化重组版计划现状</a></li>
+            <li><a href="../../../superpowers/explore/2026-06-15-settings-performance-budget-next.md">settings-performance-budget-next</a></li>
+            <li><a href="../../../superpowers/explore/2026-06-15-settings-hitrate-tclient-scroll-fps.md">settings-hitrate-tclient-scroll-fps</a></li>
+            <li><a href="../../../superpowers/specs/2026-06-14-设置页性能优化总纲-全局调度版.html">设置页性能优化总纲 - 全局调度版</a></li>
+            <li><a href="../../../superpowers/reports/2026-06-14-设置页性能优化最终收口报告.md">设置页性能优化最终收口报告</a></li>
+          </ul>
+        </section>
+
+        <section class="doc-section" id="i18n">
+          <h2>i18n 与文本</h2>
+          <ul>
+            <li><a href="../../../superpowers/explore/2026-06-05-QmClient汉化与i18n现状探索.md">QmClient 汉化与 i18n 现状探索</a></li>
+            <li><a href="../../../superpowers/explore/2026-06-12-QmClient-i18n-调用点与分类清单.md">QmClient i18n 调用点与分类清单</a></li>
+            <li><a href="../../../superpowers/explore/2026-06-14-qmclient-i18n-src-status-audit.md">QmClient i18n src status audit</a></li>
+            <li><a href="../../../superpowers/reviews/2026-06-16-i18n多语言系统代码审查.md">i18n 多语言系统代码审查</a></li>
+            <li><a href="../../../superpowers/reports/2026-06-12-QmClient-i18n-人工迁移批次清单.md">QmClient i18n 人工迁移批次清单</a></li>
+          </ul>
+        </section>
+
+        <section class="doc-section" id="resources">
+          <h2>资源与皮肤 Jobs</h2>
+          <ul>
+            <li><a href="../../../superpowers/explore/2026-05-31-Tee皮肤与资源加载Jobs模型探索.md">Tee 皮肤与资源加载 Jobs 模型探索</a></li>
+            <li><a href="../../../superpowers/explore/2026-06-03-tee皮肤加载合理路径调研.md">Tee 皮肤加载合理路径调研</a></li>
+            <li><a href="../../../superpowers/explore/2026-06-16-settings-preview-text-retest.md">settings-preview-text-retest</a></li>
+            <li><a href="../../../superpowers/reports/2026-06-14-皮肤列表稳定态性能安全性收口报告.md">皮肤列表稳定态性能安全性收口报告</a></li>
+          </ul>
+        </section>
+
+        <section class="doc-section" id="ui">
+          <h2>UI 原型与规范</h2>
+          <ul>
+            <li><a href="../../../superpowers/explore/2026-05-27-DDNet菜单UI规范探索.md">DDNet 菜单 UI 规范探索</a></li>
+            <li><a href="../../../superpowers/specs/2026-06-13-ui-prototype.html">QmClient UI prototype</a></li>
+            <li><a href="../../../superpowers/specs/2026-06-13-ui-ux-apple-redesign.html">UI/UX Apple redesign</a></li>
+          </ul>
+        </section>
+
+        <section class="doc-section" id="reviews">
+          <h2>审查与收口报告</h2>
+          <ul>
+            <li><a href="../../../superpowers/reviews/2026-06-09-性能量化系统代码审查.md">性能量化系统代码审查</a></li>
+            <li><a href="../../../superpowers/reports/2026-06-14-设置页性能优化二次根因收口报告.md">设置页性能优化二次根因收口报告</a></li>
+            <li><a href="../../../superpowers/reports/2026-06-02-tee-page-static-corruption-preview-maintenance-fbo.md">tee page static corruption preview maintenance fbo</a></li>
+          </ul>
+        </section>
+      </article>
+
+      <aside class="wiki-toc" aria-label="页内目录">
+        <h2>本页</h2>
+        <a href="#rules">使用规则</a>
+        <a href="#performance">设置页性能</a>
+        <a href="#i18n">i18n 与文本</a>
+        <a href="#resources">资源与皮肤 Jobs</a>
+        <a href="#ui">UI 原型与规范</a>
+        <a href="#reviews">审查与报告</a>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>
+

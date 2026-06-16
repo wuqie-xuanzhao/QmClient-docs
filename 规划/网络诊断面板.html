@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="draft spec" />
+  <title>网络诊断面板与状态栏预设规格</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta">
+        <span class="pill warn">draft spec</span>
+        <span class="pill secondary">2026-06-16</span>
+        <span class="pill">network diagnostics</span>
+      </div>
+      <h1>网络诊断面板与状态栏预设规格</h1>
+      <p class="muted">本文把旧 “NetGraph / 网络卡顿诊断 / 性能监控面板” 想法收敛为一个后续小规格：复用已经存在的 <code>CQmMonitoring</code> 和 TClient 状态栏，补一层只读诊断解释与状态栏预设入口；不新建平行 NetGraph，不自动修改 AntiPing 或预测参数。</p>
+      <nav class="toc" aria-label="目录">
+        <a href="#summary">当前结论</a>
+        <a href="#scope">目标与非目标</a>
+        <a href="#design">建议设计</a>
+        <a href="#acceptance">验收边界</a>
+        <a href="#evidence">复核证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="summary">
+      <h2>当前结论</h2>
+      <table>
+        <thead><tr><th>能力</th><th>现状</th><th>后续口径</th></tr></thead>
+        <tbody>
+          <tr><td>QmMonitoring 指标</td><td><span class="badge ok">已实现</span></td><td>已有 latency、prediction、margin、jitter、resend loss、traffic、connection grade、primary cause、FPS/CPU/memory。</td></tr>
+          <tr><td>图形面板</td><td><span class="badge ok">已实现</span></td><td><code>dbg_graphs</code> 打开时渲染 Qm monitoring HUD，不需要另起一个 NetGraph 面板。</td></tr>
+          <tr><td>状态栏</td><td><span class="badge ok">已实现</span></td><td>状态栏已有网络与性能条目，并有设置页编辑器；缺的是面向网络诊断的预设和解释。</td></tr>
+          <tr><td>性能日志</td><td><span class="badge ok">已有链路</span></td><td><code>qm_perf_*</code> 适合做开发诊断，不应和玩家网络 HUD 混成一个功能。</td></tr>
+          <tr><td>自动调参</td><td><span class="badge bad">不进入本规格</span></td><td>预测和 AntiPing 参数属于玩法手感风险，不从诊断面板直接改。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="scope">
+      <h2>目标与非目标</h2>
+      <table>
+        <thead><tr><th>目标</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>只读诊断摘要</td><td>把当前 <code>EQmConnectionGrade</code> 和 <code>EQmDiagnosticCause</code> 翻译成玩家能理解的短句，显示在已有 Qm monitoring HUD 或设置说明中。</td></tr>
+          <tr><td>状态栏诊断预设</td><td>提供一键应用的 status bar scheme，例如 <code>u n j k q</code>，让玩家不用手填代码。</td></tr>
+          <tr><td>解释 resend loss</td><td>明确 <code>k</code> 是 resend-based estimate，不是服务器权威丢包。</td></tr>
+          <tr><td>保留开发者入口</td><td><code>dbg_graphs</code> 仍是完整图表入口；普通状态栏只展示轻量指标。</td></tr>
+        </tbody>
+      </table>
+      <table>
+        <thead><tr><th>非目标</th><th>原因</th></tr></thead>
+        <tbody>
+          <tr><td>新建第二套 NetGraph 渲染器</td><td>当前 <code>CQmMonitoring::RenderHud()</code> 已有图形面板和历史曲线。</td></tr>
+          <tr><td>自动修改 <code>cl_antiping_*</code> 或 prediction margin</td><td>风险见 <a href="自适应AntiPing状态.html">自适应AntiPing状态.html</a>；本规格只做诊断。</td></tr>
+          <tr><td>判断服务器权威卡顿原因</td><td>客户端没有服务端帧耗时、队列拥塞和服务器 tick profiling 信号。</td></tr>
+          <tr><td>把 perf HTML 报表塞进游戏内 HUD</td><td>perf 报表面向离线/开发分析，和玩家实时状态栏不是同一层。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="design">
+      <h2>建议设计</h2>
+      <ol>
+        <li>在 TClient 状态栏设置页增加 “Network diagnostics” 预设按钮，应用 <code>u n j k q</code> 或 <code>u n j k i o q</code>。</li>
+        <li>在预设旁边显示简短解释：snapshot latency、prediction latency、jitter、resend loss、connection quality。</li>
+        <li>在 Qm monitoring HUD header 或 debug details 中复用现有 grade/cause，显示当前主因，不新增采样字段。</li>
+        <li>把 “诊断建议” 保持为只读文本，例如 “Jitter high: check Wi-Fi / routing before changing AntiPing”。</li>
+        <li>如需更细的弱网建议，另写 Adaptive AntiPing 建议规格，不在本页自动落地。</li>
+      </ol>
+      <p class="note">最小闭环是“让玩家可以一键打开网络状态栏预设，并知道每个指标代表什么”。这比新增图表更贴近当前代码，也更容易验证。</p>
+    </section>
+
+    <section class="card" id="acceptance">
+      <h2>验收边界</h2>
+      <table>
+        <thead><tr><th>检查项</th><th>应验证</th></tr></thead>
+        <tbody>
+          <tr><td>状态栏预设</td><td>点击后更新 <code>tc_statusbar_scheme</code>，并立即调用现有 <code>ApplyStatusBarScheme()</code> / <code>UpdateStatusBarScheme()</code>。</td></tr>
+          <tr><td>不新增采样路径</td><td>所有显示数据来自 <code>m_QmMonitoring.Snapshot()</code> 或现有状态栏项。</td></tr>
+          <tr><td>不改预测配置</td><td>变更 diff 中不得写入 <code>cl_antiping_*</code>、prediction margin 自动调整或类似配置。</td></tr>
+          <tr><td>文案边界</td><td>清楚标注 resend loss 是估计值，connection quality 是客户端观察，不是服务器权威诊断。</td></tr>
+          <tr><td>UI 回归</td><td>状态栏设置页预览、添加/删除条目、手动 scheme 编辑仍可用。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>源码证据</summary>
+        <ul>
+          <li><code>src/game/client/components/qmclient/monitoring/monitoring.h:20</code> 到 <code>:36</code>：已定义连接等级和诊断主因枚举。</li>
+          <li><code>src/game/client/components/qmclient/monitoring/monitoring.h:38</code> 到 <code>:64</code>：网络指标已有 snapshot/prediction latency、jitter、packet loss estimate、traffic 和 connection flags。</li>
+          <li><code>src/game/client/components/qmclient/monitoring/monitoring.h:395</code> 到 <code>:416</code>：resend-based loss 和 connection grade 阈值已封装。</li>
+          <li><code>src/game/client/components/qmclient/monitoring/monitoring.h:419</code> 到 <code>:438</code>：primary cause 已能区分 downstream、upstream、jitter、packet loss 和 client performance。</li>
+          <li><code>src/game/client/components/qmclient/monitoring/monitoring.cpp:602</code> 到 <code>:616</code>：QmMonitoring 以 20Hz 采样并维护历史。</li>
+          <li><code>src/game/client/components/qmclient/monitoring/monitoring.cpp:619</code> 到 <code>:643</code>：网络采样来源是 <code>IClient</code> 指标和 <code>NetStatsSnapshot()</code>。</li>
+          <li><code>src/game/client/gameclient.cpp:2296</code> 到 <code>:2306</code>：Qm monitoring HUD 受 <code>dbg_graphs</code> 控制。</li>
+          <li><code>src/game/client/components/tclient/statusbar.h:53</code> 到 <code>:76</code>：状态栏已有 snapshot latency、prediction latency、jitter、resend loss、receive/send rate、connection quality、CPU 和 memory 条目。</li>
+          <li><code>src/game/client/components/tclient/menus_tclient.cpp:4210</code> 到 <code>:4373</code>：状态栏设置页已有 preview、codes、apply scheme 和 scheme 输入框。</li>
+          <li><code>src/engine/shared/config_variables_tclient.h:206</code> 到 <code>:218</code>：状态栏开关、颜色、标签和默认 scheme 配置已存在。</li>
+          <li><code>src/engine/shared/config_variables_qmclient.h:13</code> 到 <code>:15</code>、<code>:174</code>：性能日志配置和监控 HUD 透明度配置已存在。</li>
+          <li><code>src/test/qmclient_monitoring_test.cpp:371</code> 到 <code>:466</code>：连接等级、主因、丢包估计、布局比例和透明度 helper 有测试覆盖。</li>
+        </ul>
+      </details>
+    </section>
+
+    <p class="footer">相关入口：<a href="../当前状态/网络卡顿可视化.html">网络卡顿与性能监控现状</a>、<a href="自适应AntiPing状态.html">自适应 AntiPing 现状与风险</a>、<a href="../调研/页面切换卡顿状态.html">页面切换卡顿调研现状</a>、<a href="候选Backlog状态.html">候选 Backlog 路由</a>。</p>
+  </div>
+</body>
+</html>
+
+
+
+

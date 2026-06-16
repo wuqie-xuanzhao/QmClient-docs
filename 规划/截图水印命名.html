@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="draft" />
+  <title>截图水印与地图名命名小规格</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill warn">draft spec</span><span class="pill secondary">2026-06-16</span><span class="pill bad">未实现规格</span></div>
+      <h1>截图水印与地图名命名小规格</h1>
+      <p class="muted">本页把新版 TODO 中“截图自动水印、时间戳、地图名”的想法收敛为本地增强规格。当前代码已有截图保存、自动截图、截图动画和 Screenshots 浏览模式，本规格只定义水印和文件命名，不做上传分享。</p>
+      <nav class="toc" aria-label="文档目录">
+        <a href="#goal">① 目标与非目标</a>
+        <a href="#naming">② 文件命名</a>
+        <a href="#watermark">③ 水印内容</a>
+        <a href="#config">④ 配置边界</a>
+        <a href="#verification">⑤ 验收</a>
+        <a href="#evidence">⑥ 当前证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="goal">
+      <h2>① 目标与非目标</h2>
+      <table>
+        <thead><tr><th>类型</th><th>范围</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge ok">目标</span></td><td>普通截图可选追加地图名到文件名前缀。</td><td>新版 TODO 点名“时间戳/地图名”；当前文件名已有时间戳，缺地图上下文。</td></tr>
+          <tr><td><span class="badge ok">目标</span></td><td>普通截图和自动截图可选叠加轻量水印。</td><td>分享前处理价值明确，但应默认关闭，避免污染玩家原始截图。</td></tr>
+          <tr><td><span class="badge ok">目标</span></td><td>保持 Screenshots 模式仍能浏览、预览、打开和删除新截图。</td><td>新文件名仍必须落在 <code>screenshots</code> 目录和 PNG 格式内。</td></tr>
+          <tr><td><span class="badge warn">暂不做</span></td><td>图片剪贴板、上传图床、社交平台分享、远端相册。</td><td>这些涉及平台 API、网络错误、隐私和第三方服务，不属于 P1。</td></tr>
+          <tr><td><span class="badge bad">禁止</span></td><td>改变现有截图默认行为或自动截图清理语义。</td><td>关闭新配置时，应继续生成 <code>screenshots/screenshot_*.png</code> 和 <code>screenshots/auto/autoscreen_*.png</code>。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="naming">
+      <h2>② 文件命名</h2>
+      <p class="note">命名增强只改变传入 <code>TakeScreenshot</code> 的前缀或其等价路径，不改变截图最终仍由图形后端保存为 PNG 的事实。</p>
+      <table>
+        <thead><tr><th>场景</th><th>默认现状</th><th>启用地图名后的建议</th></tr></thead>
+        <tbody>
+          <tr><td>普通截图</td><td><code>screenshots/screenshot_YYYY-mm-dd_HH-MM-SS.png</code></td><td><code>screenshots/screenshot_&lt;map&gt;_YYYY-mm-dd_HH-MM-SS.png</code></td></tr>
+          <tr><td>自动截图</td><td><code>screenshots/auto/autoscreen_*.png</code></td><td>P1 不建议改前缀；避免影响自动清理。</td></tr>
+          <tr><td>统计板截图</td><td><code>screenshots/auto/stats/autoscreen_*.png</code></td><td>P1 不建议改前缀；统计板 CSV 仍按现有路径。</td></tr>
+        </tbody>
+      </table>
+      <ul>
+        <li>地图名必须做路径字符清理：斜杠、反斜杠、冒号、控制字符和过长 UTF-8 都不能进入文件名。</li>
+        <li>离线、菜单、未连接或地图名为空时回退到 <code>screenshot</code>。</li>
+        <li>如果未来支持服务器名或玩家名，必须另写规格；P1 不把文件名扩成一整段上下文。</li>
+      </ul>
+    </section>
+
+    <section class="card" id="watermark">
+      <h2>③ 水印内容</h2>
+      <table>
+        <thead><tr><th>字段</th><th>默认</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>客户端标识</td><td><code>QmClient</code></td><td>小字号，右下角或左下角，不遮挡准星和聊天输入。</td></tr>
+          <tr><td>时间</td><td>本地时间</td><td>可直接复用截图文件名时间；不需要额外时区 UI。</td></tr>
+          <tr><td>地图名</td><td>当前地图名</td><td>仅在可用时显示；未知时省略，不显示 <code>unknown</code>。</td></tr>
+          <tr><td>服务器地址/玩家名</td><td><span class="badge warn">P1 不做</span></td><td>隐私风险更高，不能默认写进图片。</td></tr>
+        </tbody>
+      </table>
+      <p>实现路径优先考虑在截图保存前处理 <code>CImageInfo</code> 副本，避免为了水印改动渲染管线。水印失败时应回退为原始截图保存，而不是让截图失败。</p>
+    </section>
+
+    <section class="card" id="config">
+      <h2>④ 配置边界</h2>
+      <p class="note warn">QmClient 新配置不使用 <code>cl_</code> 前缀。现有上游自动截图配置继续保留，不借本规格重命名。</p>
+      <pre><code>qm_screenshot_include_map_name 0/1
+qm_screenshot_watermark 0/1
+qm_screenshot_watermark_time 0/1
+qm_screenshot_watermark_map 0/1</code></pre>
+      <ul>
+        <li>默认全部关闭，保证现有截图输出不变。</li>
+        <li>配置 UI 可以放在 QmClient 页面或截图相关设置区域，但本规格不要求重组设置页。</li>
+        <li>如果实现水印样式设置，P1 最多支持位置和透明度；字体、模板、图片 Logo 后置。</li>
+      </ul>
+    </section>
+
+    <section class="card" id="verification">
+      <h2>⑤ 验收</h2>
+      <table>
+        <thead><tr><th>检查项</th><th>验收标准</th></tr></thead>
+        <tbody>
+          <tr><td>默认兼容</td><td>所有新配置关闭时，普通截图文件名和 Screenshots 模式行为与当前一致。</td></tr>
+          <tr><td>地图名命名</td><td>启用后普通截图包含清理后的地图名，非法字符和超长名称不会破坏保存。</td></tr>
+          <tr><td>水印</td><td>启用后 PNG 右下或左下出现 QmClient / 时间 / 地图名，不遮挡主要 HUD 和聊天输入。</td></tr>
+          <tr><td>自动截图</td><td>自动截图和统计板截图不会被新命名规则破坏清理逻辑；是否加水印需要明确配置覆盖。</td></tr>
+          <tr><td>验证记录</td><td>实现后回填 <a href="截图管理状态.html">截图管理状态.html</a> 和 <a href="创新路线图.html">创新路线图.html</a>。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>⑥ 当前证据</h2>
+      <ul>
+        <li><a href="截图管理状态.html">截图管理状态.html</a> 已确认当前有截图保存、自动截图、截图动画和 Screenshots 浏览模式。</li>
+        <li><code>src/game/client/components/binds.cpp:564</code>：默认 <code>F10</code> 绑定 <code>screenshot</code>。</li>
+        <li><code>src/engine/client/client.cpp:4286-4291</code>：<code>screenshot</code> 命令调用 <code>Graphics()-&gt;TakeScreenshot</code> 并触发截图动画回调。</li>
+        <li><code>src/engine/client/graphics_threaded.cpp:3826-3833</code>：截图文件名目前是 <code>screenshots/%s_%s.png</code>。</li>
+        <li><code>src/engine/client/client.cpp:4220-4264</code>：自动截图和统计板截图使用 <code>screenshots/auto</code> 与 <code>screenshots/auto/stats</code> 并执行清理。</li>
+        <li><code>src/game/client/components/menus_demo.cpp:117-129</code>：Screenshots 模式浏览 <code>screenshots</code> 目录。</li>
+        <li><code>src/game/client/components/ui_effects.cpp:71-148</code>：截图动画已有图像副本展示链路。</li>
+      </ul>
+      <p class="note warn">本页不证明水印已经实现。实现前还需确认当前客户端拿地图名的最小可靠入口，以及保存前处理 <code>CImageInfo</code> 的成本。</p>
+    </section>
+
+    <p class="footer">相关入口：<a href="截图管理状态.html">截图管理与水印现状</a>、<a href="创新路线图.html">创新功能候选路由</a>、<a href="待办优先级状态.html">新版 TODO 优先级路由</a>。</p>
+  </div>
+</body>
+</html>
+
+
+
+

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="draft" />
+  <title>Demo/观战导演目标推荐小规格</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill warn">draft spec</span><span class="pill secondary">2026-06-16</span><span class="pill bad">未实现规格</span></div>
+      <h1>Demo/观战导演目标推荐小规格</h1>
+      <p class="muted">本页把 Demo/观战导演方向收敛为一个不触碰画中画、不改 demo 格式、不做全自动高光评分的小规格：基于现有 LiveDirector / MultiView / live observer overlay，提供可解释的观战目标推荐和手动确认切换。</p>
+      <nav class="toc" aria-label="文档目录">
+        <a href="#goal">① 目标与非目标</a>
+        <a href="#signals">② 推荐信号</a>
+        <a href="#rules">③ 切换规则</a>
+        <a href="#ui">④ UI 与配置</a>
+        <a href="#verification">⑤ 验收</a>
+        <a href="#evidence">⑥ 当前证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="goal">
+      <h2>① 目标与非目标</h2>
+      <table>
+        <thead><tr><th>类型</th><th>范围</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge ok">目标</span></td><td>在 live observer / director 路径中给出下一个推荐观战目标。</td><td>当前已有队伍/玩家 entries、随机选择和 fallback，适合先做可解释推荐。</td></tr>
+          <tr><td><span class="badge ok">目标</span></td><td>推荐理由必须可显示，例如“同队领先”“接近 finish”“活跃移动”。</td><td>避免黑盒自动切换干扰观战者。</td></tr>
+          <tr><td><span class="badge ok">目标</span></td><td>默认手动确认切换，可选自动切换。</td><td>先保证可控性，再讨论自动导演。</td></tr>
+          <tr><td><span class="badge warn">暂不做</span></td><td>画中画 UI、视频导出、全自动精彩度评分、跨玩法高光系统。</td><td>新版 TODO 已否决画中画；高光评分需要单独事件来源设计。</td></tr>
+          <tr><td><span class="badge bad">禁止</span></td><td>修改 demo 文件格式、网络协议、预测或玩法语义。</td><td>本规格只使用客户端已有可见状态做观战辅助。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="signals">
+      <h2>② 推荐信号</h2>
+      <table>
+        <thead><tr><th>信号</th><th>P1 是否使用</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>LiveDirector team/player entries</td><td><span class="badge ok">使用</span></td><td>已有结构能枚举可观战队伍和玩家，是推荐的基础。</td></tr>
+          <tr><td>当前观战目标/自由视角</td><td><span class="badge ok">使用</span></td><td>避免重复推荐当前目标；自由视角下优先给明确候选。</td></tr>
+          <tr><td>玩家活跃度</td><td><span class="badge ok">轻量使用</span></td><td>只用位置变化、存活/冻结等本地可见状态，不引入复杂评分。</td></tr>
+          <tr><td>Gores map progress</td><td><span class="badge warn">可选</span></td><td>只在已有距离/进度数据可用时使用，不能作为通用 DDRace 评分。</td></tr>
+          <tr><td>击杀、夺旗、PB、Finish 高光</td><td><span class="badge bad">不使用</span></td><td>不同玩法事件来源不同，P1 不混做。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="rules">
+      <h2>③ 切换规则</h2>
+      <ul>
+        <li>推荐候选必须来自当前可观战玩家或队伍，不推荐无效 client id。</li>
+        <li>推荐理由最多保留 1-2 个，避免 UI 像调试日志。</li>
+        <li>手动确认模式下，只显示“推荐切换到 X”，不自动调用 spectate。</li>
+        <li>自动模式必须有冷却时间，避免玩家目标频繁跳变。</li>
+        <li>当前目标仍有效且没有更强理由时，不抢切。</li>
+        <li>无法计算推荐时回退到现有随机/默认 director 行为。</li>
+      </ul>
+    </section>
+
+    <section class="card" id="ui">
+      <h2>④ UI 与配置</h2>
+      <table>
+        <thead><tr><th>项目</th><th>建议</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>入口</td><td>Live observer overlay 附近</td><td>不新建大型 Demo 面板。</td></tr>
+          <tr><td>默认模式</td><td>推荐提示 + 手动确认</td><td>避免用户误以为客户端自动接管观战。</td></tr>
+          <tr><td>自动切换</td><td>可选开关，默认关闭</td><td>后续再评估是否适合直播/录制场景。</td></tr>
+          <tr><td>配置命名</td><td><code>qm_director_recommend_*</code></td><td>QmClient 新配置使用 <code>qm_</code> 前缀。</td></tr>
+          <tr><td>日志</td><td>可选 debug</td><td>记录推荐理由用于调参，但默认不刷屏。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="verification">
+      <h2>⑤ 验收</h2>
+      <table>
+        <thead><tr><th>检查项</th><th>验收标准</th></tr></thead>
+        <tbody>
+          <tr><td>默认兼容</td><td>关闭推荐功能时，LiveDirector、MultiView、Demo 播放和观战行为不变。</td></tr>
+          <tr><td>推荐有效性</td><td>推荐目标始终是当前有效可观战玩家或队伍。</td></tr>
+          <tr><td>可解释</td><td>UI 能显示推荐目标和简短理由。</td></tr>
+          <tr><td>防抖</td><td>自动模式有冷却，不会连续频繁切换。</td></tr>
+          <tr><td>边界</td><td>无候选、目标离开、队伍消失、Demo 播放状态下不崩溃。</td></tr>
+          <tr><td>验证记录</td><td>实现后回填 <a href="Demo观战状态.html">Demo观战状态.html</a> 和 <a href="创新路线图.html">创新路线图.html</a>。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>⑥ 当前证据</h2>
+      <ul>
+        <li><a href="Demo观战状态.html">Demo观战状态.html</a> 已确认 Demo marker/slice/speed、Qm Demo HUD/input 回放、Ghost、LiveDirector 和 MultiView 基础存在。</li>
+        <li><code>src/game/client/live/live_director.h:10</code> 和 <code>live_director.cpp:37-75</code> 定义并维护 team/player entries、随机选择和 fallback。</li>
+        <li><code>src/game/client/gameclient.cpp:1393-1482</code> 设置 live observer 观战目标、队伍、玩家和自由视角。</li>
+        <li><code>src/game/client/gameclient.cpp:1797</code> 渲染 live observer overlay。</li>
+        <li><code>src/game/client/gameclient.h:1187-1212</code> 保存 MultiView 和 <code>CLiveDirector</code> 状态。</li>
+        <li><code>src/game/client/components/menus_demo.cpp:503-846</code> 证明当前 Demo 已有 marker、slice marker、前后 marker 和切片操作。</li>
+        <li><code>src/engine/client/client.cpp:5334-5344</code> 注册 Demo marker、slice、speed 和 replay 保存命令。</li>
+      </ul>
+      <p class="note warn">本页是规格草案，不表示目标推荐已实现。实现前还需重新复核当前 director 数据结构，并确认推荐理由是否能从现有客户端状态稳定取得。</p>
+    </section>
+
+    <p class="footer">相关入口：<a href="Demo观战状态.html">Demo 与观战导演现状</a>、<a href="创新路线图.html">创新功能候选路由</a>、<a href="待办优先级状态.html">新版 TODO 优先级路由</a>。</p>
+  </div>
+</body>
+</html>
+
+
+
+

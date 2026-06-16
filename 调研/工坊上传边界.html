@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="research" />
+  <title>Workshop 上传与资源服务边界调研</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill warn">research</span><span class="pill secondary">2026-06-16</span><span class="pill bad">上传市场不在当前闭环</span></div>
+      <h1>Workshop 上传与资源服务边界调研</h1>
+      <p class="muted">本文把“资源页 Workshop 状态收口”和“资源上传/分享市场”拆开。当前 QmClient 资源页已有 catalog 浏览、下载、删除、本地作者缓存和预览调度；未见账号、上传、审核、远端发布或资源市场闭环。</p>
+      <nav class="toc" aria-label="文档目录">
+        <a href="#conclusion">① 快速结论</a>
+        <a href="#current">② 当前已有链路</a>
+        <a href="#missing">③ 上传市场缺口</a>
+        <a href="#risk">④ 风险边界</a>
+        <a href="#path">⑤ 可行推进路径</a>
+        <a href="#evidence">⑥ 源码证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="conclusion">
+      <h2>① 快速结论</h2>
+      <p class="note warn">资源页 P0 应继续做“状态收口”：已下载/未下载 tag、作者显示、下载失败、删除确认、entity background 层级。不要把它扩大成上传市场、账号系统或远端审核平台。</p>
+      <table>
+        <thead><tr><th>问题</th><th>结论</th><th>可信度</th></tr></thead>
+        <tbody>
+          <tr><td>当前是否能浏览 Workshop 资源？</td><td>能。当前代码从 <code>assets.json</code> catalog 拉取资源，按 tab/category 过滤并合并本地列表。</td><td><span class="badge ok">高</span></td></tr>
+          <tr><td>当前是否能下载 Workshop 资源？</td><td>能。卡片有下载确认，使用 HTTP 下载到当前类别安装路径，并保存本地作者缓存。</td><td><span class="badge ok">高</span></td></tr>
+          <tr><td>当前是否有上传/发布远端资源？</td><td>未见。没有客户端上传请求、账号权限、审核状态、远端发布 API 或资源市场模型。</td><td><span class="badge warn">中高</span></td></tr>
+          <tr><td><code>PublishSettingsAssetMergeEntries</code> 是否是上传？</td><td>不是。它是本地资源列表 merge entry 发布/刷新命名，不代表远端 Workshop publish。</td><td><span class="badge ok">高</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="current">
+      <h2>② 当前已有链路</h2>
+      <table>
+        <thead><tr><th>能力</th><th>当前事实</th><th>文档口径</th></tr></thead>
+        <tbody>
+          <tr><td>资源目录</td><td>10 个 Assets tab 都由 <code>SAssetResourceCategory</code> 注册，声明安装路径、Workshop category/alias 和预览类型。</td><td>这是资源页当前真相源。</td></tr>
+          <tr><td>远端 catalog</td><td>固定 URL 为 <code>https://www.ddrace.cn/data/assets.json</code>，按当前 tab 过滤。</td><td>属于只读资源目录，不是上传 API。</td></tr>
+          <tr><td>下载</td><td>资源卡片使用下载确认和 <code>HttpGetFile</code> 写入本地安装路径。</td><td>可继续做状态/错误文案收口。</td></tr>
+          <tr><td>作者缓存</td><td>本地作者信息写入 <code>qmclient/workshop/local_asset_authors.json</code>。</td><td>是已下载资源显示辅助，不是身份系统。</td></tr>
+          <tr><td>缩略图/预览</td><td>远端 thumb、本地安装文件和 preview scheduler 共同处理。</td><td>性能要和设置页预算一起看。</td></tr>
+          <tr><td>entity background</td><td>Workshop 根目录、层级路径和本地/Workshop source 会被分开处理。</td><td>不是普通 PNG 上传/下载卡片。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="missing">
+      <h2>③ 上传市场缺口</h2>
+      <ul>
+        <li><strong>账号/身份</strong>：当前资源页没有上传身份、作者认证、登录态、token 或账号绑定 UI。</li>
+        <li><strong>上传协议</strong>：当前资源页证据指向 catalog 读取和 HTTP 文件下载；未见资源上传表单、multipart、POST 发布或远端更新 catalog 的客户端链路。</li>
+        <li><strong>审核与安全</strong>：没有内容审核、版权提示、恶意资源扫描、撤回、举报或黑名单流程。</li>
+        <li><strong>服务端存储</strong>：没有资源包 manifest、对象存储、hash 去重、版本迁移、缩略图生成或缓存失效规格。</li>
+        <li><strong>失败恢复</strong>：没有上传断点续传、重试、冲突命名、配额、速率限制和离线队列。</li>
+      </ul>
+      <p class="note bad">因此，Workshop 上传/分享市场不能从资源页 UI 小改直接进入实现。它需要单独的服务、协议、安全和治理规格。</p>
+    </section>
+
+    <section class="card" id="risk">
+      <h2>④ 风险边界</h2>
+      <table>
+        <thead><tr><th>风险</th><th>为什么重要</th><th>默认处理</th></tr></thead>
+        <tbody>
+          <tr><td>版权/恶意内容</td><td>上传资源可能包含侵权、恶意图片、畸形 map/entity 文件或误导性缩略图。</td><td>先调研审核和禁用机制。</td></tr>
+          <tr><td>账号与隐私</td><td>作者、上传者、IP、下载记录和举报都可能成为用户数据。</td><td>没有身份方案前不做上传。</td></tr>
+          <tr><td>远端依赖</td><td>catalog 当前是只读 JSON；上传会引入服务可用性、缓存一致性和回滚问题。</td><td>先定义数据源和发布 API。</td></tr>
+          <tr><td>性能</td><td>上传/市场 UI 容易和资源页预览调度、缩略图下载、GPU 上传竞争。</td><td>继续复用资源页预算，不引入全量同步。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="path">
+      <h2>⑤ 可行推进路径</h2>
+      <table>
+        <thead><tr><th>阶段</th><th>允许做什么</th><th>不做什么</th></tr></thead>
+        <tbody>
+          <tr><td>P0 状态收口</td><td>按 <a href="../规划/资源工坊状态.html">资源工坊状态.html</a> 改进已下载/未下载/本地-only/失败状态。</td><td>不做上传按钮。</td></tr>
+          <tr><td>P1 数据源调研</td><td>定义资源 manifest、catalog 字段、作者/版本/缩略图关系和本地缓存策略。</td><td>不要求客户端立即发布远端资源。</td></tr>
+          <tr><td>P2 服务端/审核规格</td><td>讨论账号、权限、审核、撤回、举报、配额、对象存储和 CDN/cache。</td><td>不把中心服或语音服务临时改成资源市场。</td></tr>
+          <tr><td>P3 opt-in 上传原型</td><td>仅在服务端和审核边界明确后，做本地打包、预检、上传草稿和失败恢复。</td><td>不影响现有只读 catalog 浏览和下载。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>⑥ 源码证据</h2>
+      <details open>
+        <summary>已有浏览/下载链路</summary>
+        <ul>
+          <li><code>src/game/client/components/assets_resource_registry.cpp:72-82</code> 注册 10 类资源、安装目录、Workshop 分类和预览类型。</li>
+          <li><code>src/game/client/components/menus_settings_assets.cpp:1478</code> 定义只读 Workshop catalog URL。</li>
+          <li><code>src/game/client/components/menus_settings_assets.cpp:1516-1657</code> 定义 <code>SWorkshopHudAsset</code> 和每个 tab 的 <code>SWorkshopHudState</code>。</li>
+          <li><code>src/game/client/components/menus_settings_assets.cpp:1853-1863</code> 从 catalog item 读取作者字段并规范化。</li>
+          <li><code>src/game/client/components/menus_settings_assets.cpp:1991-2004</code> 把 Workshop 作者信息持久化到本地缓存。</li>
+          <li><code>src/game/client/components/menus_settings_assets.cpp:7132-7204</code> 处理删除确认、下载确认和 <code>HttpGetFile</code> 下载。</li>
+          <li><code>src/game/client/components/menus_settings_assets.cpp:7293-7389</code> 渲染 <code>Show Workshop Assets</code> 和 <code>Sync Workshop Assets</code> 工具按钮。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>未见上传市场闭环</summary>
+        <ul>
+          <li>在资源页相关源码中未见资源上传账号、审核状态、上传表单或远端 publish API 的文档化入口。</li>
+          <li><code>PublishSettingsAssetMergeEntries</code> 相关命名出现在资源列表 merge/publish 路径中，用于本地 UI 状态刷新；不能作为远端 Workshop 上传证据。</li>
+          <li>当前中心服脚本有 token/report 逻辑，但它服务 QmClient 在线识别，不等同资源市场账号、上传和审核系统。</li>
+        </ul>
+      </details>
+    </section>
+
+    <p class="footer">相关入口：<a href="../当前状态/资源页.html">资源页面现状</a>、<a href="../规划/资源工坊状态.html">资源页 Workshop 状态收口小规格</a>、<a href="../规划/创新路线图.html">创新功能候选路由</a>。探索基准提交：<code>c60df3990</code>。</p>
+  </div>
+</body>
+</html>
+
+
+
+

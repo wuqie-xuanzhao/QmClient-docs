@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="draft" />
+  <title>资源页 Workshop 状态收口小规格</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill warn">draft spec</span><span class="pill secondary">2026-06-16</span><span class="pill bad">未实现规格</span></div>
+      <h1>资源页 Workshop 状态收口小规格</h1>
+      <p class="muted">本页把新版 TODO 中的资源页高优先级条目收敛成一个可开发的小闭环：统一 Workshop / 本地资源状态、作者显示、下载失败和 entity background 层级口径。资源分享、账号市场和上传审核不进入本规格。</p>
+      <nav class="toc" aria-label="文档目录">
+        <a href="#goal">① 目标与非目标</a>
+        <a href="#matrix">② 状态矩阵</a>
+        <a href="#entity-bg">③ Entity Background</a>
+        <a href="#copy">④ UI 文案</a>
+        <a href="#verification">⑤ 验收</a>
+        <a href="#evidence">⑥ 当前证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="goal">
+      <h2>① 目标与非目标</h2>
+      <table>
+        <thead><tr><th>类型</th><th>范围</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge ok">目标</span></td><td>固定 10 个 Assets tab 中 Workshop / 本地资源卡片的状态标签。</td><td>新版 TODO 点名“已下载和未下载资源使用 tag 标签区分”，当前代码已有标签基础，应先把语义收口。</td></tr>
+          <tr><td><span class="badge ok">目标</span></td><td>定义本地已下载资源的作者显示规则和缺失降级。</td><td>当前已有 <code>local_asset_authors.json</code> 缓存和 Workshop 作者字段，但需要统一显示口径。</td></tr>
+          <tr><td><span class="badge ok">目标</span></td><td>把下载失败、删除确认、同步刷新、缩略图失败写成用户可理解的状态。</td><td>避免 Workshop 卡片只有图标变化，用户不知道当前资源能不能用。</td></tr>
+          <tr><td><span class="badge warn">暂不做</span></td><td>资源上传、好友面对面传输、资源市场、哈希去重交互。</td><td>涉及远端服务、好友通信、审核和安全边界；上传市场边界见 <a href="../调研/工坊上传边界.html">工坊上传边界.html</a>。</td></tr>
+          <tr><td><span class="badge bad">禁止</span></td><td>为收口状态重写资源注册表、预览调度或下载协议。</td><td>本规格是 UI/状态闭环，不是资源系统重构。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="matrix">
+      <h2>② 状态矩阵</h2>
+      <p class="note">P0 只需要让每张资源卡片在“能不能用、从哪来、作者是谁、动作是什么”四件事上稳定可读。</p>
+      <table>
+        <thead><tr><th>状态</th><th>显示标签</th><th>主动作</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td>Workshop 未下载</td><td><span class="badge warn">Not downloaded</span></td><td>Download</td><td>显示作者；缩略图可来自远端缓存或 placeholder。</td></tr>
+          <tr><td>Workshop 已下载</td><td><span class="badge ok">Downloaded</span></td><td>Delete / select</td><td>作者优先来自 Workshop 元数据，其次来自本地作者缓存。</td></tr>
+          <tr><td>本地-only</td><td><span class="badge warn">Local-only</span></td><td>Delete / select</td><td>没有 Workshop 匹配时显示为本地资源；作者缺失时不伪造。</td></tr>
+          <tr><td>下载失败</td><td><span class="badge bad">Download failed</span></td><td>Retry download</td><td>失败后保留卡片，允许重新下载，不自动把失败资源标成已安装。</td></tr>
+          <tr><td>预览失败</td><td><span class="badge warn">Preview unavailable</span></td><td>保留原动作</td><td>缩略图失败不等于资源不可用；不要隐藏下载/删除动作。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="entity-bg">
+      <h2>③ Entity Background</h2>
+      <ul>
+        <li><code>entity_bg</code> 是地图文件资源，不能按普通 PNG 贴图卡片写规格。</li>
+        <li>Workshop 根目录应保留可识别标题，例如 <code>entity_bg (Workshop)</code>，并和本地层级目录并列。</li>
+        <li>进入目录后，卡片应继续保留来源状态：本地、Workshop 已下载、Workshop 未下载。</li>
+        <li>缩略图来源可以是 preview map，也可以是本地安装文件；任一失败都应降级为 placeholder。</li>
+        <li>切到 entity background 首帧应允许 shell-only / 延迟重预览，避免为追求完整缩略图导致切页卡顿。</li>
+      </ul>
+    </section>
+
+    <section class="card" id="copy">
+      <h2>④ UI 文案</h2>
+      <table>
+        <thead><tr><th>位置</th><th>推荐文案</th><th>备注</th></tr></thead>
+        <tbody>
+          <tr><td>Workshop 开关</td><td><code>Show Workshop Assets</code></td><td>保留当前文案；后续可本地化，但不在本规格改入口。</td></tr>
+          <tr><td>刷新</td><td><code>Sync Workshop Assets</code></td><td>语义是重置当前 tab 的 Workshop state 并重新请求，不是上传同步。</td></tr>
+          <tr><td>下载确认</td><td><code>Download this asset?</code></td><td>需要保持只对当前选中资源生效。</td></tr>
+          <tr><td>删除确认</td><td><code>Are you sure you want to delete this asset?</code></td><td>删除的是本地安装资源，不删除远端 Workshop 条目。</td></tr>
+          <tr><td>作者缺失</td><td><code>Unknown author</code> 或隐藏作者行</td><td>二选一即可；不要显示空字符串或错误 hash。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="verification">
+      <h2>⑤ 验收</h2>
+      <table>
+        <thead><tr><th>检查项</th><th>验收标准</th></tr></thead>
+        <tbody>
+          <tr><td>状态标签</td><td>同一个 tab 中本地资源、未下载 Workshop、已下载 Workshop 和下载失败能被视觉区分。</td></tr>
+          <tr><td>作者显示</td><td>Workshop 资源显示远端作者；已下载后能从当前列表或本地缓存继续显示；缺失时有明确降级。</td></tr>
+          <tr><td>Entity background</td><td>Workshop 根目录和本地层级资源可区分，预览失败不会阻塞列表使用。</td></tr>
+          <tr><td>性能</td><td>Show/Sync Workshop、切换 tab、滚动 Workshop 列表不引入明显长帧；如无法保证，必须保留 shell-only / 分帧策略。</td></tr>
+          <tr><td>验证记录</td><td>实现后回填 <a href="../当前状态/资源页.html">资源页.html</a> 和 <a href="创新路线图.html">创新路线图.html</a> 的状态。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>⑥ 当前证据</h2>
+      <ul>
+        <li><a href="../当前状态/资源页.html">资源页.html</a> 已按当前源码确认资源页是 10 个 Assets tab、统一注册表、Workshop / 本地合并展示和资源预览调度。</li>
+        <li><code>src/game/client/components/menus.h:57-66</code> 定义 10 个 Assets tab。</li>
+        <li><code>src/game/client/components/assets_resource_registry.cpp:72-82</code> 注册资源类别、安装路径、Workshop 分类和预览类型。</li>
+        <li><code>src/game/client/components/assets_author_persistence.h:9</code> 定义本地作者缓存 <code>qmclient/workshop/local_asset_authors.json</code>。</li>
+        <li><code>src/game/client/components/menus_settings_assets.cpp:286</code> 已包含 <code>Downloaded</code>、<code>Not downloaded</code>、<code>Local-only</code>、<code>Download failed</code> 文本。</li>
+        <li><code>src/game/client/components/menus_settings_assets.cpp:1478</code> 定义 Workshop catalog URL。</li>
+        <li><code>src/game/client/components/menus_settings_assets.cpp:1626-1657</code> 定义每个 tab 的 Workshop state。</li>
+        <li><code>src/game/client/components/menus_settings_assets.cpp:7132-7204</code> 处理删除确认、下载确认和 <code>HttpGetFile</code> 下载。</li>
+        <li><code>src/game/client/components/menus_settings_assets.cpp:7293-7389</code> 显示 <code>Show Workshop Assets</code> 和 <code>Sync Workshop Assets</code> 工具按钮。</li>
+      </ul>
+      <p class="note warn">本页是规格草案，不表示这些状态已经全部按产品口径收口。实现前仍需重新读当前源码，尤其是资源页近期仍可能有未提交改动。</p>
+    </section>
+
+    <p class="footer">相关入口：<a href="../当前状态/资源页.html">资源页面现状</a>、<a href="../调研/工坊上传边界.html">Workshop 上传边界调研</a>、<a href="创新路线图.html">创新功能候选路由</a>、<a href="待办优先级状态.html">新版 TODO 优先级路由</a>。</p>
+  </div>
+</body>
+</html>
+
+
+
+

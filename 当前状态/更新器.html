@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>QmClient 自动更新现状</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill ok">active</span><span class="pill secondary">2026-06-16</span><span class="pill warn">two update paths</span></div>
+      <h1>QmClient 自动更新现状</h1>
+      <p class="muted">本文接管旧自动更新报告。当前代码里同时存在 QmClient/TClient 侧版本检测与 Windows exe 替换、以及 DDNet 风格的引擎 updater。旧文档把它们写成一个完整自动更新系统，容易误导后续规划。</p>
+      <nav class="toc" aria-label="文档目录">
+        <a href="#summary">当前结论</a>
+        <a href="#qm-path">QmClient 版本检测</a>
+        <a href="#engine-path">引擎 updater</a>
+        <a href="#planning">仍是规划</a>
+        <a href="#legacy">旧文档修正</a>
+        <a href="#evidence">复核证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="summary">
+      <h2>当前结论</h2>
+      <table>
+        <thead><tr><th>能力</th><th>状态</th><th>维护口径</th></tr></thead>
+        <tbody>
+          <tr><td>中心服版本检测</td><td><span class="badge ok">已实现</span></td><td>TClient 侧请求 <code>/client/version</code> 信息服务，解析 <code>version</code> 字段并比较 <code>QMCLIENT_VERSION</code>。</td></tr>
+          <tr><td>过旧提示</td><td><span class="badge ok">已实现</span></td><td><code>qm_show_outdated_version_warning</code> 控制检测到远端版本较新时是否提示。</td></tr>
+          <tr><td>Windows exe 下载替换</td><td><span class="badge ok">已实现</span></td><td>显式更新路径会下载 <code>QmClient/releases/latest/download/DDNet.exe</code>，写临时文件后替换当前客户端。</td></tr>
+          <tr><td>非 Windows 自动替换</td><td><span class="badge bad">TClient 路径未支持</span></td><td>TClient 侧 <code>StartUpdateDownload()</code> 在非 Windows 直接提示不支持自动更新。</td></tr>
+          <tr><td>DDNet 风格 updater</td><td><span class="badge warn">存在但需区分</span></td><td><code>CUpdater</code> 仍在，使用 <code>update/update.json</code> 清单和 Q1menG_Client URL；不要和 TClient 侧更新体验混为一条线。</td></tr>
+          <tr><td>GitHub Releases API / changelog UI</td><td><span class="badge warn">planning</span></td><td>未见读取 release body、assets 元数据、跳过版本或更新通道的实现。</td></tr>
+        </tbody>
+      </table>
+      <p class="note warn">准确表述是“已有基础版本检测和 Windows exe 替换能力”。不要把旧方案里的 GitHub API、更新日志、签名校验和跨平台替换写成当前能力。</p>
+    </section>
+
+    <section class="card" id="qm-path">
+      <h2>QmClient 版本检测</h2>
+      <table>
+        <thead><tr><th>环节</th><th>当前实现</th><th>边界</th></tr></thead>
+        <tbody>
+          <tr><td>检查入口</td><td><code>RequestQmClientUpdateCheckAndUpdate()</code> 设置自动更新检查标记并调用 <code>FetchQmClientUpdateInfo()</code>。</td><td>这是 TClient 组件里的 QmClient 更新路径，不是 <code>CUpdater</code>。</td></tr>
+          <tr><td>请求 URL</td><td><code>QMCLIENT_INFO_URL</code> 拼 <code>?current=QMCLIENT_VERSION</code> 后发 HTTP GET。</td><td>信息源是自带服务器，不是 GitHub API。</td></tr>
+          <tr><td>响应格式</td><td><code>FinishQmClientUpdateInfo()</code> 只读取 JSON 的 <code>version</code> 字段。</td><td>未见 changelog、asset、hash 或 release notes 字段解析。</td></tr>
+          <tr><td>版本比较</td><td><code>IsQmClientRemoteVersionNewer()</code> 去掉 <code>v</code> 前缀，最多比较 4 段纯数字。</td><td>不支持复杂 SemVer 后缀、预发布标签或 build metadata。</td></tr>
+          <tr><td>过旧提示</td><td>远端较新时提示用户去 QQ 群更新。</td><td>不是完整更新日志 UI，也没有跳过版本状态。</td></tr>
+          <tr><td>下载替换</td><td>Windows 下下载 GitHub latest 的 <code>DDNet.exe</code>，完成后替换当前二进制。</td><td>未见 SHA256 校验、release asset 选择、回滚 UI 或跨平台自动替换。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="engine-path">
+      <h2>引擎 updater</h2>
+      <p><code>src/engine/client/updater.*</code> 保留了 DDNet 风格的 updater 状态机：获取/解析更新清单、下载文件、移动文件、替换 client/server 二进制并设置重启状态。它当前使用的下载源仍指向 <code>wxj881027/Q1menG_Client</code>，和 TClient 侧 <code>QmClient</code> latest exe 下载路径不是同一条实现线。</p>
+      <table>
+        <thead><tr><th>环节</th><th>当前行为</th></tr></thead>
+        <tbody>
+          <tr><td>编译开关</td><td><code>AUTOUPDATE</code> 在 Windows 默认 ON，其他平台默认 OFF；<code>INFORM_UPDATE</code> 仍是独立开关。</td></tr>
+          <tr><td>清单</td><td>读取 <code>update/update.json</code>，要求 JSON array，按 <code>version</code>、<code>client</code>、<code>server</code>、<code>download</code>、<code>remove</code> 字段生成任务。</td></tr>
+          <tr><td>版本停止点</td><td>遍历清单时遇到 <code>QMCLIENT_VERSION</code> 停止。</td></tr>
+          <tr><td>替换二进制</td><td><code>ReplaceClient()</code> 先把当前执行文件改名为 <code>.old</code>，再把 <code>update/</code> 中新文件移入；非 Windows 会尝试 <code>chmod +x</code>。</td></tr>
+          <tr><td>完成状态</td><td><code>CommitUpdate()</code> 成功后，在线或编辑器未保存时进入 <code>NEED_RESTART</code>；否则直接重启客户端。</td></tr>
+        </tbody>
+      </table>
+      <p class="note">这条线可以作为老更新器能力保留说明。若后续要做现代 QmClient 更新体验，应先明确是迁移它、替换它，还是继续使用 TClient 侧简化下载路径。</p>
+    </section>
+
+    <section class="card" id="planning">
+      <h2>仍是规划</h2>
+      <ul>
+        <li>GitHub Releases API：读取 <code>tag_name</code>、release body、asset 列表、下载大小和发布时间。</li>
+        <li>更新日志展示：在设置页或弹窗里展示 changelog，而不是只提示去 QQ 群。</li>
+        <li>跳过版本、稍后提醒、检查间隔、更新通道和仓库配置。</li>
+        <li>跨平台自动替换、签名校验、哈希校验和失败回滚 UI。</li>
+        <li>配置版本迁移、<code>data_version.txt</code> 校验和自动更新之间的联动。</li>
+      </ul>
+      <p class="note warn"><code>CheckDataVersion()</code> 当前仍是 stub；不要把数据版本校验写成已完成更新安全机制。</p>
+    </section>
+
+    <section class="card" id="legacy">
+      <h2>旧文档修正</h2>
+      <table>
+        <thead><tr><th>旧口径</th><th>修正后口径</th></tr></thead>
+        <tbody>
+          <tr><td>QmClient 已有一个完整自动更新系统。</td><td>应改为“已有基础版本检测和 Windows exe 替换，另有 legacy/current 的引擎 updater”。</td></tr>
+          <tr><td>主更新源是 <code>Q1menG_Client</code>。</td><td>引擎 updater 仍有 <code>Q1menG_Client</code> URL；TClient 侧 exe 下载使用 <code>QmClient</code> 仓库。文档必须区分两条线。</td></tr>
+          <tr><td>新增配置应写入 <code>config_variables_qimeng.h</code>。</td><td>错误。当前 QmClient 配置文件是 <code>src/engine/shared/config_variables_qmclient.h</code>。</td></tr>
+          <tr><td>GitHub API、更新日志和跳过版本属于当前能力。</td><td>未看到当前实现，应标为 planning。</td></tr>
+          <tr><td>自动更新是完整跨平台能力。</td><td>TClient 侧 exe 下载替换当前只支持 Windows；引擎 updater 有更通用替换逻辑但不是同一条现代 QmClient 更新体验。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>QmClient/TClient 更新路径</summary>
+        <ul>
+          <li><code>src/engine/shared/config_variables_qmclient.h:29</code> 定义 <code>qm_show_outdated_version_warning</code>。</li>
+          <li><code>src/game/client/components/tclient/tclient.cpp:63-64</code> 定义信息服务 URL 和 QmClient latest exe 下载 URL。</li>
+          <li><code>src/game/client/components/tclient/tclient.cpp:1703-1733</code> 处理版本信息请求完成、失败、最新版和过旧提示。</li>
+          <li><code>src/game/client/components/tclient/tclient.cpp:1736-1753</code> 处理 exe 下载完成后的替换、提示和重启。</li>
+          <li><code>src/game/client/components/tclient/tclient.cpp:2801-2808</code> 发起检查并设置自动更新检查标记。</li>
+          <li><code>src/game/client/components/tclient/tclient.cpp:2811-2828</code> Windows 下启动 exe 下载；非 Windows 提示不支持自动更新。</li>
+          <li><code>src/game/client/components/tclient/tclient.cpp:2841-2851</code> 替换当前客户端二进制。</li>
+          <li><code>src/game/client/components/tclient/tclient.cpp:2863-2874</code> 拼接 <code>?current=QMCLIENT_VERSION</code> 请求信息服务。</li>
+          <li><code>src/game/client/components/tclient/tclient.cpp:2877-2900</code> 从响应 JSON 读取 <code>version</code> 并判断远端是否更新。</li>
+          <li><code>src/game/client/components/qmclient/update_version.cpp:10-29</code> 规范化版本；<code>:60-84</code> 比较最多 4 段数字；<code>:89-103</code> 判断远端版本是否比本地新。</li>
+          <li><code>src/game/client/components/qmclient/menus_qmclient.cpp:3741</code> 设置页提供过旧提示开关。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>引擎 updater 路径</summary>
+        <ul>
+          <li><code>CMakeLists.txt:144-149</code> 设置 <code>AUTOUPDATE</code> 和 <code>INFORM_UPDATE</code> 选项。</li>
+          <li><code>src/engine/updater.h:10-28</code> 定义 updater 状态和接口。</li>
+          <li><code>src/engine/client/updater.h:44-90</code> 定义 <code>CUpdater</code>、状态字段和核心私有流程。</li>
+          <li><code>src/engine/client/updater.cpp:69-84</code> 定义 legacy updater 的 <code>DDNet.exe</code> 下载 URL 和 fallback base URL。</li>
+          <li><code>src/engine/client/updater.cpp:217-229</code> 根据 updater 状态执行 parse/download/move。</li>
+          <li><code>src/engine/client/updater.cpp:240-262</code> 替换客户端二进制并在非 Windows 设置可执行位。</li>
+          <li><code>src/engine/client/updater.cpp:290-361</code> 读取并解析 <code>update/update.json</code>。</li>
+          <li><code>src/engine/client/updater.cpp:459-503</code> 提交更新、替换二进制、进入失败/重启状态。</li>
+          <li><code>src/game/client/components/qmclient/data_version.h:30-49</code> 的 <code>CheckDataVersion()</code> 当前仍是 stub。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>未见当前实现项</summary>
+        <p>在更新相关源码中检索 <code>qm_update</code>、<code>skip_version</code>、<code>api.github.com</code>、<code>release body</code>、<code>GitHub API</code> 等未见可证明“更新通道、跳过版本、GitHub release changelog UI”已落地的实现。</p>
+      </details>
+    </section>
+
+    <p class="footer">原始 Markdown 保留为 <a href="../归档/已替代-当前状态/updater-status.md">updater-status.md</a>；新增状态修正应写入本 HTML。</p>
+  </div>
+</body>
+</html>
+
+
+
+
+

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="draft" />
+  <title>.qmconfig 最小配置包小规格</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill warn">draft spec</span><span class="pill secondary">2026-06-16</span><span class="pill bad">未实现</span></div>
+      <h1>.qmconfig 最小配置包小规格</h1>
+      <p class="muted">本页把新版 TODO 中“配置导入/导出”的方向收敛为一个 P0 小规格：只打包 QmClient 已拆分出的配置域文件和 manifest，提供备份/迁移闭环；不做智能合并、逐变量选择、云同步或账号系统。</p>
+      <nav class="toc" aria-label="文档目录">
+        <a href="#goal">① 目标与非目标</a>
+        <a href="#package">② 包结构</a>
+        <a href="#scope">③ P0 导出范围</a>
+        <a href="#import">④ 导入策略</a>
+        <a href="#verification">⑤ 验收</a>
+        <a href="#evidence">⑥ 当前证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="goal">
+      <h2>① 目标与非目标</h2>
+      <table>
+        <thead><tr><th>类型</th><th>范围</th><th>理由</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge ok">目标</span></td><td>导出一个本地 <code>.qmconfig</code> 文件，内含 manifest 和选择的 QmClient 配置文件副本。</td><td>当前已有稳定配置域和文件路径，P0 可以从文件级备份做闭环。</td></tr>
+          <tr><td><span class="badge ok">目标</span></td><td>导入前显示 manifest 摘要，导入时先备份当前文件，再替换文件级配置。</td><td>避免直接执行未知 cfg 命令造成不可恢复状态。</td></tr>
+          <tr><td><span class="badge warn">暂不做</span></td><td>逐变量选择、冲突合并、三方 merge、变量级版本迁移。</td><td>当前加载机制是执行 cfg 文件，不适合在 P0 里强行做变量级合并。</td></tr>
+          <tr><td><span class="badge warn">暂不做</span></td><td>打包贴图、皮肤 PNG、地图、资源文件、截图和 demo。</td><td>这些属于资源迁移，不是配置包最小闭环。</td></tr>
+          <tr><td><span class="badge bad">禁止</span></td><td>导出 API key、账号 token、中心服凭据或本地隐私数据，除非后续有明确敏感项审查。</td><td>配置文件里可能包含翻译服务 key，P0 应默认排除敏感配置域或做文本过滤。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="package">
+      <h2>② 包结构</h2>
+      <p class="note">P0 建议把 <code>.qmconfig</code> 定义为 ZIP 容器，但实现文档和 UI 对用户只暴露一个扩展名。包内路径固定，避免未来迁移无法识别。</p>
+      <pre><code>example.qmconfig
+├── manifest.json
+└── files/
+    ├── QmClient/settings_qmclient.cfg
+    ├── QmClient/qmclient_profiles.cfg
+    ├── QmClient/qmclient_chatbinds.cfg
+    └── QmClient/qmclient_warlist.cfg</code></pre>
+      <table>
+        <thead><tr><th>文件</th><th>要求</th><th>说明</th></tr></thead>
+        <tbody>
+          <tr><td><code>manifest.json</code></td><td>必选。</td><td>记录 schema、导出时间、客户端版本、包含的配置域、是否过滤敏感项。</td></tr>
+          <tr><td><code>files/...</code></td><td>可选多项。</td><td>只允许白名单路径，不允许 <code>../</code>、绝对路径或任意文件名。</td></tr>
+          <tr><td>压缩格式</td><td>ZIP 或项目已有压缩能力。</td><td>如果当前代码没有合适 ZIP 依赖，P0 可先以目录导出规格落地，再评估打包实现。</td></tr>
+        </tbody>
+      </table>
+      <pre><code>{
+  "schema": "qmclient.config_package.v1",
+  "exported_at_local": "2026-06-16T23:30:00+08:00",
+  "client": {
+    "name": "QmClient",
+    "version": "unknown"
+  },
+  "domains": [
+    {
+      "domain": "QMCLIENT",
+      "path": "QmClient/settings_qmclient.cfg",
+      "sensitive_filter": "api_keys_removed"
+    }
+  ]
+}</code></pre>
+    </section>
+
+    <section class="card" id="scope">
+      <h2>③ P0 导出范围</h2>
+      <table>
+        <thead><tr><th>配置域</th><th>P0 默认</th><th>处理规则</th></tr></thead>
+        <tbody>
+          <tr><td><code>QMCLIENT</code></td><td><span class="badge warn">可选/默认谨慎</span></td><td>包含大量 Qm/TClient 设置，但可能有翻译 API key；P0 必须过滤 <code>qm_translate_*_key</code>、SecretId/SecretKey 等敏感项，或默认不导出。</td></tr>
+          <tr><td><code>TCLIENTPROFILES</code></td><td><span class="badge ok">默认导出</span></td><td>皮肤 profile 配置，适合作为迁移目标。</td></tr>
+          <tr><td><code>TCLIENTCHATBINDS</code></td><td><span class="badge ok">默认导出</span></td><td>聊天绑定，适合跨设备迁移。</td></tr>
+          <tr><td><code>TCLIENTWARLIST</code></td><td><span class="badge warn">用户确认</span></td><td>可能包含玩家名/备注等社交信息，导出前需要显式勾选。</td></tr>
+          <tr><td><code>DDNET</code></td><td><span class="badge bad">P0 不导出</span></td><td>覆盖面大，包含上游设置、收藏和未知命令，冲突/隐私风险高。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="import">
+      <h2>④ 导入策略</h2>
+      <ul>
+        <li>导入前解析 manifest，显示包含哪些配置域、导出时间、客户端版本和敏感项过滤状态。</li>
+        <li>只允许导入白名单路径，拒绝绝对路径、上级目录跳转和未知文件。</li>
+        <li>导入前把当前目标文件复制到 <code>QmClient/import-backups/YYYYmmdd-HHMMSS/</code>。</li>
+        <li>P0 使用“文件级替换”，不做逐变量合并；UI 文案必须明确会覆盖对应配置文件。</li>
+        <li>导入完成后提示重启或重新加载配置，不在运行时强行执行整包 cfg。</li>
+      </ul>
+      <p class="note warn">如果未来要做智能合并，必须先定义每个配置域的语义和冲突策略。尤其 <code>QMCLIENT</code> 域里混有 TClient、QmClient 和敏感服务配置，不能只按文本行合并。</p>
+    </section>
+
+    <section class="card" id="verification">
+      <h2>⑤ 验收</h2>
+      <table>
+        <thead><tr><th>检查项</th><th>验收标准</th></tr></thead>
+        <tbody>
+          <tr><td>导出</td><td>能生成 <code>.qmconfig</code>，manifest 可读，包内只含白名单路径。</td></tr>
+          <tr><td>敏感项</td><td>默认导出不会包含翻译 API key、SecretId、SecretKey 或其它已列敏感项。</td></tr>
+          <tr><td>导入</td><td>导入前显示摘要，导入后目标配置文件替换成功，原文件进入 backup 目录。</td></tr>
+          <tr><td>安全</td><td>恶意路径、缺 manifest、未知 schema、未知文件和损坏包均被拒绝且不改现有配置。</td></tr>
+          <tr><td>验证</td><td>实现后至少跑文档 gate、quick gate 或导出/导入临时目录手动验证，并回填 <a href="../当前状态/配置导入导出.html">配置导入导出现状</a>。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>⑥ 当前证据</h2>
+      <details open>
+        <summary>已存在基础</summary>
+        <ul>
+          <li><a href="../当前状态/配置导入导出.html">配置导入导出.html</a> 已确认当前有多配置域保存、<code>QmClient/</code> 目录、legacy 文件迁移和配置文件打开入口。</li>
+          <li><code>src/engine/config.h:30-36</code> 定义当前配置域路径：<code>settings_ddnet.cfg</code>、<code>QmClient/settings_qmclient.cfg</code>、<code>QmClient/qmclient_profiles.cfg</code>、<code>QmClient/qmclient_chatbinds.cfg</code>、<code>QmClient/qmclient_warlist.cfg</code>。</li>
+          <li><code>src/engine/shared/config.cpp:403-505</code> 当前保存逻辑已经按配置域写入临时文件再 rename。</li>
+          <li><code>src/engine/client/client.cpp:5483-5510</code> 当前启动逻辑会把 legacy 根目录配置迁移到 <code>QmClient/</code> 子目录。</li>
+          <li><code>src/game/client/components/tclient/menus_tclient.cpp:4587-4610</code> 当前设置页能打开 QmClient、Profiles、War List 和 Chat Binds 配置文件。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>当前缺口</summary>
+        <ul>
+          <li><a href="../当前状态/配置导入导出.html">配置导入导出.html</a> 已记录源码未见 <code>.qmconfig</code>、<code>manifest.json</code>、导入/导出按钮、ZIP 打包、冲突检测或逐项合并实现。</li>
+          <li><code>src/engine/shared/config_variables_qmclient.h:437-440</code>、<code>:457-458</code> 定义了翻译服务 API key / SecretId / SecretKey 类配置，说明配置包需要敏感项过滤。</li>
+        </ul>
+      </details>
+      <p class="note warn">本页是后续实现规格，不证明 <code>.qmconfig</code> 已落地。实现完成后，应更新现状页、TODO 路由和验证证据。</p>
+    </section>
+
+    <p class="footer">相关入口：<a href="../当前状态/配置导入导出.html">配置导入导出现状</a>、<a href="创新路线图.html">创新功能候选路由</a>、<a href="待办优先级状态.html">新版 TODO 优先级路由</a>。</p>
+  </div>
+</body>
+</html>
+
+
+
+

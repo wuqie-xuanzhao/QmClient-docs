@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>QmClient 聊天翻译按钮现状</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta">
+        <span class="pill ok">active</span>
+        <span class="pill secondary">2026-06-16</span>
+        <span class="pill warn">input-side button</span>
+      </div>
+      <h1>QmClient 聊天翻译按钮现状</h1>
+      <p class="muted">当前按钮是聊天输入框旁的出站翻译控制入口，不是每条历史消息行尾的逐条按钮。入站消息翻译主要由 <code>translate</code> / <code>translate_id</code> 命令、自动入站翻译和聊天行翻译响应字段承载。</p>
+      <nav class="toc" aria-label="文档目录">
+        <a href="#summary">当前结论</a>
+        <a href="#button">按钮交互</a>
+        <a href="#outgoing">出站翻译</a>
+        <a href="#incoming">入站翻译</a>
+        <a href="#config">配置与设置</a>
+        <a href="#evidence">复核证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="summary">
+      <h2>当前结论</h2>
+      <table>
+        <thead><tr><th>能力</th><th>状态</th><th>维护口径</th></tr></thead>
+        <tbody>
+          <tr><td>输入框侧翻译按钮</td><td><span class="badge ok">已实现</span></td><td>按钮随聊天输入框渲染，占用输入框右侧宽度，使用语言图标。</td></tr>
+          <tr><td>左键语言菜单</td><td><span class="badge ok">已实现</span></td><td>左键点击按钮打开语言/出站翻译相关弹出菜单。</td></tr>
+          <tr><td>右键自动出站翻译</td><td><span class="badge ok">已实现</span></td><td>右键点击按钮切换 <code>qm_translate_auto_outgoing</code>。</td></tr>
+          <tr><td>发送前自动翻译</td><td><span class="badge ok">已实现</span></td><td><code>SendChatQueued(..., AllowOutgoingTranslation=true)</code> 会先检查自动出站翻译。</td></tr>
+          <tr><td>目标语言后缀翻译</td><td><span class="badge ok">已实现</span></td><td><code>TryTranslateOutgoingChat()</code> 解析用户输入中的目标语言标记，再发送翻译结果。</td></tr>
+          <tr><td>历史消息逐条行尾按钮</td><td><span class="badge warn">未作为当前实现</span></td><td>当前已有右键行菜单和翻译命令路径，但不是每条历史消息右侧独立翻译按钮。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="button">
+      <h2>按钮交互</h2>
+      <p><code>CChat</code> 在渲染聊天输入框时缩减输入文本宽度，在右侧放置翻译按钮。按钮区域用聊天坐标系命中检测，优先处理鼠标事件，避免穿透到输入框选择、聊天提交或其它弹窗。</p>
+      <table>
+        <thead><tr><th>交互</th><th>当前行为</th></tr></thead>
+        <tbody>
+          <tr><td>位置</td><td>输入框文本裁剪区域右侧，大小由聊天字体缩放计算，最小约 16px。</td></tr>
+          <tr><td>左键</td><td>按下并释放在按钮内时调用 <code>OpenLanguageMenu()</code>。</td></tr>
+          <tr><td>右键</td><td>按下在按钮内时调用 <code>ToggleAutoTranslate()</code>，直接切换出站自动翻译。</td></tr>
+          <tr><td>颜色</td><td>启用色、禁用色、菜单色和选中/普通选项色由 <code>qm_translate_*_color</code> 配置控制。</td></tr>
+          <tr><td>Tooltip</td><td>hover 时显示右键启用/禁用自动翻译的提示。</td></tr>
+          <tr><td>菜单定位</td><td>语言菜单以按钮位置换算到 UI 坐标，并限制在屏幕内。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="outgoing">
+      <h2>出站翻译</h2>
+      <table>
+        <thead><tr><th>路径</th><th>当前行为</th><th>边界</th></tr></thead>
+        <tbody>
+          <tr><td>自动出站翻译</td><td><code>ShouldAutoTranslateOutgoing()</code> 检查开关、空文本、命令文本、数字文本和目标语言启发式匹配。</td><td>以 <code>qm_translate_auto_outgoing</code>、<code>qm_translate_auto_outgoing_mode</code> 和 <code>qm_translate_outgoing_target</code> 为主。</td></tr>
+          <tr><td>发送前替换</td><td><code>StartAutoOutgoingTranslate()</code> 创建出站翻译任务；任务完成后用翻译结果再次调用 <code>SendChatQueued(..., false)</code>。</td><td>队列满或后端无效时会回退发送原文。</td></tr>
+          <tr><td>显式目标语言</td><td><code>TryTranslateOutgoingChat()</code> 解析输入中的目标语言标记，并在翻译前提示正在翻译。</td><td>这条路径不是按钮本身，但属于同一出站翻译体验。</td></tr>
+          <tr><td>发送队列</td><td><code>SendChatQueued()</code> 仍保留原聊天发送节流和历史记录。</td><td>翻译结果最终仍通过普通聊天发送，不是跨服聊天或单独消息通道。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="incoming">
+      <h2>入站翻译</h2>
+      <p>入站翻译不是通过“每行右侧按钮”作为当前主要入口。当前能力是：命令翻译最近消息或指定 ID、自动入站翻译、以及把翻译响应挂到聊天行对象上。</p>
+      <table>
+        <thead><tr><th>能力</th><th>当前行为</th></tr></thead>
+        <tbody>
+          <tr><td><code>translate</code></td><td>翻译最近一条消息，可选按玩家名筛选。</td></tr>
+          <tr><td><code>translate_id</code></td><td>翻译指定 client id 的最近消息。</td></tr>
+          <tr><td>自动入站翻译</td><td><code>qm_translate_auto</code> 开启后，对非本地、非服务器消息进行启发式过滤后翻译。</td></tr>
+          <tr><td>响应承载</td><td><code>CChat::CLine</code> 通过 <code>m_pTranslateResponse</code> 和 <code>m_TranslationId</code> 管理翻译结果、错误和行复用安全。</td></tr>
+          <tr><td>FTAPI 过载保护</td><td>FTAPI 自动翻译默认需要额外开关，避免过载。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="config">
+      <h2>配置与设置</h2>
+      <table>
+        <thead><tr><th>配置</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td><code>qm_translate_backend</code></td><td>翻译后端，当前包括 LLM、TencentCloud、LibreTranslate、FTAPI 等路径。</td></tr>
+          <tr><td><code>qm_translate_target</code> / <code>qm_translate_source</code></td><td>入站翻译目标语言和源语言。</td></tr>
+          <tr><td><code>qm_translate_auto</code></td><td>自动翻译收到的消息。</td></tr>
+          <tr><td><code>qm_translate_auto_outgoing</code></td><td>自动翻译发送消息，也是按钮右键切换的核心状态。</td></tr>
+          <tr><td><code>qm_translate_auto_outgoing_mode</code></td><td>出站自动翻译触发模式。</td></tr>
+          <tr><td><code>qm_translate_outgoing_target</code></td><td>出站翻译目标语言。</td></tr>
+          <tr><td><code>qm_translate_btn_color_*</code> / <code>qm_translate_menu_*</code></td><td>按钮和语言菜单视觉颜色。</td></tr>
+        </tbody>
+      </table>
+      <p class="note warn">旧文档提到的 <code>qm_translate_show_button</code> 不应再作为当前核心开关；本轮源码复核未看到它。</p>
+    </section>
+
+    <section class="card">
+      <h2>旧文档修正</h2>
+      <table>
+        <thead><tr><th>旧口径</th><th>修正后口径</th></tr></thead>
+        <tbody>
+          <tr><td>聊天翻译按钮需要从零添加鼠标交互。</td><td>已过时。聊天框已处理按钮命中、按下/释放、右键切换、弹窗关闭和菜单定位。</td></tr>
+          <tr><td>按钮是历史消息行尾逐条翻译入口。</td><td>不准确。当前按钮落在输入框侧，是出站翻译控制入口；历史消息翻译主要走命令、自动入站和行响应字段。</td></tr>
+          <tr><td>自动出站翻译未接入发送链路。</td><td>已过时。<code>SendChatQueued()</code> 会调用自动出站翻译检查，任务完成后发送翻译结果。</td></tr>
+          <tr><td>按钮显示由单独 show-button 配置控制。</td><td>未见当前实现。当前主要状态是 <code>qm_translate_auto_outgoing</code> 和按钮/菜单颜色配置。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>聊天按钮与发送链路</summary>
+        <ul>
+          <li><code>src/game/client/components/chat.cpp:1037</code> 优先处理翻译按钮鼠标命中。</li>
+          <li><code>src/game/client/components/chat.cpp:1070</code> 左键释放触发 <code>OpenLanguageMenu()</code>。</li>
+          <li><code>src/game/client/components/chat.cpp:1078</code> 右键触发 <code>ToggleAutoTranslate()</code>。</li>
+          <li><code>src/game/client/components/chat.cpp:2414</code> 计算输入框侧翻译按钮大小。</li>
+          <li><code>src/game/client/components/chat.cpp:2510</code> 渲染输入框侧翻译按钮。</li>
+          <li><code>src/game/client/components/chat.cpp:2944</code> <code>SendChatQueued()</code> 在发送前检查自动出站翻译。</li>
+          <li><code>src/game/client/components/chat.cpp:2985</code> 定义聊天坐标系鼠标位置换算。</li>
+          <li><code>src/game/client/components/chat.cpp:2995</code> 渲染按钮、状态颜色、图标和 tooltip。</li>
+          <li><code>src/game/client/components/chat.cpp:3074</code> 切换 <code>qm_translate_auto_outgoing</code>。</li>
+          <li><code>src/game/client/components/chat.cpp:3080</code> 打开语言菜单并根据按钮位置定位弹窗。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>翻译模块</summary>
+        <ul>
+          <li><code>src/game/client/components/qmclient/translate/translate.cpp:1504</code> 注册 <code>translate</code> 和 <code>translate_id</code> 命令。</li>
+          <li><code>src/game/client/components/qmclient/translate/translate.cpp:1582</code> 为聊天行创建翻译任务和响应对象。</li>
+          <li><code>src/game/client/components/qmclient/translate/translate.cpp:1634</code> 处理带目标语言标记的出站翻译。</li>
+          <li><code>src/game/client/components/qmclient/translate/translate.cpp:1667</code> 更新翻译任务并安全写回聊天行。</li>
+          <li><code>src/game/client/components/qmclient/translate/translate.cpp:1739</code> 自动翻译入站聊天行。</li>
+          <li><code>src/game/client/components/qmclient/translate/translate.cpp:1814</code> 判断是否自动翻译出站消息。</li>
+          <li><code>src/game/client/components/qmclient/translate/translate.cpp:1837</code> 启动出站自动翻译任务。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>配置和设置页</summary>
+        <ul>
+          <li><code>src/engine/shared/config_variables_qmclient.h:412</code> 到 <code>:470</code> 定义翻译后端、语言、自动入站/出站、LLM、TencentCloud、LibreTranslate 和按钮菜单颜色配置。</li>
+          <li><code>src/game/client/components/qmclient/menus_qmclient.cpp:4166</code> 渲染 Translate 设置模块。</li>
+          <li><code>src/game/client/components/qmclient/menus_qmclient.cpp:4696</code> 渲染 Translate button 视觉设置模块。</li>
+        </ul>
+      </details>
+    </section>
+
+    <p class="footer">原始 Markdown 保留为 <a href="../归档/已替代-当前状态/chat-translation-button.md">chat-translation-button.md</a>；新增状态修正应写入本 HTML。</p>
+  </div>
+</body>
+</html>
+
+
+
+
+

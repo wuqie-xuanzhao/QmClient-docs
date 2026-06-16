@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>页面切换卡顿调研现状</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta"><span class="pill ok">active</span><span class="pill secondary">2026-06-16</span><span class="pill warn">supersedes old research</span></div>
+      <h1>页面切换卡顿调研现状</h1>
+      <p class="muted">本页用于替代旧的 <code>page-switch-stutter-research.md</code> 作为当前阅读入口。旧报告仍有历史价值，但设置页性能、资源预览调度和 GPU upload budget 已经明显演进，不能再按旧结论直接执行。</p>
+      <div class="toc">
+        <a href="#summary">当前结论</a>
+        <a href="#superseded">已被后续工作覆盖</a>
+        <a href="#remaining">仍需关注的同步路径</a>
+        <a href="#evidence">复核证据</a>
+      </div>
+    </header>
+
+    <section class="card" id="summary">
+      <h2>当前结论</h2>
+      <p class="note">旧调研中“资源页全异步加载”和“全局 GPU 上传节流”的方向仍然成立，但当前实现已经不再是旧文档描述的局部 30/帧常量。资源页、国旗、皮肤相关上传已经接入 <code>CGpuUploadLimiter</code>，设置页还会按 Tee/Assets 当前页动态调整每帧预算。</p>
+      <table>
+        <thead><tr><th>旧主题</th><th>当前状态</th><th>使用口径</th></tr></thead>
+        <tbody>
+          <tr><td>设置页/资源页卡顿</td><td><span class="badge ok">covered elsewhere</span></td><td>优先看新版设置页性能总纲、<a href="../当前状态/资源页.html">资源页.html</a> 和资源 preview scheduler 相关源码。</td></tr>
+          <tr><td>GPU 上传节流</td><td><span class="badge ok">implemented and extended</span></td><td>当前是全局 limiter + 设置页上下文预算，不再引用旧文档中的“资源页本地常量仍未统一”结论。</td></tr>
+          <tr><td>皮肤加载卡顿</td><td><span class="badge warn">partly relevant</span></td><td>旧版 <code>CSkins</code> 仍有 <code>LoadSkinDirect("default")</code> 同步入口；新版 <code>CSkins7</code> 的普通部件上传受 limiter 控制，但装饰纹理仍同步加载。</td></tr>
+          <tr><td>背景/菜单主题加载</td><td><span class="badge warn">still relevant</span></td><td><code>CBackground::LoadBackground()</code> 和 <code>CMenuBackground::LoadMenuBackground()</code> 仍包含同步 map/image 加载路径。</td></tr>
+          <tr><td>网络卡顿诊断</td><td><span class="badge ok">split out</span></td><td>这不是同一个问题域；参考 <a href="../当前状态/网络卡顿可视化.html">网络卡顿可视化.html</a>。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="superseded">
+      <h2>已被后续工作覆盖</h2>
+      <ul>
+        <li>资源图片读取与解码已经存在 <code>CFullAsyncImageLoadJob</code>，入口覆盖 entities、assets、命名单文件资源和 Workshop 缩略图等路径。</li>
+        <li><code>CGpuUploadLimiter</code> 现在是全局客户端成员，由 <code>CGameClient::OnUpdate()</code> 每帧重置，并接收设置页上下文计算出的预算。</li>
+        <li>Assets 设置页会在上传前检查 <code>GameClient()->GpuUploadLimiter()->CanUpload()</code>，上传后调用 <code>OnUploaded()</code>。</li>
+        <li>旧调研里关于设置页性能的执行依据，应整体让位给 <code>docs/superpowers/specs/2026-06-14-设置页性能优化总纲-全局调度版.html</code>。</li>
+      </ul>
+    </section>
+
+    <section class="card" id="remaining">
+      <h2>仍需关注的同步路径</h2>
+      <table>
+        <thead><tr><th>路径</th><th>当前观察</th><th>后续处理建议</th></tr></thead>
+        <tbody>
+          <tr><td><code>CSkins7::LoadXmasHat()</code> / <code>LoadBotDecoration()</code></td><td>仍通过 <code>Graphics()->LoadPng()</code> 和 <code>LoadTextureRawMove()</code> 同步读取、解码和上传装饰纹理。</td><td>如果再次处理皮肤刷新卡顿，优先把这两个装饰纹理纳入异步解码 + 主线程预算上传。</td></tr>
+          <tr><td><code>CSkins::Refresh()</code></td><td>旧版皮肤系统仍同步调用 <code>LoadSkinDirect("default")</code>，然后才排队扫描皮肤目录。</td><td>需要先确认旧版 <code>CSkins</code> 在 QmClient 当前 UI 中的触发频率，再决定是否改造。</td></tr>
+          <tr><td><code>CBackground::LoadBackground()</code></td><td>自定义背景 entities 会同步执行 map load、layer init 和 background image loading。</td><td>适合作为独立计划处理，避免和设置页资源预览调度混在一起。</td></tr>
+          <tr><td><code>CMenuBackground::LoadMenuBackground()</code></td><td>主题列表/图标已有异步 job，但主题地图主体仍同步加载并调用 <code>m_pImages->LoadBackground()</code>。</td><td>如果用户报告主题切换卡顿，优先在这里加观测和异步加载设计。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>源码位置</summary>
+        <ul>
+          <li><code>src/engine/client/gpu_upload_limiter.h:21</code> 定义 <code>CGpuUploadLimiter</code>，默认每帧 30 次上传，并提供 <code>CanUpload(int)</code>。</li>
+          <li><code>src/game/client/gameclient.cpp:678</code> 计算设置页当前帧 GPU upload limit，<code>src/game/client/gameclient.cpp:680</code> 调用 <code>OnFrameStart(FrameGpuUploadLimit)</code>。</li>
+          <li><code>src/game/client/components/menus.h:1955</code> 是设置页默认 GPU 上传预算回退；Tee/Assets 等页面在相邻逻辑中返回差异化预算。</li>
+          <li><code>src/game/client/components/menus_settings_assets.cpp:542</code> 定义 <code>CFullAsyncImageLoadJob</code>，<code>:1104</code>、<code>:1187</code>、<code>:1330</code> 用于 entities/assets/命名单文件资源异步解码。</li>
+          <li><code>src/game/client/components/menus_settings_assets.cpp:5591</code>、<code>:5606</code>、<code>:6404</code>、<code>:6417</code> 显示资源预览和 Workshop 缩略图上传接入全局 limiter。</li>
+          <li><code>src/game/client/components/skins7.cpp:303</code> 显示 skin part 上传受 limiter 控制；<code>:580</code>、<code>:603</code>、<code>:599</code>、<code>:622</code> 显示装饰纹理仍同步加载并上传。</li>
+          <li><code>src/game/client/components/skins.cpp:2097</code> 显示旧版 <code>CSkins::Refresh()</code> 仍同步加载 default skin。</li>
+          <li><code>src/game/client/components/background.cpp:1566</code>、<code>:1625</code> 和 <code>src/game/client/components/menu_background.cpp:381</code>、<code>:610</code> 是背景/菜单主题同步 map/image 加载路径。</li>
+        </ul>
+      </details>
+    </section>
+
+    <p class="footer">旧调研原文保留为 <a href="../归档/已替代-调研/page-switch-stutter-research.md">page-switch-stutter-research.md</a>，仅用于追溯，不再作为当前执行计划。</p>
+  </div>
+</body>
+</html>
+
+
+
+
+
+

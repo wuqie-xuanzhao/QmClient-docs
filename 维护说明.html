@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>QmClient Wiki 维护说明</title>
+  <link rel="stylesheet" href="assets/wiki.css" />
+</head>
+<body>
+  <div class="wiki-shell">
+    <header class="wiki-topbar">
+      <a class="wiki-brand" href="index.html">QmClient Wiki</a>
+      <nav class="wiki-nav" aria-label="主导航">
+        <a href="当前状态/index.html">当前状态</a>
+        <a href="规划/index.html">规划</a>
+        <a href="调研/index.html">调研</a>
+        <a href="工作流参考/index.html">工作流参考</a>
+        <a href="归档/index.html">归档</a>
+      </nav>
+    </header>
+
+    <main class="wiki-layout">
+      <aside class="wiki-sidebar" aria-label="分区导航">
+        <h2>维护入口</h2>
+        <a href="index.html">Wiki 首页</a>
+        <a href="当前状态/index.html">当前状态</a>
+        <a href="规划/index.html">规划</a>
+        <a href="调研/index.html">调研</a>
+        <a href="工作流参考/index.html">工作流参考</a>
+        <a href="归档/index.html">归档</a>
+      </aside>
+
+      <article class="wiki-content">
+        <header class="doc-header">
+          <h1>维护说明</h1>
+          <p class="muted">本页固定 `docs/dyl/QmClient_docs` 的维护边界：HTML 是主要阅读入口，中文目录和文件名面向维护者，归档材料只保留追溯价值。</p>
+          <dl class="doc-meta">
+            <div><dt>状态</dt><dd>active</dd></div>
+            <div><dt>复核日期</dt><dd>2026-06-16</dd></div>
+            <div><dt>范围</dt><dd><code>docs/dyl/QmClient_docs/</code></dd></div>
+          </dl>
+        </header>
+
+        <section class="doc-section" id="authority">
+          <h2>权威入口</h2>
+          <table>
+            <thead><tr><th>区域</th><th>当前状态</th><th>维护规则</th></tr></thead>
+            <tbody>
+              <tr><td><code>当前状态/</code></td><td><span class="badge ok">当前说明</span></td><td>只放当前代码现状页。改动事实前必须复核源码、脚本或 gate 入口。</td></tr>
+              <tr><td><code>规划/</code></td><td><span class="badge warn">规划路由</span></td><td>只说明后续可以做什么。进入开发前必须重新写小规格或计划。</td></tr>
+              <tr><td><code>调研/</code></td><td><span class="badge warn">调研状态</span></td><td>记录已复核的调研结论和风险，不替代源码阅读。</td></tr>
+              <tr><td><code>工作流参考/</code></td><td><span class="badge warn">历史参考</span></td><td>索引 `docs/superpowers/`，只用于理解背景和旧工作流，不能直接作为当前事实。</td></tr>
+              <tr><td><code>归档/</code></td><td><span class="badge bad">历史材料</span></td><td>已知过时或被 HTML 接管，不可直接作为实现依据。</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="doc-section" id="naming">
+          <h2>命名规则</h2>
+          <ul>
+            <li>目录和人读的页面文件名使用中文，例如 <code>当前状态/翻译系统.html</code>。</li>
+            <li>技术名可保留原文，例如 <code>QmUi</code>、<code>BindWheel</code>、<code>HarmonyOS</code>。</li>
+            <li>不要再用 <code>*-status.html</code>、<code>*-spec.html</code> 表达状态；状态写进页面头部元信息。</li>
+            <li>共享样式只维护 <code>assets/wiki.css</code>，新增页面不要复制内联 CSS。</li>
+          </ul>
+        </section>
+
+        <section class="doc-section" id="archive">
+          <h2>归档口径</h2>
+          <ul>
+            <li><code>归档/已替代-当前状态/</code> 保存从当前说明迁出的 Markdown，当前事实以对应 HTML 为准。</li>
+            <li><code>归档/已替代-规划/</code> 保存旧方案稿，只能用来追溯想法来源。</li>
+            <li><code>归档/已替代-调研/</code> 保存旧调研原文，引用前必须先读对应 HTML 状态页。</li>
+            <li>明显过时、错误或不再适用的旧报告保留在 <code>归档/</code> 根部或专题子目录。</li>
+          </ul>
+        </section>
+
+        <section class="doc-section" id="workflow">
+          <h2>后续维护流程</h2>
+          <ul>
+            <li>新增当前事实：先读源码或脚本，再更新 <code>当前状态/*.html</code> 或 <code>调研/*.html</code>。</li>
+            <li>新增规划：先连接到 <code>规划/index.html</code>，并明确它不是实现计划。</li>
+            <li>新增 HTML：使用 wiki 布局和 <code>assets/wiki.css</code>，保证相对链接可检查。</li>
+            <li>引用 <code>docs/superpowers/</code>：只加到 <code>工作流参考/</code>，并标注需要按当前代码复核。</li>
+            <li>完成文档改动后运行 HTML 相对链接检查和 <code>python qmclient_scripts/gate/check_docs.py</code>。</li>
+          </ul>
+        </section>
+      </article>
+
+      <aside class="wiki-toc" aria-label="页内目录">
+        <h2>本页</h2>
+        <a href="#authority">权威入口</a>
+        <a href="#naming">命名规则</a>
+        <a href="#archive">归档口径</a>
+        <a href="#workflow">维护流程</a>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>
+
+

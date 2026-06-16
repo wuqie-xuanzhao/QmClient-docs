@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>QmClient 好友分类与全局聊天现状</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <div class="meta">
+        <span class="pill ok">active</span>
+        <span class="pill secondary">2026-06-16</span>
+        <span class="pill warn">current + backlog</span>
+      </div>
+      <h1>QmClient 好友分类与全局聊天现状</h1>
+      <p class="muted">本文接管旧版“好友分类与全局聊天功能报告”：好友分类、备注、持久化和 Qm 好友提醒是当前实现；跨服务器全局聊天没有实现，边界调研见 <a href="../规划/全局聊天边界.html">全局聊天边界.html</a>。</p>
+      <nav class="toc" aria-label="文档目录">
+        <a href="#conclusion">当前结论</a>
+        <a href="#friend-categories">好友分类能力</a>
+        <a href="#notifications">Qm 好友通知</a>
+        <a href="#global-chat">全局聊天边界</a>
+        <a href="#legacy-corrections">旧文档修正</a>
+        <a href="#evidence">复核证据</a>
+      </nav>
+    </header>
+
+    <section class="card" id="conclusion">
+      <h2>当前结论</h2>
+      <table>
+        <thead><tr><th>能力</th><th>状态</th><th>维护口径</th></tr></thead>
+        <tbody>
+          <tr><td>好友分类、备注、持久化</td><td><span class="badge ok">已实现</span></td><td><code>IFriends</code> / <code>CFriends</code> 已提供分类增删改、排序、好友归类、备注和配置保存。</td></tr>
+          <tr><td>Qm 好友上线提醒</td><td><span class="badge ok">已实现</span></td><td>基于服务器浏览器 HTTP 列表扫描，不是账号在线状态服务。</td></tr>
+          <tr><td>Qm 好友进服问候/播报</td><td><span class="badge ok">已实现</span></td><td>只检测当前服务器内好友进入，支持大字播报和延迟自动问候。</td></tr>
+          <tr><td>跨服务器全局聊天</td><td><span class="badge bad">未实现</span></td><td>未发现独立 socket、协议、服务端或 <code>GlobalChat</code> 组件；继续作为 <a href="../规划/全局聊天边界.html">高风险边界调研项</a>。</td></tr>
+        </tbody>
+      </table>
+      <p class="note warn">代码中的 <code>Team=0 global</code> 表示当前服务器内的全服聊天，不等于跨服务器全局聊天。</p>
+    </section>
+
+    <section class="card" id="friend-categories">
+      <h2>好友分类能力</h2>
+      <p>好友模型仍以名称和战队为识别基础，单条好友记录包含 <code>name</code>、<code>clan</code>、<code>category</code>、<code>note</code> 和 hash。上限为 4096 个好友、64 个分类，分类名和备注长度分别由 <code>MAX_FRIEND_CATEGORY_LENGTH</code>、<code>MAX_FRIEND_NOTE_LENGTH</code> 控制。</p>
+      <table>
+        <thead><tr><th>功能</th><th>入口/接口</th><th>当前行为</th></tr></thead>
+        <tbody>
+          <tr><td>新增分类</td><td><code>friend_category_add</code> / <code>AddCategory()</code></td><td>会规范化分类名，拒绝受保护分类和重复项；新增分类插入到 <code>Offline</code> 之前。</td></tr>
+          <tr><td>移动分类</td><td><code>MoveCategory()</code></td><td>支持分类排序，移动的是分类数组位置，不重写好友身份。</td></tr>
+          <tr><td>重命名分类</td><td><code>friend_category_rename</code> / <code>RenameCategory()</code></td><td>重命名后会同步更新属于旧分类的好友记录。</td></tr>
+          <tr><td>删除分类</td><td><code>friend_category_remove</code> / <code>RemoveCategory()</code></td><td>删除非受保护分类时，成员会回落到默认分类。</td></tr>
+          <tr><td>设置好友分类</td><td><code>set_friend_category</code> / <code>SetFriendCategory()</code></td><td>只能设为已存在分类，不能手动设为 <code>Clan Members</code>。</td></tr>
+          <tr><td>好友备注</td><td><code>set_friend_note</code> / <code>clear_friend_note</code></td><td>备注写在好友记录里，并随配置保存。</td></tr>
+          <tr><td>配置保存</td><td><code>ConfigSaveCallback()</code></td><td>写出自定义分类、好友分类参数和备注，重启后可恢复。</td></tr>
+        </tbody>
+      </table>
+      <p class="note">预置分类当前是英文常量：<code>"Friends"</code>、<code>"Clan Members"</code>、<code>"Offline"</code>。旧文档写成“好友 / 战队成员 / 离线”不是当前代码事实。</p>
+    </section>
+
+    <section class="card" id="notifications">
+      <h2>Qm 好友通知</h2>
+      <table>
+        <thead><tr><th>配置</th><th>状态</th><th>边界</th></tr></thead>
+        <tbody>
+          <tr><td><code>qm_friend_online_notify</code></td><td><span class="badge ok">已实现</span></td><td>启用后扫描服务器列表，发现好友在线时向本地聊天输出提示。</td></tr>
+          <tr><td><code>qm_friend_online_auto_refresh</code></td><td><span class="badge ok">已实现</span></td><td>可自动刷新服务器列表；刷新间隔至少 5 秒。</td></tr>
+          <tr><td><code>qm_friend_online_refresh_seconds</code></td><td><span class="badge ok">已实现</span></td><td>控制自动刷新间隔，配置范围为 5 到 300 秒。</td></tr>
+          <tr><td><code>qm_friend_enter_auto_greet</code></td><td><span class="badge ok">已实现</span></td><td>好友进入当前服务器后，延迟发送配置文本到当前服务器聊天。</td></tr>
+          <tr><td><code>qm_friend_enter_broadcast</code></td><td><span class="badge ok">已实现</span></td><td>好友进入当前服务器时显示大字提示。</td></tr>
+          <tr><td><code>qm_friend_enter_*_text</code></td><td><span class="badge ok">已实现</span></td><td>用于配置大字提示和自动问候文本。</td></tr>
+        </tbody>
+      </table>
+      <p class="note warn">这些能力是客户端侧体验增强：上线提醒依赖服务器浏览器列表，进服问候依赖当前服务器玩家列表。它们不是跨服聊天、账号系统或中心化 presence 服务。</p>
+    </section>
+
+    <section class="card" id="global-chat">
+      <h2>全局聊天边界</h2>
+      <ul>
+        <li>当前聊天发送接口是 <code>CChat::SendChat(int Team, const char *pLine)</code>，消息发送到当前服务器连接。</li>
+        <li><code>chat.cpp</code> 注释里的 <code>0 = global</code> 指服务器内全服频道，和 <code>1 = team</code>、whisper 类型并列。</li>
+        <li>未发现跨服务器聊天专用组件、网络通道、服务端协议或独立持久连接。</li>
+        <li>语音系统里的 <code>QmVoiceGroupGlobal</code> 是语音房间/全图收听语义，不是文本跨服聊天。</li>
+      </ul>
+      <p class="note bad">如果要推进真正的全局聊天，需要先明确账号/身份、中心服务、协议、滥用控制、隐私与服务器兼容性边界；不能沿用当前服务器内聊天接口直接实现。详细边界见 <a href="../规划/全局聊天边界.html">跨服务器全局聊天边界调研</a>。</p>
+    </section>
+
+    <section class="card" id="legacy-corrections">
+      <h2>旧文档修正</h2>
+      <table>
+        <thead><tr><th>旧口径</th><th>修正后口径</th></tr></thead>
+        <tbody>
+          <tr><td>预置分类是中文常量。</td><td>错误。当前代码常量是 <code>Friends</code>、<code>Clan Members</code>、<code>Offline</code>。</td></tr>
+          <tr><td>“好友分类名存实亡”。</td><td>不应再作为实现状态结论。分类能力已实现；如果用户仍感觉不可用，应归类为 UI 可发现性或交互效率问题。</td></tr>
+          <tr><td>全局聊天与好友系统可并列写成当前能力。</td><td>错误。好友系统是当前能力，全局聊天是未实现高范围规划项。</td></tr>
+          <tr><td>好友系统可支撑跨服身份。</td><td>证据不足。当前好友模型仍基于 name + clan，没有唯一账号 ID。</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="card" id="evidence">
+      <h2>复核证据</h2>
+      <details open>
+        <summary>好友系统源码证据</summary>
+        <ul>
+          <li><code>src/engine/friends.h:10</code> - <code>CFriendInfo</code> 包含名称、战队、分类、备注和 hash。</li>
+          <li><code>src/engine/friends.h:30</code> - 好友、分类、分类名、备注长度上限以及三个预置分类常量。</li>
+          <li><code>src/engine/friends.h:40</code> - <code>IFriends</code> 暴露分类、备注和好友管理接口。</li>
+          <li><code>src/engine/client/friends.cpp:20</code> - 初始化默认分类、战队成员分类和离线分类。</li>
+          <li><code>src/engine/client/friends.cpp:143</code> - 注册好友、分类和备注相关控制台命令。</li>
+          <li><code>src/engine/client/friends.cpp:282</code> - 新分类插入逻辑会放在 <code>Offline</code> 前。</li>
+          <li><code>src/engine/client/friends.cpp:322</code> - 重命名分类时同步好友记录。</li>
+          <li><code>src/engine/client/friends.cpp:355</code> - 删除分类时成员回落默认分类。</li>
+          <li><code>src/engine/client/friends.cpp:476</code> - 配置保存写出自定义分类、好友分类和备注。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>Qm 好友通知源码证据</summary>
+        <ul>
+          <li><code>src/engine/shared/config_variables_qmclient.h:229</code> - 定义好友上线提醒、自动刷新、进服问候和播报配置。</li>
+          <li><code>src/game/client/components/qmclient/menus_qmclient.cpp:4000</code> - Qm 设置页提供 Friend Notifications 相关 UI。</li>
+          <li><code>src/game/client/components/tclient/tclient.cpp:1767</code> - 常规检查流程调用好友上线与进服检测。</li>
+          <li><code>src/game/client/components/tclient/tclient.cpp:2324</code> - <code>CheckFriendOnline()</code> 处理好友上线提醒和服务器列表刷新。</li>
+          <li><code>src/game/client/components/tclient/tclient.cpp:2483</code> - <code>CheckFriendEnterGreet()</code> 处理当前服务器内好友进服问候和播报。</li>
+        </ul>
+      </details>
+      <details>
+        <summary>聊天边界证据</summary>
+        <ul>
+          <li><code>src/game/client/components/chat.h:420</code> - <code>SendChat()</code> 面向当前连接发送聊天消息。</li>
+          <li><code>src/game/client/components/chat.cpp:1766</code> - 注释中的 <code>0 = global</code> 是服务器内聊天频道语义。</li>
+          <li>代码检索未发现可证明跨服聊天已实现的 <code>GlobalChat</code> 组件、独立协议或服务连接。</li>
+        </ul>
+      </details>
+    </section>
+
+    <p class="footer">原始 Markdown 保留为 <a href="../归档/已替代-当前状态/friends-and-global-chat.md">friends-and-global-chat.md</a>；新增状态修正应写入本 HTML。</p>
+  </div>
+</body>
+</html>
+
+
+
+
+
