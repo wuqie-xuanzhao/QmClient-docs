@@ -381,6 +381,88 @@ summary {
   border-color: rgba(49, 95, 104, 0.55);
 }
 
+.analysis-map {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.analysis-card {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-height: 168px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-soft);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.analysis-card.is-reference {
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.analysis-card strong {
+  font-size: 17px;
+}
+
+.analysis-card span:not(.badge) {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.analysis-card code {
+  align-self: end;
+  word-break: break-word;
+}
+
+.analysis-card:hover {
+  border-color: rgba(49, 95, 104, 0.55);
+}
+
+.analysis-steps {
+  margin-left: 0;
+  list-style-position: inside;
+}
+
+.analysis-steps li {
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+}
+
+.analysis-steps li:first-child {
+  border-top: 0;
+}
+
+.flow-table {
+  display: grid;
+  gap: 10px;
+}
+
+.flow-table div {
+  display: grid;
+  grid-template-columns: minmax(130px, 190px) minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper-soft);
+}
+
+.flow-table strong {
+  color: var(--accent);
+}
+
+.flow-table span {
+  color: var(--muted);
+}
+
+.evidence-list li {
+  margin: 8px 0;
+}
+
 .todo-list {
   display: grid;
   gap: 14px;
@@ -481,5 +563,9 @@ summary {
   .card {
     padding-left: 16px;
     padding-right: 16px;
+  }
+
+  .flow-table div {
+    grid-template-columns: 1fr;
   }
 }

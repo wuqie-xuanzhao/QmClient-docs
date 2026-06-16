@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>源码分析 - 设置页与资源预热</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="wiki-shell">
+    <header class="wiki-topbar">
+      <a class="wiki-brand" href="../index.html">QmClient Wiki</a>
+      <nav class="wiki-nav" aria-label="主导航">
+        <a href="../当前状态/index.html">当前状态</a>
+        <a href="../源码分析/index.html" aria-current="page">源码分析</a>
+        <a href="../规划/index.html">规划</a>
+        <a href="../调研/index.html">调研</a>
+        <a href="../工作流参考/index.html">工作流参考</a>
+        <a href="../归档/index.html">归档</a>
+        <a href="../维护说明.html">维护说明</a>
+      </nav>
+    </header>
+
+    <main class="wiki-layout">
+      <aside class="wiki-sidebar" aria-label="源码分析页面">
+        <h2>源码分析</h2>
+        <a href="index.html">源码分析入口</a>
+        <a href="多语言系统.html">多语言系统</a>
+        <a href="客户端UI架构.html">客户端 UI 架构</a>
+        <a href="设置页与资源预热.html" aria-current="page">设置页与资源预热</a>
+        <a href="HUD通知系统.html">HUD 通知系统</a>
+        <h2>相关页面</h2>
+        <a href="../当前状态/资源页.html">资源页现状</a>
+        <a href="../调研/页面切换卡顿状态.html">页面切换卡顿状态</a>
+      </aside>
+
+      <article class="wiki-content">
+        <header class="doc-header">
+          <h1>设置页与资源预热源码分析</h1>
+          <p class="muted">本页分析设置页打开和切换时的渲染、文本预构建、资源列表、预览缓存与 GPU 上传预算。这里的重点不是单个设置项，而是防止设置页卡顿的运行路径。</p>
+          <dl class="doc-meta">
+            <div><dt>状态</dt><dd>active</dd></div>
+            <div><dt>验证日期</dt><dd>2026-06-16</dd></div>
+            <div><dt>源码快照</dt><dd><code>67440f08c</code></dd></div>
+            <div><dt>可信度</dt><dd>high</dd></div>
+          </dl>
+        </header>
+
+        <section class="doc-section" id="summary">
+          <h2>结论摘要</h2>
+          <p>设置页性能链路分成两段：启动加载期通过 `PrewarmSettingsRuntimeCachesDuringLoading()` 预热设置页和文本容器；运行期由 `OnUpdate()` 根据当前设置页决定资源和 GPU 上传预算。QmClient 设置页本身通过 `RenderSettingsQmClient()` 承载模块卡片、搜索、折叠、拖拽、滚动裁剪和 perf 日志。</p>
+          <p class="callout">这不是“资源页单独优化”的问题。皮肤、资源、QmClient 设置页、文本容器和 GPU 上传共享同一套 frame budget 思路，文档和后续修复应该按这条链路理解。</p>
+        </section>
+
+        <section class="doc-section" id="paths">
+          <h2>关联源码路径</h2>
+          <table>
+            <thead><tr><th>路径</th><th>职责</th><th>当前口径</th></tr></thead>
+            <tbody>
+              <tr><td><code>src/game/client/gameclient.cpp</code></td><td>启动期预热、每帧设置页预算分发。</td><td>设置页性能链路的外层入口。</td></tr>
+              <tr><td><code>src/game/client/components/menus_settings.cpp</code></td><td>设置页总入口，选择具体设置页并调用 QmClient 设置页。</td><td>旧 DDNet 设置体系仍是承载层。</td></tr>
+              <tr><td><code>src/game/client/components/qmclient/menus_qmclient.cpp</code></td><td>QmClient 设置页模块卡片、搜索、tab、dogfood、文本计划和 perf 日志。</td><td>QmClient 设置页核心实现。</td></tr>
+              <tr><td><code>src/game/client/components/settings_resource_jobs.*</code></td><td>资源列表可见范围、资源 job 合并、GPU 上传、frame/shared heavy budget。</td><td>资源预热和运行期预算核心。</td></tr>
+              <tr><td><code>src/game/client/components/menus.h</code></td><td>暴露设置页预热、文本池、GPU 上传限制和 frame budget API。</td><td>菜单组件对外接口。</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="doc-section" id="flow">
+          <h2>运行/调用流程</h2>
+          <div class="flow-table">
+            <div><strong>1. 启动加载</strong><span>`CGameClient::OnInit()` 在资源加载阶段调用 `PrewarmSettingsRuntimeCachesDuringLoading()`，先触发 `m_Menus.PrewarmSettingsPages()`。</span></div>
+            <div><strong>2. 文本预构建</strong><span>预热循环中调用 `PrewarmSettingsTextPoolForLoading()`，并用 `SettingsTextContainerCount()`、`SettingsTextPrebuildRemaining()` 记录进度。</span></div>
+            <div><strong>3. 运行期预算</strong><span>`CGameClient::OnUpdate()` 判断 Tee/Assets 设置页是否激活，再调用 `SettingsGpuUploadLimitForFrame()` 和 `ResetSettingsFrameBudgetForFrame()`。</span></div>
+            <div><strong>4. 设置页分发</strong><span>`CMenus::RenderSettings()` 在 QmClient 设置页分支调用 `RenderSettingsQmClient(ContentView, false, CollectingMenuTextPlan)`。</span></div>
+            <div><strong>5. QmClient 页面</strong><span>`RenderSettingsQmClient()` 处理 tab、滚动区域、模块卡片、搜索/折叠/拖拽，并在 perf debug 时写 `perf/qmclient`。</span></div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="resource-budget">
+          <h2>资源预算模型</h2>
+          <table>
+            <thead><tr><th>函数</th><th>职责</th><th>边界</th></tr></thead>
+            <tbody>
+              <tr><td><code>SettingsResourceFrameStageBudget</code></td><td>按 frame context、优先级和滚动可见状态选择阶段预算。</td><td>用于避免一次性处理太多可见/后台资源。</td></tr>
+              <tr><td><code>SettingsResourceSharedHeavyBudget</code></td><td>给共享 heavy work 设置常规和恢复预算。</td><td>恢复模式和普通帧的预算不同。</td></tr>
+              <tr><td><code>SettingsResourceUploadWithinByteBudget</code></td><td>按上传次数和字节预算判断是否允许继续上传。</td><td>控制 GPU 上传峰值。</td></tr>
+              <tr><td><code>SettingsResourceOversizedUploadAllowed</code></td><td>对超预算单项上传做例外判断。</td><td>页面切换、优先级和 oversized 次数都会影响结果。</td></tr>
+              <tr><td><code>SettingsResourceCanUseHighPriorityBudget</code></td><td>判断高优先级资源是否能使用额外预算。</td><td>不能把高优先级当作无限加速。</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="doc-section" id="boundaries">
+          <h2>边界与风险</h2>
+          <ul>
+            <li><strong>可依赖事实：</strong>设置页启动期预热和运行期预算已经存在，且由 `CGameClient` 统一驱动。</li>
+            <li><strong>阶段性状态：</strong>QmClient 设置页仍是大型函数和局部 lambda 组合，模块化更多体现在卡片注册/搜索/渲染分支，而不是独立组件树。</li>
+            <li><strong>性能风险：</strong>新增资源预览、文本容器或 GPU 上传路径时，必须接入现有预算接口，不能绕过 frame budget。</li>
+            <li><strong>文档风险：</strong>旧 `docs/superpowers` 中的页面卡顿/设置页计划可能仍有价值，但实现依据必须回到本页列出的当前源码。</li>
+          </ul>
+        </section>
+
+        <section class="doc-section" id="evidence">
+          <h2>证据清单</h2>
+          <ul class="evidence-list">
+            <li><code>src/game/client/gameclient.cpp:641-663</code>：启动加载阶段预热设置页与文本池，并记录预热进度。</li>
+            <li><code>src/game/client/gameclient.cpp:673-681</code>：运行期根据设置页活动状态分发 GPU 上传和 frame budget。</li>
+            <li><code>src/game/client/components/menus_settings.cpp:4518-4810</code>：设置页总入口调用 QmClient 设置页。</li>
+            <li><code>src/game/client/components/qmclient/menus_qmclient.cpp:479-506</code>：QmClient 设置页文本计划通过 render-only 路径收集。</li>
+            <li><code>src/game/client/components/qmclient/menus_qmclient.cpp:606-790</code>：QmClient 设置页入口、dogfood 分支、tab、动画和 perf 记录。</li>
+            <li><code>src/game/client/components/menus.h:1963-1997</code>：菜单组件暴露文本预构建、GPU 上传限制和设置页 frame budget API。</li>
+            <li><code>src/game/client/components/settings_resource_jobs.cpp:1201-1268</code>：资源 frame stage/shared heavy/upload byte/oversized/high priority 预算函数。</li>
+          </ul>
+        </section>
+      </article>
+
+      <aside class="wiki-toc" aria-label="页内目录">
+        <h2>本页</h2>
+        <a href="#summary">结论摘要</a>
+        <a href="#paths">源码路径</a>
+        <a href="#flow">调用流程</a>
+        <a href="#resource-budget">资源预算</a>
+        <a href="#boundaries">边界风险</a>
+        <a href="#evidence">证据清单</a>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>QmClient Wiki - 源码分析</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="wiki-shell">
+    <header class="wiki-topbar">
+      <a class="wiki-brand" href="../index.html">QmClient Wiki</a>
+      <nav class="wiki-nav" aria-label="主导航">
+        <a href="../当前状态/index.html">当前状态</a>
+        <a href="../源码分析/index.html" aria-current="page">源码分析</a>
+        <a href="../规划/index.html">规划</a>
+        <a href="../调研/index.html">调研</a>
+        <a href="../工作流参考/index.html">工作流参考</a>
+        <a href="../归档/index.html">归档</a>
+        <a href="../维护说明.html">维护说明</a>
+      </nav>
+    </header>
+
+    <main class="wiki-layout">
+      <aside class="wiki-sidebar" aria-label="源码分析页面">
+        <h2>源码分析</h2>
+        <a href="index.html" aria-current="page">源码分析入口</a>
+        <a href="多语言系统.html">多语言系统</a>
+        <a href="客户端UI架构.html">客户端 UI 架构</a>
+        <a href="设置页与资源预热.html">设置页与资源预热</a>
+        <a href="HUD通知系统.html">HUD 通知系统</a>
+        <a href="绑定系统.html">绑定系统</a>
+        <a href="翻译系统.html">翻译系统</a>
+        <a href="资源页.html">资源页</a>
+        <a href="网络卡顿可视化.html">网络卡顿可视化</a>
+        <h2>交叉参考</h2>
+        <a href="../当前状态/本地化系统.html">本地化系统现状</a>
+        <a href="../当前状态/QmUi运行时.html">QmUi 运行时现状</a>
+      </aside>
+
+      <article class="wiki-content">
+        <header class="doc-header">
+          <h1>源码分析</h1>
+          <p class="muted">这里按源码路径组织 QmClient 的当前实现事实，目标是做成类似 DeepWiki 的源码导读：先给模块地图，再给流程、边界和证据。所有结论都应能回到当前代码或脚本验证。</p>
+          <dl class="doc-meta">
+            <div><dt>状态</dt><dd>active</dd></div>
+            <div><dt>验证日期</dt><dd>2026-06-16</dd></div>
+            <div><dt>源码快照</dt><dd><code>67440f08c</code></dd></div>
+            <div><dt>页面数</dt><dd>8 个深页</dd></div>
+          </dl>
+        </header>
+
+        <section class="doc-section" id="map">
+          <h2>模块地图</h2>
+          <div class="analysis-map">
+            <a class="analysis-card" href="多语言系统.html">
+              <span class="badge ok">已复核</span>
+              <strong>多语言系统</strong>
+              <span>从源码字符串提取、TOML 维护库、运行时语言文件生成到校验脚本的链路。</span>
+              <code>qmclient_scripts/languages_qmclient/</code>
+            </a>
+            <a class="analysis-card" href="客户端UI架构.html">
+              <span class="badge ok">已复核</span>
+              <strong>客户端 UI 架构</strong>
+              <span>DDNet 旧 CUIRect 菜单体系、QmUi runtime、widget dogfood 和设置页接入关系。</span>
+              <code>src/game/client/QmUi/</code>
+            </a>
+            <a class="analysis-card" href="设置页与资源预热.html">
+              <span class="badge ok">已复核</span>
+              <strong>设置页与资源预热</strong>
+              <span>设置页渲染入口、QmClient 设置页、文本预构建、资源列表与 GPU 上传预算。</span>
+              <code>src/game/client/components/settings_resource_jobs.*</code>
+            </a>
+            <a class="analysis-card" href="HUD通知系统.html">
+              <span class="badge ok">已复核</span>
+              <strong>HUD 通知系统</strong>
+              <span>服务器消息分类、Echo 路由、通知队列、HUD 渲染和 QmClient 设置入口。</span>
+              <code>src/game/client/components/qmclient/hud_notifications/</code>
+            </a>
+            <a class="analysis-card" href="绑定系统.html">
+              <span class="badge ok">已复核</span>
+              <strong>绑定系统</strong>
+              <span>基础 bind 命令、输入栈、设置页 key reader、聊天绑定和绑定轮盘的关系。</span>
+              <code>src/game/client/components/binds.cpp</code>
+            </a>
+            <a class="analysis-card" href="翻译系统.html">
+              <span class="badge ok">已复核</span>
+              <strong>翻译系统</strong>
+              <span>聊天翻译后端、手动/自动翻译、出站翻译、并发和设置页配置。</span>
+              <code>src/game/client/components/qmclient/translate/</code>
+            </a>
+            <a class="analysis-card" href="资源页.html">
+              <span class="badge ok">已复核</span>
+              <strong>资源页</strong>
+              <span>Assets 页面扫描、预览 artifact、GPU 上传预算、工具栏和刷新入口。</span>
+              <code>src/game/client/components/menus_settings_assets.cpp</code>
+            </a>
+            <a class="analysis-card" href="网络卡顿可视化.html">
+              <span class="badge ok">已复核</span>
+              <strong>网络卡顿可视化</strong>
+              <span>网络指标采样、诊断等级、历史曲线、HUD 面板和状态栏复用。</span>
+              <code>src/game/client/components/qmclient/monitoring/</code>
+            </a>
+          </div>
+        </section>
+
+        <section class="doc-section" id="coverage">
+          <h2>已有功能覆盖矩阵</h2>
+          <table>
+            <thead><tr><th>当前状态页</th><th>源码分析状态</th><th>源码分析页</th><th>核心源码路径</th><th>可信度</th></tr></thead>
+            <tbody>
+              <tr><td><a href="../当前状态/绑定系统.html">绑定系统</a></td><td><span class="badge ok">已复核</span></td><td><a href="绑定系统.html">绑定系统</a></td><td><code>src/game/client/components/binds.cpp</code></td><td>high / 2026-06-16</td></tr>
+              <tr><td><a href="../当前状态/本地化系统.html">本地化系统</a></td><td><span class="badge ok">已复核</span></td><td><a href="多语言系统.html">多语言系统</a></td><td><code>qmclient_scripts/languages_qmclient/</code></td><td>high / 2026-06-16</td></tr>
+              <tr><td><a href="../当前状态/翻译系统.html">翻译系统</a></td><td><span class="badge ok">已复核</span></td><td><a href="翻译系统.html">翻译系统</a></td><td><code>src/game/client/components/qmclient/translate/</code></td><td>high / 2026-06-16</td></tr>
+              <tr><td><a href="../当前状态/更新器.html">更新器</a></td><td><span class="badge warn">待分析</span></td><td>-</td><td><code>src/</code> 待定位</td><td>未复核</td></tr>
+              <tr><td><a href="../当前状态/好友与全局聊天.html">好友与全局聊天</a></td><td><span class="badge warn">待分析</span></td><td>-</td><td><code>src/game/client/components/</code> 待定位</td><td>未复核</td></tr>
+              <tr><td><a href="../当前状态/聊天翻译按钮.html">聊天翻译按钮</a></td><td><span class="badge warn">部分覆盖</span></td><td><a href="翻译系统.html">翻译系统</a></td><td><code>src/game/client/components/qmclient/translate/translate_ui_settings.*</code></td><td>medium / 2026-06-16</td></tr>
+              <tr><td><a href="../当前状态/配置导入导出.html">配置导入导出</a></td><td><span class="badge warn">待分析</span></td><td>-</td><td><code>src/</code> 待定位</td><td>未复核</td></tr>
+              <tr><td><a href="../当前状态/网络卡顿可视化.html">网络卡顿可视化</a></td><td><span class="badge ok">已复核</span></td><td><a href="网络卡顿可视化.html">网络卡顿可视化</a></td><td><code>src/game/client/components/qmclient/monitoring/</code></td><td>high / 2026-06-16</td></tr>
+              <tr><td><a href="../当前状态/语音聊天.html">语音聊天</a></td><td><span class="badge warn">待分析</span></td><td>-</td><td><code>src/game/client/components/qmclient/voice/</code></td><td>未复核</td></tr>
+              <tr><td><a href="../当前状态/资源页.html">资源页</a></td><td><span class="badge ok">已复核</span></td><td><a href="资源页.html">资源页</a></td><td><code>src/game/client/components/menus_settings_assets.cpp</code></td><td>high / 2026-06-16</td></tr>
+              <tr><td><a href="../当前状态/总览.html">总览</a></td><td><span class="badge warn">由模块页覆盖</span></td><td><a href="index.html">源码分析入口</a></td><td><code>src/game/client/</code></td><td>索引页</td></tr>
+              <tr><td><a href="../当前状态/BC移植状态.html">BC 移植状态</a></td><td><span class="badge warn">待分析</span></td><td>-</td><td><code>src/</code> 待定位</td><td>未复核</td></tr>
+              <tr><td><a href="../当前状态/QmUi运行时.html">QmUi 运行时</a></td><td><span class="badge ok">已复核</span></td><td><a href="客户端UI架构.html">客户端 UI 架构</a></td><td><code>src/game/client/QmUi/</code></td><td>high / 2026-06-16</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="doc-section" id="order">
+          <h2>推荐阅读顺序</h2>
+          <ol class="analysis-steps">
+            <li><strong>先读源码分析页的结论。</strong>确认模块职责和当前边界，避免把规划或旧报告当成实现。</li>
+            <li><strong>再看流程表。</strong>流程表把入口脚本、维护源、生成产物和运行时接入拆开，便于定位下一步修改点。</li>
+            <li><strong>最后按证据清单回到源码。</strong>证据只引用关键路径，不复制大段源码；实现前仍要读当前工作区的真实文件。</li>
+          </ol>
+        </section>
+
+        <section class="doc-section" id="policy">
+          <h2>可信度口径</h2>
+          <table>
+            <thead><tr><th>标记</th><th>含义</th><th>维护要求</th></tr></thead>
+            <tbody>
+              <tr><td><span class="badge ok">已复核</span></td><td>已按当前源码或脚本入口复核。</td><td>必须保留验证日期、源码快照和证据清单。</td></tr>
+              <tr><td><span class="badge warn">现状页</span></td><td>已有可用的当前状态说明，但不是本区深页。</td><td>引用前仍应核对对应源码。</td></tr>
+              <tr><td><span class="badge bad">历史材料</span></td><td>来自旧计划、旧调研或归档。</td><td>只能用于追溯，不可直接作为实现依据。</td></tr>
+            </tbody>
+          </table>
+          <p class="callout">`docs/superpowers/` 可以帮助理解背景，但源码分析页的事实必须来自当前代码、脚本或 gate 入口。后续新增页面也要遵守这个口径。</p>
+        </section>
+      </article>
+
+      <aside class="wiki-toc" aria-label="页内目录">
+        <h2>本页</h2>
+        <a href="#map">模块地图</a>
+        <a href="#coverage">覆盖矩阵</a>
+        <a href="#order">阅读顺序</a>
+        <a href="#policy">可信度口径</a>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>

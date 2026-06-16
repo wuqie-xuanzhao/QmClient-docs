@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>源码分析 - 多语言系统</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="wiki-shell">
+    <header class="wiki-topbar">
+      <a class="wiki-brand" href="../index.html">QmClient Wiki</a>
+      <nav class="wiki-nav" aria-label="主导航">
+        <a href="../当前状态/index.html">当前状态</a>
+        <a href="../源码分析/index.html" aria-current="page">源码分析</a>
+        <a href="../规划/index.html">规划</a>
+        <a href="../调研/index.html">调研</a>
+        <a href="../工作流参考/index.html">工作流参考</a>
+        <a href="../归档/index.html">归档</a>
+        <a href="../维护说明.html">维护说明</a>
+      </nav>
+    </header>
+
+    <main class="wiki-layout">
+      <aside class="wiki-sidebar" aria-label="源码分析页面">
+        <h2>源码分析</h2>
+        <a href="index.html">源码分析入口</a>
+        <a href="多语言系统.html" aria-current="page">多语言系统</a>
+        <a href="客户端UI架构.html">客户端 UI 架构</a>
+        <h2>相关页面</h2>
+        <a href="../当前状态/本地化系统.html">本地化系统现状</a>
+        <a href="../当前状态/翻译系统.html">翻译系统现状</a>
+      </aside>
+
+      <article class="wiki-content">
+        <header class="doc-header">
+          <h1>多语言系统源码分析</h1>
+          <p class="muted">本页分析 QmClient 运行时语言包的维护链路：从 C++ 源码里的 `Localize`/`Localizable`/`Register` 文本提取，到模块化 TOML 维护库，再生成 `data/languages/*.txt` 并校验。</p>
+          <dl class="doc-meta">
+            <div><dt>状态</dt><dd>active</dd></div>
+            <div><dt>验证日期</dt><dd>2026-06-16</dd></div>
+            <div><dt>源码快照</dt><dd><code>67440f08c</code></dd></div>
+            <div><dt>可信度</dt><dd>high</dd></div>
+          </dl>
+        </header>
+
+        <section class="doc-section" id="summary">
+          <h2>结论摘要</h2>
+          <p>多语言系统的长期维护源不是 `data/languages/*.txt`，而是 `qmclient_scripts/languages_qmclient/translations/i18n/*.toml`。`extract_strings.py` 负责从 `src/` 提取 active source key，`generate_all.py` 读取 TOML store 并覆写运行时语言文件，`validate.py` 和 `review_duplicate_entries.py` 负责结构、缺失项和重复项审查。</p>
+          <p class="callout">聊天翻译系统是另一条业务链路，入口在 `src/game/client/components/qmclient/translate/`；它处理在线翻译 API，不负责生成 DDNet 运行时语言文件。</p>
+        </section>
+
+        <section class="doc-section" id="paths">
+          <h2>关联源码路径</h2>
+          <table>
+            <thead><tr><th>路径</th><th>职责</th><th>维护口径</th></tr></thead>
+            <tbody>
+              <tr><td><code>qmclient_scripts/languages_qmclient/source_keys.py</code></td><td>扫描 `src/` 下 C/C++ 源码，提取 `Localize`、`Localizable` 和控制台 help 文本。</td><td>active source key 的事实来源。</td></tr>
+              <tr><td><code>qmclient_scripts/languages_qmclient/extract_strings.py</code></td><td>调用 `source_keys` 输出 `extracted_strings.txt` 和 `extracted_audit_report.json`。</td><td>新增/删除本地化 key 后优先运行。</td></tr>
+              <tr><td><code>qmclient_scripts/languages_qmclient/i18n_store.py</code></td><td>读写 `translations/i18n/*.toml`，按模块组织 message 和多语言 translations。</td><td>TOML 维护库的读写层。</td></tr>
+              <tr><td><code>qmclient_scripts/languages_qmclient/generate_all.py</code></td><td>把 active source key 与 TOML 翻译合成 `data/languages/*.txt`。</td><td>运行时语言文件生成入口。</td></tr>
+              <tr><td><code>qmclient_scripts/languages_qmclient/validate.py</code></td><td>解析生成产物和 TOML store，检查缺失翻译与文本风格审计。</td><td>只读校验。</td></tr>
+              <tr><td><code>qmclient_scripts/languages_qmclient/review_duplicate_entries.py</code></td><td>审查运行时语言文件中的空翻译、重复翻译、相似翻译和未使用项。</td><td>只读人工审查辅助。</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="doc-section" id="flow">
+          <h2>运行/调用流程</h2>
+          <div class="flow-table">
+            <div><strong>1. 源码提取</strong><span>`source_keys.py` 在 `src/` 中扫描 `.c/.cpp/.h/.hpp`，识别 `Localize`/`Localizable` 调用、`Register` help 文本和已知间接文本。</span></div>
+            <div><strong>2. 提取产物</strong><span>`extract_strings.py` 排序输出 `extracted_strings.txt`，同时把字符串审计报告写入 `extracted_audit_report.json`。</span></div>
+            <div><strong>3. 维护库读取</strong><span>`i18n_store.py` 从 `translations/i18n/*.toml` 读取模块化 message，identity 为 `(key, context)`。</span></div>
+            <div><strong>4. 运行时生成</strong><span>`generate_all.py` 对 `GENERATED_LANGUAGES` 中登记的语言生成 `data/languages/*.txt`；缺失翻译回退到英文 source key。</span></div>
+            <div><strong>5. 校验与审查</strong><span>`validate.py` 校验运行时文件和 TOML 缺失项，`review_duplicate_entries.py` 给出重复/相似/未使用项报告。</span></div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="boundaries">
+          <h2>边界与风险</h2>
+          <table>
+            <thead><tr><th>主题</th><th>当前事实</th><th>文档口径</th></tr></thead>
+            <tbody>
+              <tr><td>维护源</td><td><code>translations/i18n/*.toml</code> 是人工维护源。</td><td>不要手工把 `data/languages/*.txt` 当长期真相源。</td></tr>
+              <tr><td>生成产物</td><td><code>generate_all.py</code> 明确覆写 `data/languages/*.txt`。</td><td>改运行时语言文件前应先回到 TOML store。</td></tr>
+              <tr><td>缺失翻译</td><td>生成时按语言 map 查找，缺失时使用 source key 回退。</td><td>运行时有回退不等于翻译完整。</td></tr>
+              <tr><td>脚本职责</td><td>`validate.py` 与 `review_duplicate_entries.py` 是只读检查。</td><td>审查报告用于人工收口，不能自动替代翻译审核。</td></tr>
+              <tr><td>在线翻译</td><td>`translate_with_local_http.py` 生成 draft，显式 `--write-back` 才回填维护库。</td><td>draft 需要审核，不应直接当最终翻译。</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="doc-section" id="evidence">
+          <h2>证据清单</h2>
+          <ul class="evidence-list">
+            <li><code>qmclient_scripts/languages_qmclient/source_keys.py:16-22</code>：定义扫描源码扩展、`src/` 扫描根和 `Localize`/`Localizable` 调用匹配。</li>
+            <li><code>qmclient_scripts/languages_qmclient/source_keys.py:585-606</code>：收集 active source key records，并合并 `Register` help 记录。</li>
+            <li><code>qmclient_scripts/languages_qmclient/extract_strings.py:13-36</code>：输出 `extracted_strings.txt`，并以 source key record 生成文本行。</li>
+            <li><code>qmclient_scripts/languages_qmclient/i18n_store.py:17-35</code>：TOML store 根目录和 `Message` identity 定义。</li>
+            <li><code>qmclient_scripts/languages_qmclient/i18n_store.py:122-165</code>：读取 `translations/i18n/*.toml` 并按语言生成 identity map。</li>
+            <li><code>qmclient_scripts/languages_qmclient/generate_all.py:19-32</code>：当前生成语言列表。</li>
+            <li><code>qmclient_scripts/languages_qmclient/generate_all.py:119-170</code>：合成语言条目、定位运行时文件，并明确覆写 `data/languages/*.txt`。</li>
+            <li><code>qmclient_scripts/languages_qmclient/validate.py:74-134</code>：验证生成文件解析、TOML store 非空和缺失翻译。</li>
+            <li><code>qmclient_scripts/languages_qmclient/review_duplicate_entries.py:192-218</code>：收集已使用 key，并审查未使用、空翻译、重复和相似翻译。</li>
+          </ul>
+        </section>
+      </article>
+
+      <aside class="wiki-toc" aria-label="页内目录">
+        <h2>本页</h2>
+        <a href="#summary">结论摘要</a>
+        <a href="#paths">源码路径</a>
+        <a href="#flow">调用流程</a>
+        <a href="#boundaries">边界风险</a>
+        <a href="#evidence">证据清单</a>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>源码分析 - 客户端 UI 架构</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="wiki-shell">
+    <header class="wiki-topbar">
+      <a class="wiki-brand" href="../index.html">QmClient Wiki</a>
+      <nav class="wiki-nav" aria-label="主导航">
+        <a href="../当前状态/index.html">当前状态</a>
+        <a href="../源码分析/index.html" aria-current="page">源码分析</a>
+        <a href="../规划/index.html">规划</a>
+        <a href="../调研/index.html">调研</a>
+        <a href="../工作流参考/index.html">工作流参考</a>
+        <a href="../归档/index.html">归档</a>
+        <a href="../维护说明.html">维护说明</a>
+      </nav>
+    </header>
+
+    <main class="wiki-layout">
+      <aside class="wiki-sidebar" aria-label="源码分析页面">
+        <h2>源码分析</h2>
+        <a href="index.html">源码分析入口</a>
+        <a href="多语言系统.html">多语言系统</a>
+        <a href="客户端UI架构.html" aria-current="page">客户端 UI 架构</a>
+        <h2>相关页面</h2>
+        <a href="../当前状态/QmUi运行时.html">QmUi 运行时现状</a>
+        <a href="../规划/QmUi整合边界.html">QmUi 整合边界</a>
+      </aside>
+
+      <article class="wiki-content">
+        <header class="doc-header">
+          <h1>客户端 UI 架构源码分析</h1>
+          <p class="muted">本页分析当前客户端 UI 的分层关系：DDNet 旧 `CMenus` / `CUIRect` 仍是大量页面的承载层，QmUi 提供 runtime、动画、布局、token 和 widget 原语，并通过 QmClient 设置页 dogfood 渐进接入。</p>
+          <dl class="doc-meta">
+            <div><dt>状态</dt><dd>active</dd></div>
+            <div><dt>验证日期</dt><dd>2026-06-16</dd></div>
+            <div><dt>源码快照</dt><dd><code>67440f08c</code></dd></div>
+            <div><dt>可信度</dt><dd>high</dd></div>
+          </dl>
+        </header>
+
+        <section class="doc-section" id="summary">
+          <h2>结论摘要</h2>
+          <p>当前 UI 架构不是完全重写后的声明式 UI。`CGameClient` 持有 `CUiRuntimeV2` 并在每帧推进 runtime；`CMenus` 和大量页面仍用 `CUIRect`、`DoButton_Menu`、局部绘制函数组织界面。QmUi 的价值在于提供可复用 runtime、动画、布局、token/theme 和 widget 原语，让新页面能逐步脱离散落的局部样式。</p>
+          <p class="callout warn">不要把 `src/game/client/QmUi/` 的存在解读为“主菜单、HUD、计分板都已迁移完成”。当前事实是渐进接入，尤其 QmClient 设置页仍大量混用传统菜单绘制和 QmUi dogfood。</p>
+        </section>
+
+        <section class="doc-section" id="layers">
+          <h2>架构层次</h2>
+          <table>
+            <thead><tr><th>层次</th><th>代表路径</th><th>当前职责</th></tr></thead>
+            <tbody>
+              <tr><td>客户端帧入口</td><td><code>src/game/client/gameclient.cpp</code></td><td>初始化 UI、推进 `CUiRuntimeV2`、渲染组件和菜单。</td></tr>
+              <tr><td>旧菜单承载层</td><td><code>src/game/client/components/menus*.cpp</code></td><td>DDNet/TaterClient 传统菜单体系，仍使用 `CMenus`、`CUIRect`、按钮容器和滚动区域。</td></tr>
+              <tr><td>QmClient 设置页</td><td><code>src/game/client/components/qmclient/menus_qmclient.cpp</code></td><td>QmClient 功能设置入口，也是 QmUi dogfood 的接入点。</td></tr>
+              <tr><td>QmUi runtime</td><td><code>src/game/client/QmUi/QmRt.*</code></td><td>聚合 tree、animation runtime、layout engine、render bridge 和 perf stats。</td></tr>
+              <tr><td>QmUi 组件原语</td><td><code>src/game/client/QmUi/Ui*.h/.cpp</code></td><td>按钮、表单、导航、容器、overlay、context 和 dogfood 页面。</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="doc-section" id="flow">
+          <h2>运行/调用流程</h2>
+          <div class="flow-table">
+            <div><strong>1. 初始化</strong><span>`CGameClient::OnInit()` 初始化旧 `m_UI`，随后调用 `m_UiRuntimeV2.Init(this)`，QmUi runtime 获得 `CGameClient` 上下文。</span></div>
+            <div><strong>2. 重置</strong><span>`CGameClient::OnReset()` 调用 `m_UiRuntimeV2.Reset()`，runtime 清空 tree、animation runtime、render bridge 统计和 perf context。</span></div>
+            <div><strong>3. 每帧推进</strong><span>`CGameClient::OnRender()` 在组件渲染前设置 QmUi perf context，并调用 `m_UiRuntimeV2.OnRender()`。</span></div>
+            <div><strong>4. Runtime 内部</strong><span>`CUiRuntimeV2::OnRender()` 依次执行 tree begin、动画推进、render bridge begin、tree end，并写入节点数、动画数和耗时。</span></div>
+            <div><strong>5. 页面接入</strong><span>`RenderSettingsQmClient()` 在 `dbg_qm_ui_dogfood` 开启时组装 `IUiContext`，把 `Ui()`、`Tooltips()`、`QmIconManager()` 和 `AnimRuntime()` 传给 dogfood 页面。</span></div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="components">
+          <h2>QmUi 组件边界</h2>
+          <table>
+            <thead><tr><th>模块</th><th>当前能力</th><th>边界</th></tr></thead>
+            <tbody>
+              <tr><td><code>QmLayout.*</code></td><td>提供 row/column、flex、percent、padding、gap、align、justify 和 min/max 约束。</td><td>输出仍可回到 `CUIRect` 世界。</td></tr>
+              <tr><td><code>QmAnim.*</code></td><td>提供属性动画、tween/spring、delay、interrupt policy、完成事件和 motion level。</td><td>需要页面用稳定 node key 接入。</td></tr>
+              <tr><td><code>QmRender.*</code></td><td>记录 draw call 和 clip push 统计。</td><td>不是独立 renderer，不替代 `IGraphics`。</td></tr>
+              <tr><td><code>UiButtons.*</code></td><td>封装 primary、secondary、icon button，并复用 `CMenus::DoButton_Menu`。</td><td>仍依赖 `CMenus` 和旧按钮行为。</td></tr>
+              <tr><td><code>UiForms.*</code></td><td>提供 text field、toggle、slider。</td><td>输入与绘制仍走旧 `CUi` / `CLineInput` 能力。</td></tr>
+              <tr><td><code>UiNavigation.*</code></td><td>提供 tab bar 和 list item。</td><td>tab 仍调用 `DoButton_MenuTab`。</td></tr>
+              <tr><td><code>UiDogfood.*</code></td><td>集中展示 widget hover/focus/disabled/selected/缩放状态。</td><td>是验证入口，不是正式设置页重写。</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="doc-section" id="boundaries">
+          <h2>边界与风险</h2>
+          <ul>
+            <li><strong>可依赖事实：</strong>`CUiRuntimeV2` 已由 `CGameClient` 初始化、重置并每帧推进；动画 runtime 可以通过 `GameClient()->UiRuntimeV2()->AnimRuntime()` 传入页面。</li>
+            <li><strong>阶段性状态：</strong>QmClient 设置页有 dogfood 入口，但大量设置卡片仍是 `CUIRect` 手写布局和 `CMenus` 控件。</li>
+            <li><strong>不可推导：</strong>不能从 QmUi token/theme 推导出全局视觉系统已经统一；旧菜单颜色、局部样式和配置变量仍并存。</li>
+            <li><strong>维护风险：</strong>新 widget 若直接包裹旧 `DoButton_Menu`，需要继续遵守旧 UI 的 hot item、按钮 id、tooltip 和裁剪规则。</li>
+          </ul>
+        </section>
+
+        <section class="doc-section" id="evidence">
+          <h2>证据清单</h2>
+          <ul class="evidence-list">
+            <li><code>src/game/client/gameclient.cpp:510-511</code>：初始化旧 UI 和 `m_UiRuntimeV2`。</li>
+            <li><code>src/game/client/gameclient.cpp:1194-1195</code>：重置 `m_UiRuntimeV2` 和 IME manager。</li>
+            <li><code>src/game/client/gameclient.cpp:2057-2060</code>：设置 QmUi perf context 并调用 `OnRender()`。</li>
+            <li><code>src/game/client/QmUi/QmRt.h:24-41</code>：runtime 聚合 animation、layout、tree、render bridge 和 perf stats。</li>
+            <li><code>src/game/client/QmUi/QmRt.cpp:58-132</code>：每帧推进 tree、动画、render bridge 并记录 perf payload。</li>
+            <li><code>src/game/client/QmUi/UiContext.h:18-29</code>：widget context 注入 `CUi`、icon manager、menus、tooltips、text render 和 animation runtime。</li>
+            <li><code>src/game/client/QmUi/UiButtons.cpp:20-53</code>：QmUi styled button 仍包裹 `CMenus::DoButton_Menu`。</li>
+            <li><code>src/game/client/QmUi/UiNavigation.cpp:21-62</code>：TabBar 使用 `DoButton_MenuTab` 并用 animation runtime 解析 underline。</li>
+            <li><code>src/game/client/components/qmclient/menus_qmclient.cpp:606-623</code>：`dbg_qm_ui_dogfood` 接管 QmClient 设置页并传入 `AnimRuntime()`。</li>
+            <li><code>src/game/client/components/qmclient/menus_qmclient.cpp:630-790</code>：常规 QmClient 设置页仍使用 tab、scroll、module card 和 `CUIRect` 手写布局。</li>
+          </ul>
+        </section>
+      </article>
+
+      <aside class="wiki-toc" aria-label="页内目录">
+        <h2>本页</h2>
+        <a href="#summary">结论摘要</a>
+        <a href="#layers">架构层次</a>
+        <a href="#flow">调用流程</a>
+        <a href="#components">组件边界</a>
+        <a href="#boundaries">边界风险</a>
+        <a href="#evidence">证据清单</a>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>

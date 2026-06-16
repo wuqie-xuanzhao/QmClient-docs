@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>源码分析 - HUD 通知系统</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="wiki-shell">
+    <header class="wiki-topbar">
+      <a class="wiki-brand" href="../index.html">QmClient Wiki</a>
+      <nav class="wiki-nav" aria-label="主导航">
+        <a href="../当前状态/index.html">当前状态</a>
+        <a href="../源码分析/index.html" aria-current="page">源码分析</a>
+        <a href="../规划/index.html">规划</a>
+        <a href="../调研/index.html">调研</a>
+        <a href="../工作流参考/index.html">工作流参考</a>
+        <a href="../归档/index.html">归档</a>
+        <a href="../维护说明.html">维护说明</a>
+      </nav>
+    </header>
+
+    <main class="wiki-layout">
+      <aside class="wiki-sidebar" aria-label="源码分析页面">
+        <h2>源码分析</h2>
+        <a href="index.html">源码分析入口</a>
+        <a href="多语言系统.html">多语言系统</a>
+        <a href="客户端UI架构.html">客户端 UI 架构</a>
+        <a href="设置页与资源预热.html">设置页与资源预热</a>
+        <a href="HUD通知系统.html" aria-current="page">HUD 通知系统</a>
+        <h2>相关页面</h2>
+        <a href="../规划/HUD视觉辅助状态.html">HUD 视觉辅助状态</a>
+        <a href="../规划/聊天UI状态.html">聊天 UI 状态</a>
+      </aside>
+
+      <article class="wiki-content">
+        <header class="doc-header">
+          <h1>HUD 通知系统源码分析</h1>
+          <p class="muted">本页分析 QmClient 的 HUD 通知链路：聊天 Echo、服务器系统消息分类、隐藏/路由决策、通知队列、HUD 渲染、编辑器测量和 QmClient 设置页配置。</p>
+          <dl class="doc-meta">
+            <div><dt>状态</dt><dd>active</dd></div>
+            <div><dt>验证日期</dt><dd>2026-06-16</dd></div>
+            <div><dt>源码快照</dt><dd><code>67440f08c</code></dd></div>
+            <div><dt>可信度</dt><dd>high</dd></div>
+          </dl>
+        </header>
+
+        <section class="doc-section" id="summary">
+          <h2>结论摘要</h2>
+          <p>HUD 通知系统由 `CQmHudNotifications` 组件承载。聊天组件负责把 Echo 和服务器聊天消息交给通知组件；通知组件使用 `hud_notification_rules.cpp` 对服务器消息做语义分类，再根据配置决定隐藏、保留聊天行或入队通知。渲染侧按最大可见数、停留时间、动画、颜色和锚点计算可见通知。</p>
+          <p class="callout">这套系统既影响 HUD，也影响聊天行是否显示。改规则时不能只看渲染函数，还要检查 `CChat::OnMessage()` 和 `CChat::ResolveLineServerMessageClass()`。</p>
+        </section>
+
+        <section class="doc-section" id="paths">
+          <h2>关联源码路径</h2>
+          <table>
+            <thead><tr><th>路径</th><th>职责</th><th>当前口径</th></tr></thead>
+            <tbody>
+              <tr><td><code>src/game/client/components/qmclient/hud_notifications/hud_notifications.h/.cpp</code></td><td>通知队列、Echo payload、服务器聊天处理、HUD 渲染和编辑器测量。</td><td>组件主实现。</td></tr>
+              <tr><td><code>src/game/client/components/qmclient/hud_notifications/hud_notification_rules.*</code></td><td>服务器消息 route/class/domain 分析和 entry decision。</td><td>系统消息分类事实来源。</td></tr>
+              <tr><td><code>src/game/client/components/chat.cpp/.h</code></td><td>Echo 路由、服务器消息拦截、聊天行 server message class 标记。</td><td>通知与聊天交汇点。</td></tr>
+              <tr><td><code>src/game/client/gameclient.cpp</code></td><td>把 `m_QmHudNotifications` 注册到组件列表。</td><td>生命周期接入入口。</td></tr>
+              <tr><td><code>src/game/client/components/qmclient/menus_qmclient.cpp</code></td><td>通知系统设置卡片、过滤、颜色、动画、可见数和边距配置。</td><td>用户配置入口。</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="doc-section" id="flow">
+          <h2>运行/调用流程</h2>
+          <div class="flow-table">
+            <div><strong>1. 组件注册</strong><span>`CGameClient::OnConsoleInit()` 的组件列表包含 `m_QmHudNotifications`，因此它参与 reset/render/message 生命周期。</span></div>
+            <div><strong>2. Echo 路由</strong><span>`CChat` 在 Echo 输出路径调用 `m_QmHudNotifications.QueueEcho()`，通知组件会固化 Echo 文本和颜色。</span></div>
+            <div><strong>3. 服务器消息</strong><span>`CChat::OnMessage()` 对服务器聊天调用 `HandleServerChat()`，通知组件返回是否消费/隐藏，并回填 `SServerMessageAnalysis`。</span></div>
+            <div><strong>4. 规则决策</strong><span>`AnalyzeServerMessage()` 识别 solo、help/basic info、team、swap/rescue、vote、status 等语义；`DecideServerMessageEntry()` 根据配置决定是否入队或隐藏。</span></div>
+            <div><strong>5. HUD 渲染</strong><span>`CQmHudNotifications::OnRender()` 计算 HUD 锚点、可见区域、动画和颜色，并调用 `RenderNotifications()`。</span></div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="classification">
+          <h2>分类与配置</h2>
+          <table>
+            <thead><tr><th>类别</th><th>来源</th><th>影响</th></tr></thead>
+            <tbody>
+              <tr><td>Prompt</td><td>Solo、team、swap/rescue、vote moderation、status 等规则。</td><td>可显示为系统通知，也可被 focus/隐藏配置消费。</td></tr>
+              <tr><td>BasicInfo</td><td>基础服务器信息或明确排除的系统提示。</td><td>影响聊天 focus 过滤和是否入队。</td></tr>
+              <tr><td>HelpInfo</td><td>帮助、用法、示例类服务器消息。</td><td>可被高级分类过滤控制。</td></tr>
+              <tr><td>Unknown</td><td>无法识别但可按系统消息处理的文本。</td><td>受 “Show unknown server messages” 控制。</td></tr>
+              <tr><td>Echo</td><td>聊天组件 Echo 输出。</td><td>可继承聊天颜色或使用通知覆盖色。</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="doc-section" id="boundaries">
+          <h2>边界与风险</h2>
+          <ul>
+            <li><strong>可依赖事实：</strong>通知系统已接入组件生命周期，服务器消息分类和 Echo 入队都有代码路径。</li>
+            <li><strong>关键耦合：</strong>聊天行 `m_ServerMessageClass` 用于 focus 过滤；通知规则变化会影响聊天显示，不只是 HUD。</li>
+            <li><strong>配置边界：</strong>基础开关、高级分类过滤、颜色、动画、最大可见数和边距都在 QmClient 设置页配置。</li>
+            <li><strong>维护风险：</strong>新增服务器消息规则时要同步考虑本地化文本、fallback、隐藏逻辑和测试覆盖，避免把普通信息误路由为强提示。</li>
+          </ul>
+        </section>
+
+        <section class="doc-section" id="evidence">
+          <h2>证据清单</h2>
+          <ul class="evidence-list">
+            <li><code>src/game/client/gameclient.cpp:309</code>：`m_QmHudNotifications` 被加入客户端组件列表。</li>
+            <li><code>src/game/client/components/qmclient/hud_notifications/hud_notifications.h:173-328</code>：`CQmHudNotifications` 组件接口、队列、服务器聊天处理和配置读取。</li>
+            <li><code>src/game/client/components/qmclient/hud_notifications/hud_notifications.cpp:118-280</code>：reset/render、Echo 入队、隐藏判断和通知渲染入口。</li>
+            <li><code>src/game/client/components/qmclient/hud_notifications/hud_notification_rules.h:47-114</code>：route/class/domain、analysis、decision 和公开规则函数。</li>
+            <li><code>src/game/client/components/qmclient/hud_notifications/hud_notification_rules.cpp:1083-1238</code>：服务器消息分析、入队决策、class 查询和本地化格式化。</li>
+            <li><code>src/game/client/components/chat.cpp:959-973</code>：Echo 消息进入通知队列。</li>
+            <li><code>src/game/client/components/chat.cpp:1447-1453</code>：服务器聊天交给通知组件处理，并把分类传给聊天行。</li>
+            <li><code>src/game/client/components/chat.h:353-365</code>：聊天行根据已知分类或规则解析 `EServerMessageClass`。</li>
+            <li><code>src/game/client/components/qmclient/menus_qmclient.cpp:2008-2117</code>：通知系统基础/高级设置、颜色、动画、最大可见数和边距。</li>
+            <li><code>src/game/client/components/qmclient/menus_qmclient.cpp:6136-6149</code>：QmClient 设置页渲染通知模块卡片。</li>
+          </ul>
+        </section>
+      </article>
+
+      <aside class="wiki-toc" aria-label="页内目录">
+        <h2>本页</h2>
+        <a href="#summary">结论摘要</a>
+        <a href="#paths">源码路径</a>
+        <a href="#flow">调用流程</a>
+        <a href="#classification">分类配置</a>
+        <a href="#boundaries">边界风险</a>
+        <a href="#evidence">证据清单</a>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>

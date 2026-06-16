@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>源码分析 - 绑定系统</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="wiki-shell">
+    <header class="wiki-topbar">
+      <a class="wiki-brand" href="../index.html">QmClient Wiki</a>
+      <nav class="wiki-nav" aria-label="主导航">
+        <a href="../当前状态/index.html">当前状态</a>
+        <a href="../源码分析/index.html" aria-current="page">源码分析</a>
+        <a href="../规划/index.html">规划</a>
+        <a href="../调研/index.html">调研</a>
+        <a href="../工作流参考/index.html">工作流参考</a>
+        <a href="../归档/index.html">归档</a>
+        <a href="../维护说明.html">维护说明</a>
+      </nav>
+    </header>
+
+    <main class="wiki-layout">
+      <aside class="wiki-sidebar" aria-label="源码分析页面">
+        <h2>源码分析</h2>
+        <a href="index.html">源码分析入口</a>
+        <a href="多语言系统.html">多语言系统</a>
+        <a href="客户端UI架构.html">客户端 UI 架构</a>
+        <a href="设置页与资源预热.html">设置页与资源预热</a>
+        <a href="HUD通知系统.html">HUD 通知系统</a>
+        <a href="绑定系统.html" aria-current="page">绑定系统</a>
+        <a href="翻译系统.html">翻译系统</a>
+        <a href="资源页.html">资源页</a>
+        <a href="网络卡顿可视化.html">网络卡顿可视化</a>
+        <h2>相关页面</h2>
+        <a href="../当前状态/绑定系统.html">绑定系统现状</a>
+      </aside>
+
+      <article class="wiki-content">
+        <header class="doc-header">
+          <h1>绑定系统源码分析</h1>
+          <p class="muted">本页分析 QmClient 当前的按键绑定链路：控制台 bind 命令、运行时输入栈、设置页按键读取器、TClient 聊天绑定和绑定轮盘。</p>
+          <dl class="doc-meta">
+            <div><dt>状态</dt><dd>active</dd></div>
+            <div><dt>验证日期</dt><dd>2026-06-16</dd></div>
+            <div><dt>源码快照</dt><dd><code>67440f08c</code></dd></div>
+            <div><dt>可信度</dt><dd>high</dd></div>
+          </dl>
+        </header>
+
+        <section class="doc-section" id="summary">
+          <h2>结论摘要</h2>
+          <p>基础键位绑定由 DDNet 的 `CBinds` 承载，`bind`、`binds`、`unbind`、`unbindall` 仍是权威配置入口。QmClient 在输入栈上额外接入 `CKeyBinder`、`CBindChat` 和 `CBindWheel`：设置页用 `CKeyBinder` 捕获新键位，聊天绑定和轮盘绑定则是 TClient 功能层，最终仍通过控制台命令执行。</p>
+          <p class="callout">绑定系统不是单一页面功能。修改键位行为时要同时检查输入栈顺序、设置页读取器、控制台保存回调和 TClient 扩展绑定。</p>
+        </section>
+
+        <section class="doc-section" id="paths">
+          <h2>关联源码路径</h2>
+          <table>
+            <thead><tr><th>路径</th><th>职责</th><th>当前口径</th></tr></thead>
+            <tbody>
+              <tr><td><code>src/game/client/components/binds.cpp/.h</code></td><td>基础按键槽、修饰键、控制台 bind 命令、输入触发和配置保存。</td><td>绑定系统事实来源。</td></tr>
+              <tr><td><code>src/game/client/components/key_binder.cpp/.h</code></td><td>设置页里“按一个键”的交互状态机。</td><td>UI 捕获入口。</td></tr>
+              <tr><td><code>src/game/client/components/menus_settings_controls.cpp</code></td><td>Controls 设置页搜索、绑定项列表和 key reader 调用。</td><td>用户编辑入口。</td></tr>
+              <tr><td><code>src/game/client/components/tclient/bindchat.*</code></td><td>聊天短命令绑定、默认项和配置保存。</td><td>TClient 扩展。</td></tr>
+              <tr><td><code>src/game/client/components/tclient/bindwheel.*</code></td><td>绑定轮盘的打开、渲染、选择和执行。</td><td>TClient 扩展。</td></tr>
+              <tr><td><code>src/game/client/gameclient.cpp</code></td><td>组件生命周期和输入栈顺序。</td><td>接入边界。</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="doc-section" id="flow">
+          <h2>运行/调用流程</h2>
+          <div class="flow-table">
+            <div><strong>1. 组件注册</strong><span>`CGameClient::OnConsoleInit()` 把 `m_Binds`、`m_BindChat`、`m_BindWheel`、`m_KeyBinder` 放入组件列表，并在输入栈里让 `m_KeyBinder` 优先接管按键捕获。</span></div>
+            <div><strong>2. 配置命令</strong><span>`CBinds::OnConsoleInit()` 注册 `bind`、`binds`、`unbind`、`unbindall`，`ConBind()` 解析键名后调用 `CBinds::Bind()`。</span></div>
+            <div><strong>3. 存储绑定</strong><span>`CBinds::Bind()` 按修饰键组合和 key id 写入 `m_aapKeyBindings`，并刷新 `g_Config.m_QmDeepflyMode`。</span></div>
+            <div><strong>4. 输入执行</strong><span>`CBinds::OnInput()` 在 press/release 时查找当前修饰键绑定，执行 stroked console command，并跟踪 active binds。</span></div>
+            <div><strong>5. 设置页编辑</strong><span>`CMenusSettingsControls::Render()` 调用 `CKeyBinder::DoKeyReader()` 捕获或清空键位，再把变化写回绑定项。</span></div>
+            <div><strong>6. 扩展绑定</strong><span>`CBindWheel` 注册 `+bindwheel` 和管理命令，轮盘关闭时执行选中命令；`CBindChat` 负责聊天命令别名。</span></div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="boundaries">
+          <h2>边界与风险</h2>
+          <ul>
+            <li><strong>可依赖事实：</strong>基础按键绑定仍以 `CBinds` 为中心，设置页和扩展功能都围绕控制台命令工作。</li>
+            <li><strong>输入优先级：</strong>`m_KeyBinder` 在输入栈最前，设置页捕获键位时会阻断后续组件；轮盘、聊天、菜单、控制台也会影响 release 处理。</li>
+            <li><strong>配置风险：</strong>绑定字符串可以包含嵌套 bind/unbind/exec；修改解析规则会影响配置兼容性。</li>
+            <li><strong>QmClient 特有耦合：</strong>`CBinds::Bind()` 会刷新 deepfly 模式，不能把它当成纯 DDNet 绑定存储。</li>
+          </ul>
+        </section>
+
+        <section class="doc-section" id="evidence">
+          <h2>证据清单</h2>
+          <ul class="evidence-list">
+            <li><code>src/game/client/gameclient.cpp:247-326</code>：绑定、聊天绑定、绑定轮盘和 key binder 都加入组件列表。</li>
+            <li><code>src/game/client/gameclient.cpp:328-345</code>：输入栈中 `m_KeyBinder` 位于最前，`m_Binds` 位于末尾。</li>
+            <li><code>src/game/client/components/binds.cpp:255-280</code>：`CBinds::Bind()` 写入绑定字符串并刷新 `g_Config.m_QmDeepflyMode`。</li>
+            <li><code>src/game/client/components/binds.cpp:328-424</code>：`CBinds::OnInput()` 根据 press/release、修饰键和 active binds 执行命令。</li>
+            <li><code>src/game/client/components/binds.cpp:606-636</code>：控制台注册和 `ConBind()` 到 `Bind()` 的入口。</li>
+            <li><code>src/game/client/components/binds.cpp:701-764</code>：键名、修饰键组合和配置保存字符串的解析/格式化。</li>
+            <li><code>src/game/client/components/key_binder.cpp:14-99</code>：设置页 key reader 捕获按键、Esc 取消和清空键位。</li>
+            <li><code>src/game/client/components/menus_settings_controls.cpp:131-160</code>：Controls 页面搜索与 key binder 活跃态联动。</li>
+            <li><code>src/game/client/components/menus_settings_controls.cpp:542-570</code>：每个绑定项调用 `DoKeyReader()` 并处理取消/变更。</li>
+            <li><code>src/game/client/components/tclient/bindwheel.cpp:109-122</code>：绑定轮盘控制台命令注册。</li>
+            <li><code>src/game/client/components/tclient/bindwheel.cpp:156-205</code>：轮盘关闭时执行选中 bind。</li>
+          </ul>
+        </section>
+      </article>
+
+      <aside class="wiki-toc" aria-label="页内目录">
+        <h2>本页</h2>
+        <a href="#summary">结论摘要</a>
+        <a href="#paths">源码路径</a>
+        <a href="#flow">调用流程</a>
+        <a href="#boundaries">边界风险</a>
+        <a href="#evidence">证据清单</a>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>

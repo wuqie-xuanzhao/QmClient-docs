@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>源码分析 - 翻译系统</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="wiki-shell">
+    <header class="wiki-topbar">
+      <a class="wiki-brand" href="../index.html">QmClient Wiki</a>
+      <nav class="wiki-nav" aria-label="主导航">
+        <a href="../当前状态/index.html">当前状态</a>
+        <a href="../源码分析/index.html" aria-current="page">源码分析</a>
+        <a href="../规划/index.html">规划</a>
+        <a href="../调研/index.html">调研</a>
+        <a href="../工作流参考/index.html">工作流参考</a>
+        <a href="../归档/index.html">归档</a>
+        <a href="../维护说明.html">维护说明</a>
+      </nav>
+    </header>
+
+    <main class="wiki-layout">
+      <aside class="wiki-sidebar" aria-label="源码分析页面">
+        <h2>源码分析</h2>
+        <a href="index.html">源码分析入口</a>
+        <a href="多语言系统.html">多语言系统</a>
+        <a href="绑定系统.html">绑定系统</a>
+        <a href="翻译系统.html" aria-current="page">翻译系统</a>
+        <a href="资源页.html">资源页</a>
+        <a href="网络卡顿可视化.html">网络卡顿可视化</a>
+        <h2>相关页面</h2>
+        <a href="../当前状态/翻译系统.html">翻译系统现状</a>
+        <a href="../当前状态/聊天翻译按钮.html">聊天翻译按钮</a>
+        <a href="多语言系统.html">多语言系统源码分析</a>
+      </aside>
+
+      <article class="wiki-content">
+        <header class="doc-header">
+          <h1>翻译系统源码分析</h1>
+          <p class="muted">本页分析用户可见的聊天翻译功能。它不同于 `data/languages/*.txt` 运行时语言包生成链；后者见“多语言系统”。</p>
+          <dl class="doc-meta">
+            <div><dt>状态</dt><dd>active</dd></div>
+            <div><dt>验证日期</dt><dd>2026-06-16</dd></div>
+            <div><dt>源码快照</dt><dd><code>67440f08c</code></dd></div>
+            <div><dt>可信度</dt><dd>high</dd></div>
+          </dl>
+        </header>
+
+        <section class="doc-section" id="summary">
+          <h2>结论摘要</h2>
+          <p>聊天翻译由 `CTranslate` 组件承载，支持手动翻译最近聊天、按玩家 id 翻译、入站自动翻译和出站发送前翻译。后端通过配置选择 LibreTranslate、FTAPI、Tencent Cloud 或 LLM API；每个 job 通过 HTTP backend 更新结果，并把结果挂回聊天行或发送队列。</p>
+          <p class="callout">本页只描述聊天内容翻译。源码字符串提取、TOML 维护库和运行时语言包生成属于 <a href="多语言系统.html">多语言系统</a>。</p>
+        </section>
+
+        <section class="doc-section" id="paths">
+          <h2>关联源码路径</h2>
+          <table>
+            <thead><tr><th>路径</th><th>职责</th><th>当前口径</th></tr></thead>
+            <tbody>
+              <tr><td><code>src/game/client/components/qmclient/translate/translate.cpp/.h</code></td><td>翻译组件、后端选择、任务队列、入站/出站翻译。</td><td>功能主实现。</td></tr>
+              <tr><td><code>src/game/client/components/qmclient/translate/translate_parse.cpp/.h</code></td><td>出站翻译目标解析和语言代码辅助。</td><td>命令文本解析。</td></tr>
+              <tr><td><code>src/game/client/components/qmclient/translate/translate_ui_settings.*</code></td><td>翻译按钮和菜单颜色配置。</td><td>UI 外观设置。</td></tr>
+              <tr><td><code>src/game/client/components/qmclient/menus_qmclient.cpp</code></td><td>QmClient 设置页的翻译模块、后端、密钥、并发、自动翻译配置。</td><td>用户配置入口。</td></tr>
+              <tr><td><code>src/game/client/components/chat.*</code></td><td>聊天行保存翻译响应，触发自动翻译和重建聊天显示。</td><td>显示接入点。</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="doc-section" id="flow">
+          <h2>运行/调用流程</h2>
+          <div class="flow-table">
+            <div><strong>1. 后端选择</strong><span>`CreateTranslateBackend()` 根据 `g_Config.m_QmTranslateBackend` 创建 LibreTranslate、FTAPI、Tencent Cloud 或 LLM backend。</span></div>
+            <div><strong>2. 手动翻译</strong><span>`translate` 和 `translate_id` 控制台命令调用 `Translate()`，从聊天环形缓冲里选最近的可翻译玩家消息。</span></div>
+            <div><strong>3. 入站任务</strong><span>`Translate(CChat::CLine &)` 检查并发、排除服务器消息，创建 `CTranslateJob`，并把 response 指针挂到聊天行。</span></div>
+            <div><strong>4. 出站任务</strong><span>`TryTranslateOutgoingChat()` 解析目标语言，创建 `COutgoingTranslateJob`，完成后通过 `SendChatQueued()` 发送译文。</span></div>
+            <div><strong>5. 渲染轮询</strong><span>`OnRender()` 轮询 HTTP backend；成功时更新聊天行并 `RebuildChat()`，失败时写入错误文本。</span></div>
+            <div><strong>6. 自动翻译</strong><span>`AutoTranslate()` 根据开关、本地玩家、服务器消息、FTAPI 保护、数字/目标语言启发式过滤后启动入站翻译。</span></div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="boundaries">
+          <h2>边界与风险</h2>
+          <ul>
+            <li><strong>可依赖事实：</strong>聊天翻译是 HTTP job 驱动的运行时功能，不会写回 `translations/i18n/*.toml`。</li>
+            <li><strong>并发边界：</strong>`GetEffectiveConcurrency()` 按后端设置默认并发；FTAPI 默认最低，LLM/TencentCloud 较高。</li>
+            <li><strong>隐私边界：</strong>聊天文本和密钥会进入外部服务请求；文档和设置页应明确区分本地语言包与远端翻译。</li>
+            <li><strong>显示风险：</strong>聊天行重用通过 line index 和 translation id 防护；改聊天缓冲结构时要同步检查翻译响应生命周期。</li>
+          </ul>
+        </section>
+
+        <section class="doc-section" id="evidence">
+          <h2>证据清单</h2>
+          <ul class="evidence-list">
+            <li><code>src/game/client/gameclient.cpp:272</code>：`m_Translate` 被加入客户端组件列表。</li>
+            <li><code>src/game/client/components/qmclient/translate/translate.cpp:1473-1484</code>：后端选择覆盖 LibreTranslate、FTAPI、Tencent Cloud 和 LLM。</li>
+            <li><code>src/game/client/components/qmclient/translate/translate.cpp:1504-1508</code>：注册 `translate` 和 `translate_id` 控制台命令。</li>
+            <li><code>src/game/client/components/qmclient/translate/translate.cpp:1538-1579</code>：手动翻译会查找最近聊天行并排除本地/系统消息。</li>
+            <li><code>src/game/client/components/qmclient/translate/translate.cpp:1582-1625</code>：入站 job 写入聊天行 response 指针并创建后端请求。</li>
+            <li><code>src/game/client/components/qmclient/translate/translate.cpp:1634-1665</code>：出站翻译解析目标语言并创建发送前 job。</li>
+            <li><code>src/game/client/components/qmclient/translate/translate.cpp:1667-1737</code>：`OnRender()` 轮询翻译结果，更新聊天行或发送译文。</li>
+            <li><code>src/game/client/components/qmclient/translate/translate.cpp:1739-1773</code>：自动翻译过滤本地玩家、服务器消息、FTAPI 自动开关和目标语言启发式。</li>
+            <li><code>src/game/client/components/qmclient/translate/translate.cpp:1872-1916</code>：按后端计算有效并发。</li>
+            <li><code>src/game/client/components/qmclient/menus_qmclient.cpp:4157-4589</code>：设置页提供自动翻译、后端、目标语言、密钥、LLM 参数和并发配置。</li>
+          </ul>
+        </section>
+      </article>
+
+      <aside class="wiki-toc" aria-label="页内目录">
+        <h2>本页</h2>
+        <a href="#summary">结论摘要</a>
+        <a href="#paths">源码路径</a>
+        <a href="#flow">调用流程</a>
+        <a href="#boundaries">边界风险</a>
+        <a href="#evidence">证据清单</a>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="dcterms.date" content="2026-06-16" />
+  <meta name="status" content="active" />
+  <title>源码分析 - 网络卡顿可视化</title>
+  <link rel="stylesheet" href="../assets/wiki.css" />
+</head>
+<body>
+  <div class="wiki-shell">
+    <header class="wiki-topbar">
+      <a class="wiki-brand" href="../index.html">QmClient Wiki</a>
+      <nav class="wiki-nav" aria-label="主导航">
+        <a href="../当前状态/index.html">当前状态</a>
+        <a href="../源码分析/index.html" aria-current="page">源码分析</a>
+        <a href="../规划/index.html">规划</a>
+        <a href="../调研/index.html">调研</a>
+        <a href="../工作流参考/index.html">工作流参考</a>
+        <a href="../归档/index.html">归档</a>
+        <a href="../维护说明.html">维护说明</a>
+      </nav>
+    </header>
+
+    <main class="wiki-layout">
+      <aside class="wiki-sidebar" aria-label="源码分析页面">
+        <h2>源码分析</h2>
+        <a href="index.html">源码分析入口</a>
+        <a href="客户端UI架构.html">客户端 UI 架构</a>
+        <a href="绑定系统.html">绑定系统</a>
+        <a href="翻译系统.html">翻译系统</a>
+        <a href="资源页.html">资源页</a>
+        <a href="网络卡顿可视化.html" aria-current="page">网络卡顿可视化</a>
+        <h2>相关页面</h2>
+        <a href="../当前状态/网络卡顿可视化.html">网络卡顿可视化现状</a>
+      </aside>
+
+      <article class="wiki-content">
+        <header class="doc-header">
+          <h1>网络卡顿可视化源码分析</h1>
+          <p class="muted">本页分析 QmClient 的网络与性能监控 HUD：采样指标、诊断等级、历史曲线、状态栏数字和设置页开关。</p>
+          <dl class="doc-meta">
+            <div><dt>状态</dt><dd>active</dd></div>
+            <div><dt>验证日期</dt><dd>2026-06-16</dd></div>
+            <div><dt>源码快照</dt><dd><code>67440f08c</code></dd></div>
+            <div><dt>可信度</dt><dd>high</dd></div>
+          </dl>
+        </header>
+
+        <section class="doc-section" id="summary">
+          <h2>结论摘要</h2>
+          <p>网络卡顿可视化由 `CQmMonitoring` 组件承载。组件从 `IClient` 采集 snapshot latency、prediction latency、prediction margin、jitter、game time margin、netstats 和 pending resend，计算连接等级与主要原因，并渲染 HUD 面板。TClient 状态栏也直接读取同一份 `m_QmMonitoring.Snapshot()` 展示延迟、jitter、丢包和上下行。</p>
+          <p class="callout">这个功能不是简单 ping 显示。当前实现把网络指标、客户端性能指标和诊断结论合并，因此“卡顿”可能被归因为网络、丢包、jitter 或客户端性能。</p>
+        </section>
+
+        <section class="doc-section" id="paths">
+          <h2>关联源码路径</h2>
+          <table>
+            <thead><tr><th>路径</th><th>职责</th><th>当前口径</th></tr></thead>
+            <tbody>
+              <tr><td><code>src/game/client/components/qmclient/monitoring/monitoring.h/.cpp</code></td><td>指标结构、采样、诊断、历史曲线和 HUD 渲染。</td><td>功能主实现。</td></tr>
+              <tr><td><code>src/game/client/components/qmclient/monitoring/monitoring_device_perf.cpp</code></td><td>设备/性能指标辅助。</td><td>性能侧补充。</td></tr>
+              <tr><td><code>src/game/client/gameclient.cpp</code></td><td>组件注册和 `RenderQmMonitoringHud()` 面板入口。</td><td>生命周期/渲染接入。</td></tr>
+              <tr><td><code>src/game/client/components/tclient/statusbar.cpp/.h</code></td><td>状态栏读取 monitoring snapshot 显示网络数字。</td><td>轻量展示入口。</td></tr>
+              <tr><td><code>src/game/client/components/qmclient/menus_qmclient.cpp</code></td><td>Debug Graph / monitoring HUD 快捷键和透明度设置。</td><td>用户配置入口。</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="doc-section" id="flow">
+          <h2>运行/调用流程</h2>
+          <div class="flow-table">
+            <div><strong>1. 组件接入</strong><span>`CGameClient` 把 `m_QmMonitoring` 加入组件列表，HUD 渲染入口调用 `RenderHud()`。</span></div>
+            <div><strong>2. 指标采样</strong><span>`UpdateNetworkMetrics()` 从 `IClient` 读取连接状态、延迟、jitter、margin、netstats、pending resend。</span></div>
+            <div><strong>3. 诊断判定</strong><span>`QmDetermineConnectionGrade()` 和 `QmDeterminePrimaryCause()` 按阈值输出等级和主因。</span></div>
+            <div><strong>4. 历史记录</strong><span>`PushHistorySample()` 把 ping、prediction、margin、jitter、FPS 写入环形历史。</span></div>
+            <div><strong>5. HUD 渲染</strong><span>`RenderHud()` 依次绘制 header、主图、FPS 图、指标卡和 debug details。</span></div>
+            <div><strong>6. 状态栏复用</strong><span>`CStatusBar` 读取 `m_QmMonitoring.Snapshot().m_Network` 展示 prediction、jitter、丢包和上下行。</span></div>
+          </div>
+        </section>
+
+        <section class="doc-section" id="boundaries">
+          <h2>边界与风险</h2>
+          <ul>
+            <li><strong>可依赖事实：</strong>网络指标和历史曲线都来自 `CQmMonitoring` snapshot，状态栏是复用展示。</li>
+            <li><strong>诊断边界：</strong>等级阈值是启发式，不等同于服务器真实故障；pending resend 被用作丢包估计的一部分。</li>
+            <li><strong>性能边界：</strong>HUD 会渲染多段图表和文字，设置项应保持可关闭/可调透明度。</li>
+            <li><strong>维护风险：</strong>新增指标要同步结构体、采样、历史容量、HUD 布局、状态栏文案和翻译 key。</li>
+          </ul>
+        </section>
+
+        <section class="doc-section" id="evidence">
+          <h2>证据清单</h2>
+          <ul class="evidence-list">
+            <li><code>src/game/client/gameclient.cpp:276</code>：`m_QmMonitoring` 被加入客户端组件列表。</li>
+            <li><code>src/game/client/gameclient.cpp:2296-2306</code>：`RenderQmMonitoringHud()` 计算布局并调用 `m_QmMonitoring.RenderHud()`。</li>
+            <li><code>src/game/client/components/qmclient/monitoring/monitoring.h:20-64</code>：定义连接等级、诊断原因和网络指标字段。</li>
+            <li><code>src/game/client/components/qmclient/monitoring/monitoring.h:395-435</code>：丢包估计、连接等级和主因判定阈值。</li>
+            <li><code>src/game/client/components/qmclient/monitoring/monitoring.h:527-548</code>：`CQmMonitoring` 保存 snapshot 与历史数组，并声明采样/渲染函数。</li>
+            <li><code>src/game/client/components/qmclient/monitoring/monitoring.cpp:619-646</code>：从 `IClient` 采集连接、延迟、jitter、netstats 和 pending resend。</li>
+            <li><code>src/game/client/components/qmclient/monitoring/monitoring.cpp:717-743</code>：生成诊断 verdict 并更新 snapshot。</li>
+            <li><code>src/game/client/components/qmclient/monitoring/monitoring.cpp:845-875</code>：HUD header 使用 latency、prediction、prediction margin 和 jitter 作为图例指标。</li>
+            <li><code>src/game/client/components/qmclient/monitoring/monitoring.cpp:1136-1165</code>：HUD 面板布局包含 header、主图、FPS 图、指标卡和 debug details。</li>
+            <li><code>src/game/client/components/qmclient/menus_qmclient.cpp:6028-6049</code>：设置页提供 Debug Graph 快捷键和 HUD 透明度配置。</li>
+            <li><code>src/game/client/components/tclient/statusbar.cpp:250-324</code>：状态栏从 monitoring snapshot 显示 prediction、jitter、丢包、上下行速率。</li>
+          </ul>
+        </section>
+      </article>
+
+      <aside class="wiki-toc" aria-label="页内目录">
+        <h2>本页</h2>
+        <a href="#summary">结论摘要</a>
+        <a href="#paths">源码路径</a>
+        <a href="#flow">调用流程</a>
+        <a href="#boundaries">边界风险</a>
+        <a href="#evidence">证据清单</a>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>

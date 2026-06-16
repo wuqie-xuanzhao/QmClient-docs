@@ -14,6 +14,7 @@
       <a class="wiki-brand" href="index.html">QmClient Wiki</a>
       <nav class="wiki-nav" aria-label="主导航">
         <a href="当前状态/index.html">当前状态</a>
+        <a href="源码分析/index.html">源码分析</a>
         <a href="规划/index.html">规划</a>
         <a href="调研/index.html">调研</a>
         <a href="工作流参考/index.html">工作流参考</a>
@@ -26,6 +27,7 @@
         <h2>维护入口</h2>
         <a href="index.html">Wiki 首页</a>
         <a href="当前状态/index.html">当前状态</a>
+        <a href="源码分析/index.html">源码分析</a>
         <a href="规划/index.html">规划</a>
         <a href="调研/index.html">调研</a>
         <a href="工作流参考/index.html">工作流参考</a>
@@ -49,6 +51,7 @@
             <thead><tr><th>区域</th><th>当前状态</th><th>维护规则</th></tr></thead>
             <tbody>
               <tr><td><code>当前状态/</code></td><td><span class="badge ok">当前说明</span></td><td>只放当前代码现状页。改动事实前必须复核源码、脚本或 gate 入口。</td></tr>
+              <tr><td><code>源码分析/</code></td><td><span class="badge ok">源码导读</span></td><td>按源码路径解释当前实现。每页必须包含验证日期、关联源码路径、结论摘要、流程、边界和证据清单。</td></tr>
               <tr><td><code>规划/</code></td><td><span class="badge warn">规划路由</span></td><td>只说明后续可以做什么。进入开发前必须重新写小规格或计划。</td></tr>
               <tr><td><code>调研/</code></td><td><span class="badge warn">调研状态</span></td><td>记录已复核的调研结论和风险，不替代源码阅读。</td></tr>
               <tr><td><code>工作流参考/</code></td><td><span class="badge warn">历史参考</span></td><td>索引 `docs/superpowers/`，只用于理解背景和旧工作流，不能直接作为当前事实。</td></tr>
@@ -64,6 +67,18 @@
             <li>技术名可保留原文，例如 <code>QmUi</code>、<code>BindWheel</code>、<code>HarmonyOS</code>。</li>
             <li>不要再用 <code>*-status.html</code>、<code>*-spec.html</code> 表达状态；状态写进页面头部元信息。</li>
             <li>共享样式只维护 <code>assets/wiki.css</code>，新增页面不要复制内联 CSS。</li>
+            <li>源码分析页使用中文文件名，例如 <code>源码分析/多语言系统.html</code>；技术路径和符号名保留原文。</li>
+          </ul>
+        </section>
+
+        <section class="doc-section" id="source-analysis">
+          <h2>源码分析规则</h2>
+          <ul>
+            <li>每页必须写明验证日期、源码快照、关联源码路径和可信度。</li>
+            <li>结论只能来自当前源码、脚本或 gate 入口；<code>docs/superpowers/</code> 只能作为背景材料。</li>
+            <li>不要复制大段源码；使用文件路径、关键符号和短说明建立证据链。</li>
+            <li>如果结论依赖阶段性实现，必须写入“边界与风险”，避免读者误判为完成态。</li>
+            <li>新增源码分析页后，同步更新 <code>源码分析/index.html</code> 和首页入口。</li>
           </ul>
         </section>
 
@@ -81,6 +96,7 @@
           <h2>后续维护流程</h2>
           <ul>
             <li>新增当前事实：先读源码或脚本，再更新 <code>当前状态/*.html</code> 或 <code>调研/*.html</code>。</li>
+            <li>新增源码分析：先确认当前源码路径和关键符号，再更新 <code>源码分析/*.html</code>。</li>
             <li>新增规划：先连接到 <code>规划/index.html</code>，并明确它不是实现计划。</li>
             <li>新增 HTML：使用 wiki 布局和 <code>assets/wiki.css</code>，保证相对链接可检查。</li>
             <li>引用 <code>docs/superpowers/</code>：只加到 <code>工作流参考/</code>，并标注需要按当前代码复核。</li>
@@ -93,6 +109,7 @@
         <h2>本页</h2>
         <a href="#authority">权威入口</a>
         <a href="#naming">命名规则</a>
+        <a href="#source-analysis">源码分析</a>
         <a href="#archive">归档口径</a>
         <a href="#workflow">维护流程</a>
       </aside>
